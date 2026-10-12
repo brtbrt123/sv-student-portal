@@ -157,7 +157,10 @@ export default function ShellFrame({
           )}
           {signOut}
 
-          <div className="mt-2 flex items-center gap-2.5 border-t border-border px-1 pt-3">
+          <div className="mt-2 flex justify-center border-t border-border px-1 pt-3">
+            <ThemeToggle />
+          </div>
+          <div className="mt-3 flex items-center gap-2.5 px-1">
             <span
               aria-hidden="true"
               className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground"
@@ -168,7 +171,6 @@ export default function ShellFrame({
               <p className="truncate text-sm font-semibold">{userName}</p>
               <p className="truncate text-xs text-muted">{userMeta ?? roleLabel}</p>
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </aside>
