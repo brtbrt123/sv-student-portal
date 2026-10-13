@@ -59,6 +59,31 @@ export function acceptanceEmail(firstName: string, studentNumber: string, link: 
   }
 }
 
+// Staff welcome email (accounts created by the Admin): the role and the one-time set-password link.
+// Never contains a password. Staff sign in with this email address and the password they set.
+export function staffWelcomeEmail(firstName: string, roleName: string, link: string): Omit<MailMessage, 'to'> {
+  return {
+    subject: `Your ${SCHOOL} staff account`,
+    text: [
+      `Hi ${firstName},`,
+      '',
+      `An account was created for you on the ${SCHOOL} with the role: ${roleName}.`,
+      '',
+      'To start using the portal, set your password with this link:',
+      link,
+      '',
+      'This link works only once and expires after a short time. If it has expired or was already used,',
+      'ask the portal Admin for a new one.',
+      '',
+      'After you set your password, sign in to the portal with this email address and that password.',
+      '',
+      'If you were not expecting this, you can ignore this email.',
+      '',
+      `${SCHOOL}`,
+    ].join('\n'),
+  }
+}
+
 // Rejection notice: no account details, only the decision and the Registrar's remarks.
 export function rejectionEmail(firstName: string, remarks: string): Omit<MailMessage, 'to'> {
   return {
