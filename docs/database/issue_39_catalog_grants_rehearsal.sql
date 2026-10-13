@@ -1,10 +1,10 @@
 -- ==========================================
 -- REHEARSAL OF issue_39_catalog_grants.sql (GitHub issue 39): change + TC-139 to TC-146
 -- ==========================================
--- The change (sections 1 to 5 of issue_39_catalog_grants.sql, WITHOUT its COMMIT) and the
--- tests (the block at the bottom of that file) in ONE transaction that ends in ROLLBACK,
--- with ONE result row (all_ok must be true). Nothing is committed. Run it BEFORE the live
--- change: Supabase SQL editor, as postgres, a new tab, whole file, never a selection.
+-- The change (sections 1 to 5 of issue_39_catalog_grants.sql, WITHOUT its COMMIT) and the tests
+-- (the block at the bottom of that file) in ONE transaction that ends in ROLLBACK, with ONE
+-- result row (all_ok must be true). Nothing is committed. Run it BEFORE the live change:
+-- Supabase SQL editor, as postgres, a new tab, whole file, never a selection.
 -- Generated from issue_39_catalog_grants.sql; if one changes, regenerate the other.
 
 BEGIN;
@@ -211,7 +211,7 @@ BEGIN
     AND c.relname IN ('departments', 'programs', 'terms', 'subjects', 'sections')
     AND (pg_catalog.has_any_column_privilege('anon', c.oid, 'SELECT,INSERT,UPDATE,REFERENCES')
          OR pg_catalog.has_table_privilege('anon', c.oid, 'DELETE,TRUNCATE,TRIGGER')
-         OR EXISTS (SELECT 1 FROM pg_catalog.aclexplode(coalesce(c.relacl, '{}'::aclitem[])) a
+         OR EXISTS (SELECT 1 FROM pg_catalog.aclexplode(c.relacl) a
                     LEFT JOIN pg_catalog.pg_roles r ON r.oid = a.grantee
                     WHERE a.grantee = 0 OR r.rolname = 'anon'));
   IF v_bad IS NOT NULL THEN
@@ -222,7 +222,7 @@ BEGIN
   --    REFERENCES, TRIGGER, MAINTAIN, and no table-level INSERT / UPDATE).
   SELECT string_agg(DISTINCT c.relname || ':' || a.privilege_type, ', ') INTO v_bad
   FROM pg_catalog.pg_class c
-  CROSS JOIN LATERAL pg_catalog.aclexplode(coalesce(c.relacl, '{}'::aclitem[])) a
+  CROSS JOIN LATERAL pg_catalog.aclexplode(c.relacl) a
   JOIN pg_catalog.pg_roles r ON r.oid = a.grantee AND r.rolname = 'authenticated'
   WHERE c.relnamespace = 'public'::regnamespace
     AND c.relname IN ('departments', 'programs', 'terms', 'subjects', 'sections')
@@ -329,7 +329,7 @@ select set_config('app.r139', format(
   (select count(*) from pg_trigger t join pg_class c on c.oid = t.tgrelid
      where not t.tgisinternal and t.tgname = 'audit_log' and t.tgtype = 29 and c.relnamespace = 'public'::regnamespace
        and c.relname in ('departments', 'programs', 'terms', 'subjects', 'sections')),
-  (select count(*) from pg_class c cross join lateral aclexplode(coalesce(c.relacl, '{}'::aclitem[])) a
+  (select count(*) from pg_class c cross join lateral aclexplode(c.relacl) a
      join pg_roles r on r.oid = a.grantee and r.rolname = 'authenticated'
      where c.relnamespace = 'public'::regnamespace and c.relname in ('departments', 'programs', 'terms', 'subjects', 'sections')
        and a.privilege_type <> 'SELECT'),
@@ -346,7 +346,7 @@ select set_config('app.r139', format(
         and (select count(*) from pg_trigger t join pg_class c on c.oid = t.tgrelid
                where not t.tgisinternal and t.tgname = 'audit_log' and t.tgtype = 29 and c.relnamespace = 'public'::regnamespace
                  and c.relname in ('departments', 'programs', 'terms', 'subjects', 'sections')) = 5
-        and (select count(*) from pg_class c cross join lateral aclexplode(coalesce(c.relacl, '{}'::aclitem[])) a
+        and (select count(*) from pg_class c cross join lateral aclexplode(c.relacl) a
                join pg_roles r on r.oid = a.grantee and r.rolname = 'authenticated'
                where c.relnamespace = 'public'::regnamespace and c.relname in ('departments', 'programs', 'terms', 'subjects', 'sections')
                  and a.privilege_type <> 'SELECT') = 0
