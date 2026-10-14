@@ -1,789 +1,394 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1900" height="2848" viewBox="0 0 1900 2848" font-family="Arial"><rect width="1900" height="2848" fill="white"/><text x="40" y="48" font-size="30" font-weight="bold" fill="#111">Level 1 Data Flow Diagram</text><text x="40" y="76" font-size="15" fill="#555">Centralized Student Portal and Automated Clearance System. Yellow box = external entity, blue rounded box = process, open-ended box = data store (tables listed under its name).</text><text x="40" y="98" font-size="15" fill="#555">Arrow = data flow. Numbers only identify flows, not their order. Dashed = automatic (database triggers). Each section shows one area; the same entity or store can appear in several sections.</text><text x="40" y="170" font-family="Arial" font-size="19" font-weight="bold" fill="#222">A. Authentication (REQ-STU-01, SEC-03)</text><line x1="40" y1="178" x2="1860" y2="178" stroke="#cccccc"/><svg x="40" y="184" width="1370" height="248"
- viewBox="0.00 0.00 1095.60 198.31" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 187.51)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-187.51 1084.8,-187.51 1084.8,10.8 -10.8,10.8"/>
-<!-- U -->
-<g id="node1" class="node">
-<title>U</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="196,-176.71 0,-176.71 0,-120.71 196,-120.71 196,-176.71"/>
-<text text-anchor="middle" x="98" y="-159.31" font-family="Arial" font-size="13.00">All users</text>
-<text text-anchor="middle" x="98" y="-145.31" font-family="Arial" font-size="13.00">(Student, Registrar, Cashier,</text>
-<text text-anchor="middle" x="98" y="-131.31" font-family="Arial" font-size="13.00">Dept Head, Admin)</text>
-</g>
-<!-- P1 -->
-<g id="node2" class="node">
-<title>P1</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M567,-127.21C567,-127.21 483,-127.21 483,-127.21 477,-127.21 471,-121.21 471,-115.21 471,-115.21 471,-80.21 471,-80.21 471,-74.21 477,-68.21 483,-68.21 483,-68.21 567,-68.21 567,-68.21 573,-68.21 579,-74.21 579,-80.21 579,-80.21 579,-115.21 579,-115.21 579,-121.21 573,-127.21 567,-127.21"/>
-<text text-anchor="start" x="515.5" y="-107.81" font-family="Arial" font-weight="bold" font-size="13.00">1.0</text>
-<text text-anchor="start" x="487" y="-94.81" font-family="Arial" font-size="13.00">Authenticate</text>
-<text text-anchor="start" x="508" y="-81.81" font-family="Arial" font-size="13.00">users</text>
-</g>
-<!-- U&#45;&gt;P1 -->
-<g id="edge1" class="edge">
-<title>U&#45;&gt;P1</title>
-<path fill="none" stroke="#444444" d="M196.3,-152.14C252.66,-152.52 324.75,-150.26 388,-139.71 413.18,-135.51 440.19,-127.85 463.45,-120.22"/>
-<polygon fill="#444444" stroke="#444444" points="464.58,-122.61 470.86,-117.75 462.92,-117.63 464.58,-122.61"/>
-<text text-anchor="middle" x="333.5" y="-152.91" font-family="Arial" font-size="11.00">1 &#160;Login credentials</text>
-</g>
-<!-- P1&#45;&gt;U -->
-<g id="edge7" class="edge">
-<title>P1&#45;&gt;U</title>
-<path fill="none" stroke="#444444" d="M470.91,-103.21C421.26,-108.43 345.05,-116.67 279,-124.71 254.61,-127.68 228.39,-131.06 203.71,-134.34"/>
-<polygon fill="#444444" stroke="#444444" points="203.19,-131.76 196.1,-135.35 203.88,-136.96 203.19,-131.76"/>
-<text text-anchor="middle" x="333.5" y="-127.91" font-family="Arial" font-size="11.00">7 &#160;Session and role</text>
-</g>
-<!-- SA -->
-<g id="node3" class="node">
-<title>SA</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="163,-68.71 33,-68.71 33,-26.71 163,-26.71 163,-68.71"/>
-<text text-anchor="middle" x="98" y="-51.31" font-family="Arial" font-size="13.00">Supabase Auth</text>
-<text text-anchor="middle" x="98" y="-37.31" font-family="Arial" font-size="13.00">(external service)</text>
-</g>
-<!-- P1&#45;&gt;SA -->
-<g id="edge2" class="edge">
-<title>P1&#45;&gt;SA</title>
-<path fill="none" stroke="#444444" d="M490.11,-68.18C464.13,-47.61 426.34,-21.92 388,-10.71 313.16,11.18 223.66,-6.71 164.29,-24.41"/>
-<polygon fill="#444444" stroke="#444444" points="163.25,-21.98 156.84,-26.67 164.78,-27 163.25,-21.98"/>
-<text text-anchor="middle" x="333.5" y="-13.91" font-family="Arial" font-size="11.00">2 &#160;Credential check</text>
-</g>
-<!-- D2 -->
-<g id="node5" class="node">
-<title>D2</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="899.5,-116.71 899.5,-151.71 929.5,-151.71 929.5,-116.71 899.5,-116.71"/>
-<polyline fill="none" stroke="black" points="929.5,-151.71 899.5,-151.71 899.5,-116.71 929.5,-116.71 "/>
-<text text-anchor="start" x="905.5" y="-131.51" font-family="Arial" font-weight="bold" font-size="14.00">D2</text>
-<polyline fill="none" stroke="black" points="929.5,-116.71 1039.5,-116.71 "/>
-<polyline fill="none" stroke="black" points="1039.5,-151.71 929.5,-151.71 "/>
-<text text-anchor="start" x="935.5" y="-135.51" font-family="Arial" font-weight="bold" font-size="14.00">Login attempts</text>
-<text text-anchor="start" x="935.5" y="-125.51" font-family="Arial" font-size="9.00" fill="#555555">login_attempts</text>
-</g>
-<!-- P1&#45;&gt;D2 -->
-<g id="edge6" class="edge">
-<title>P1&#45;&gt;D2</title>
-<path fill="none" stroke="#444444" d="M579.27,-103.01C604.36,-105.46 634.71,-108.34 662,-110.71 740.15,-117.5 829.58,-124.41 891.59,-129.05"/>
-<polygon fill="#444444" stroke="#444444" points="891.72,-131.69 899.39,-129.64 892.11,-126.46 891.72,-131.69"/>
-<text text-anchor="middle" x="722" y="-122.91" font-family="Arial" font-size="11.00">6 &#160;Login attempt</text>
-</g>
-<!-- SA&#45;&gt;P1 -->
-<g id="edge3" class="edge">
-<title>SA&#45;&gt;P1</title>
-<path fill="none" stroke="#444444" d="M163.28,-49.43C222.04,-51.65 311.22,-56.64 388,-67.71 412.83,-71.29 439.88,-76.89 463.27,-82.3"/>
-<polygon fill="#444444" stroke="#444444" points="462.82,-84.89 470.72,-84.04 464.02,-79.78 462.82,-84.89"/>
-<text text-anchor="middle" x="333.5" y="-70.91" font-family="Arial" font-size="11.00">3 &#160;Authentication result</text>
-</g>
-<!-- D1 -->
-<g id="node4" class="node">
-<title>D1</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="865.5,-22.71 865.5,-57.71 895.5,-57.71 895.5,-22.71 865.5,-22.71"/>
-<polyline fill="none" stroke="black" points="895.5,-57.71 865.5,-57.71 865.5,-22.71 895.5,-22.71 "/>
-<text text-anchor="start" x="871.5" y="-37.51" font-family="Arial" font-weight="bold" font-size="14.00">D1</text>
-<polyline fill="none" stroke="black" points="895.5,-22.71 1074.5,-22.71 "/>
-<polyline fill="none" stroke="black" points="1074.5,-57.71 895.5,-57.71 "/>
-<text text-anchor="start" x="901.5" y="-41.51" font-family="Arial" font-weight="bold" font-size="14.00">Accounts</text>
-<text text-anchor="start" x="901.5" y="-31.51" font-family="Arial" font-size="9.00" fill="#555555">roles, profiles, students, department_staff</text>
-</g>
-<!-- D1&#45;&gt;P1 -->
-<g id="edge4" class="edge">
-<title>D1&#45;&gt;P1</title>
-<path fill="none" stroke="#444444" d="M864.97,-48.29C805.43,-53.29 729.3,-60.76 662,-70.71 637.18,-74.38 610.03,-79.53 586.56,-84.36"/>
-<polygon fill="#444444" stroke="#444444" points="585.89,-81.82 579.08,-85.91 586.95,-86.96 585.89,-81.82"/>
-<text text-anchor="middle" x="722" y="-73.91" font-family="Arial" font-size="11.00">4 &#160;Profile and role</text>
-</g>
-<!-- D2&#45;&gt;P1 -->
-<g id="edge5" class="edge">
-<title>D2&#45;&gt;P1</title>
-<path fill="none" stroke="#444444" d="M901.26,-117.15C866.02,-108.84 821.98,-99.84 782,-95.71 728.95,-90.22 715.33,-95.32 662,-95.71 637.5,-95.89 610.51,-96.25 587.08,-96.62"/>
-<polygon fill="#444444" stroke="#444444" points="586.74,-94 579.28,-96.74 586.83,-99.25 586.74,-94"/>
-<text text-anchor="middle" x="722" y="-98.91" font-family="Arial" font-size="11.00">5 &#160;Recent failed attempts</text>
-</g>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2300 1830" width="2300" height="1830" font-family="'Plus Jakarta Sans', Arial, sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#1b1c26"/></marker><marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#8a86a0"/></marker></defs>
+<rect width="2300" height="1830" fill="#faf9fc"/>
+<text x="40.0" y="44.0" font-size="22" font-weight="800" fill="#1b1c26" text-anchor="start">Data Flow Diagram, Level 1: Centralized Student Portal</text>
+<text x="40.0" y="66.0" font-size="12" font-weight="400" fill="#6e6c85" text-anchor="start">13 processes, 14 data stores, 10 sections. Same entity or store can appear in several sections. Dashed arrows are automatic changes made by database triggers.</text>
+<rect x="40" y="90" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="40" y="90" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="40" y="106" width="725" height="14" fill="#ebddf6"/>
+<text x="60.0" y="110.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">A. Authentication</text>
+<rect x="91.0" y="190.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="95.0" y="194.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="156.0" y="207.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">User</text><text x="156.0" y="221.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">(any role)</text>
+<rect x="320.0" y="172.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="410.0" y="200.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">1.0</text><text x="410.0" y="214.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Authenticate</text><text x="410.0" y="228.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">users</text>
+<rect x="335.0" y="405.0" width="150" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="339.0" y="409.0" width="142" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="410.0" y="429.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Supabase Auth</text>
+<rect x="535.0" y="286.0" width="170" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M569.0 286.0 V324.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="552.0" y="309.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D2</text>
+<text x="637.0" y="309.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Login attempts</text>
+<rect x="535.0" y="156.0" width="170" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M569.0 156.0 V194.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="552.0" y="179.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D1</text>
+<text x="637.0" y="179.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Accounts</text>
+<line x1="221.0" y1="210.0" x2="320.0" y2="210.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="212.5" y="184.0" width="116.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="270.5" y="195.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">student ID or email,</text><text x="270.5" y="207.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">password</text>
+<path d="M320.0 210.0 Q270.5 244.0 221.0 210.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="228.7" y="227.0" width="83.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="270.5" y="238.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">session or</text><text x="270.5" y="250.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">lockout notice</text>
+<line x1="410.0" y1="248.0" x2="410.0" y2="405.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="340.3" y="318.5" width="67.4" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="374.0" y="329.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">credentials</text>
+<path d="M410.0 405.0 Q436.0 326.5 410.0 248.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="435.9" y="318.5" width="78.2" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="475.0" y="329.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">verified user</text>
+<line x1="494.0" y1="248.0" x2="578.0" y2="286.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="478.0" y="259.0" width="116.0" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="536.0" y="270.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">attempts, lock check</text>
+<line x1="535.0" y1="189.2" x2="500.0" y2="195.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="467.6" y="184.1" width="99.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="517.5" y="195.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">role, active flag</text>
+<rect x="785" y="90" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="785" y="90" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="785" y="106" width="725" height="14" fill="#ebddf6"/>
+<text x="805.0" y="110.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">B. Admissions (public apply form)</text>
+<rect x="829.0" y="160.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="833.0" y="164.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="894.0" y="177.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Applicant</text><text x="894.0" y="191.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">(New or Transferee)</text>
+<rect x="829.0" y="370.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="833.0" y="374.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="894.0" y="394.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Registrar</text>
+<rect x="1057.0" y="247.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1147.0" y="275.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">2.0</text><text x="1147.0" y="289.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Process</text><text x="1147.0" y="303.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">admissions</text>
+<rect x="1299.0" y="133.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 133.0 V171.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="156.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D11</text>
+<text x="1396.0" y="156.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Applications</text>
+<rect x="1299.0" y="199.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 199.0 V237.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="222.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D3</text>
+<text x="1396.0" y="222.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Academic catalog</text>
+<rect x="1299.0" y="265.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 265.0 V303.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="288.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D12</text>
+<text x="1396.0" y="288.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Program curriculum</text>
+<rect x="1299.0" y="347.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 347.0 V385.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="370.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D1</text>
+<text x="1396.0" y="370.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Accounts</text>
+<rect x="1299.0" y="421.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 421.0 V459.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="444.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D4</text>
+<text x="1396.0" y="444.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Enrollments</text>
+<line x1="942.2" y1="200.0" x2="1057.0" y2="247.6" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="898.1" y="187.8" width="143.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="969.6" y="199.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">application: name, email,</text><text x="969.6" y="211.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">program, new or transfer</text>
+<path d="M1057.0 247.6 Q982.7 264.5 942.2 200.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="948.9" y="264.1" width="164.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1031.2" y="275.5" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">acceptance email: student ID,</text><text x="1031.2" y="287.5" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">set-password link</text>
+<line x1="942.2" y1="370.0" x2="1057.0" y2="322.4" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="955.1" y="332.2" width="89.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="999.6" y="343.5" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">accept or</text><text x="999.6" y="355.5" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">reject, remarks</text>
+<line x1="1213.3" y1="247.0" x2="1345.9" y2="171.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="1243.2" y="195.0" width="72.8" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1279.6" y="206.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">application,</text><text x="1279.6" y="218.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">status</text>
+<line x1="1313.2" y1="237.0" x2="1237.0" y2="259.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1249.5" y="240.0" width="51.2" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1275.1" y="251.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">programs</text>
+<line x1="1299.0" y1="284.3" x2="1237.0" y2="284.6" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1237.0" y="270.5" width="62.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1268.0" y="281.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">first-year</text><text x="1268.0" y="293.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">subjects</text>
+<line x1="1237.0" y1="316.4" x2="1324.6" y2="347.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1247.1" y="317.7" width="67.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1280.8" y="329.0" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">new student</text><text x="1280.8" y="341.0" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">account</text>
+<line x1="1203.9" y1="323.0" x2="1350.6" y2="421.0" stroke="#8a86a0" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+<rect x="1219.2" y="358.0" width="116.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1277.2" y="369.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">Pending first-year</text><text x="1277.2" y="381.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">enrollment (trigger)</text>
+<rect x="1530" y="90" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="1530" y="90" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="1530" y="106" width="725" height="14" fill="#ebddf6"/>
+<text x="1550.0" y="110.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">C. Enrollment</text>
+<rect x="1574.0" y="175.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="1578.0" y="179.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="1639.0" y="199.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student</text>
+<rect x="1574.0" y="355.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="1578.0" y="359.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="1639.0" y="379.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Registrar</text>
+<rect x="1802.0" y="247.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1892.0" y="275.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">3.0</text><text x="1892.0" y="289.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Manage</text><text x="1892.0" y="303.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">enrollment</text>
+<rect x="2044.0" y="181.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M2078.0 181.0 V219.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="2061.0" y="204.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D4</text>
+<text x="2141.0" y="204.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Enrollments</text>
+<rect x="2044.0" y="356.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M2078.0 356.0 V394.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="2061.0" y="379.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D3</text>
+<text x="2141.0" y="379.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Academic catalog</text>
+<line x1="1695.2" y1="215.0" x2="1802.0" y2="253.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1687.9" y="220.0" width="121.4" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1748.6" y="231.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">subjects and sections</text>
+<path d="M1802.0 253.0 Q1738.6 262.3 1695.2 215.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1693.7" y="252.1" width="99.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1743.6" y="263.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">enrollment status</text>
+<line x1="1695.2" y1="355.0" x2="1802.0" y2="317.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1701.4" y="322.0" width="94.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1748.6" y="333.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">approve, reject,</text><text x="1748.6" y="345.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">drop subject</text>
+<line x1="1982.0" y1="252.0" x2="2072.1" y2="219.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="1993.4" y="221.5" width="67.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="2027.1" y="232.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">enrollment,</text><text x="2027.1" y="244.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">items</text>
+<line x1="2075.0" y1="356.0" x2="1982.0" y2="319.9" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2000.2" y="324.0" width="56.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="2028.5" y="335.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">sections,</text><text x="2028.5" y="347.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">capacity</text>
+<rect x="40" y="520" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="40" y="520" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="40" y="536" width="725" height="14" fill="#ebddf6"/>
+<text x="60.0" y="540.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">D. Grades</text>
+<rect x="84.0" y="605.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="88.0" y="609.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="149.0" y="629.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Registrar</text>
+<rect x="84.0" y="785.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="88.0" y="789.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="149.0" y="809.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student</text>
+<rect x="312.0" y="677.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="402.0" y="705.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">4.0</text><text x="402.0" y="719.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Manage</text><text x="402.0" y="733.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">grades</text>
+<rect x="554.0" y="611.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M588.0 611.0 V649.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="571.0" y="634.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D5</text>
+<text x="651.0" y="634.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Grades</text>
+<rect x="554.0" y="786.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M588.0 786.0 V824.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="571.0" y="809.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D4</text>
+<text x="651.0" y="809.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Enrollments</text>
+<line x1="205.2" y1="645.0" x2="312.0" y2="683.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="224.9" y="656.0" width="67.4" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="258.6" y="667.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">grade codes</text>
+<line x1="312.0" y1="747.0" x2="205.2" y2="785.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="224.9" y="766.0" width="67.4" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="258.6" y="777.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">grades, GWA</text>
+<line x1="492.0" y1="682.0" x2="582.1" y2="649.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="503.4" y="651.5" width="67.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="537.1" y="662.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">grades,</text><text x="537.1" y="674.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">grade scale</text>
+<line x1="585.0" y1="786.0" x2="492.0" y2="749.9" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="496.7" y="760.0" width="83.6" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="538.5" y="771.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">approved items</text>
+<rect x="785" y="520" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="785" y="520" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="785" y="536" width="725" height="14" fill="#ebddf6"/>
+<text x="805.0" y="540.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">E. Payments and finance clearance</text>
+<rect x="829.0" y="620.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="833.0" y="624.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="894.0" y="644.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Cashier</text>
+<rect x="1057.0" y="682.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1147.0" y="710.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">5.0</text><text x="1147.0" y="724.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Process</text><text x="1147.0" y="738.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">payments</text>
+<rect x="829.0" y="800.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="833.0" y="804.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="894.0" y="824.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student</text>
+<rect x="1299.0" y="611.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 611.0 V649.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="634.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D6</text>
+<text x="1396.0" y="634.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Finance</text>
+<rect x="1299.0" y="801.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1333.0 801.0 V839.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1316.0" y="824.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D7</text>
+<text x="1396.0" y="824.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Clearances</text>
+<line x1="957.2" y1="660.0" x2="1057.0" y2="691.5" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="959.9" y="653.8" width="94.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1007.1" y="665.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">payments, charge</text><text x="1007.1" y="677.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">status</text>
+<line x1="1057.0" y1="755.6" x2="944.6" y2="800.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="977.9" y="775.8" width="45.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1000.8" y="787.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">balance</text>
+<line x1="1237.0" y1="685.1" x2="1330.0" y2="649.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="1257.9" y="653.0" width="51.2" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1283.5" y="664.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">charges,</text><text x="1283.5" y="676.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">payments</text>
+<line x1="1235.2" y1="758.0" x2="1334.9" y2="801.0" stroke="#8a86a0" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+<rect x="1227.0" y="765.5" width="116.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1285.0" y="776.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">Finance item cleared</text><text x="1285.0" y="788.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">(trigger)</text>
+<rect x="40" y="950" width="1470" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="40" y="950" width="1470" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="40" y="966" width="1470" height="14" fill="#ebddf6"/>
+<text x="60.0" y="970.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">F. Clearance (request, department approval, final approval)</text>
+<rect x="84.0" y="1020.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="88.0" y="1024.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="149.0" y="1044.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student</text>
+<rect x="84.0" y="1150.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="88.0" y="1154.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="149.0" y="1167.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Department</text><text x="149.0" y="1181.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Head</text>
+<rect x="84.0" y="1270.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="88.0" y="1274.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="149.0" y="1294.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Registrar</text>
+<rect x="365.0" y="1002.0" width="190" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="460.0" y="1030.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">6.0</text><text x="460.0" y="1044.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Initiate and track</text><text x="460.0" y="1058.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">clearance</text>
+<rect x="365.0" y="1132.0" width="190" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="460.0" y="1160.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">7.0</text><text x="460.0" y="1174.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Clear departments,</text><text x="460.0" y="1188.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">manage holds</text>
+<rect x="365.0" y="1255.0" width="190" height="70" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="460.0" y="1280.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">8.0</text><text x="460.0" y="1294.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Issue final</text><text x="460.0" y="1308.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">clearance</text>
+<rect x="970.0" y="1061.0" width="170" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1004.0 1061.0 V1099.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="987.0" y="1084.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D7</text>
+<text x="1072.0" y="1084.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Clearances</text>
+<rect x="970.0" y="1151.0" width="170" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1004.0 1151.0 V1189.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="987.0" y="1174.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D8</text>
+<text x="1072.0" y="1174.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Academic holds</text>
+<rect x="980.0" y="1261.0" width="150" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1014.0 1261.0 V1299.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="997.0" y="1284.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D1</text>
+<text x="1072.0" y="1284.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Accounts</text>
+<line x1="214.0" y1="1040.0" x2="365.0" y2="1040.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="239.6" y="1024.0" width="99.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="289.5" y="1035.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">request clearance</text>
+<path d="M365.0 1040.0 Q289.5 1066.0 214.0 1040.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="239.6" y="1057.0" width="99.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="289.5" y="1068.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">status per office</text>
+<line x1="555.0" y1="1046.4" x2="970.0" y2="1074.3" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="715.2" y="1032.3" width="110.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="770.5" y="1043.7" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">clearance, one item</text><text x="770.5" y="1055.7" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">per department</text>
+<line x1="214.0" y1="1170.0" x2="365.0" y2="1170.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="234.2" y="1156.0" width="110.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="289.5" y="1167.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">place or lift hold,</text><text x="289.5" y="1179.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">approve item</text>
+<line x1="555.0" y1="1170.0" x2="970.0" y2="1170.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="745.0" y="1162.0" width="35.0" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="762.5" y="1173.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">holds</text>
+<line x1="555.0" y1="1155.6" x2="970.0" y2="1092.9" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="722.1" y="1096.2" width="72.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="758.5" y="1107.6" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">item cleared</text>
+<line x1="980.0" y1="1266.1" x2="555.0" y2="1187.6" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="714.9" y="1218.8" width="105.2" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="767.5" y="1230.2" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">department of head</text>
+<line x1="214.0" y1="1290.0" x2="365.0" y2="1290.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="247.7" y="1282.0" width="83.6" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="289.5" y="1293.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">final approval</text>
+<line x1="555.0" y1="1256.5" x2="1001.2" y2="1099.0" stroke="#8a86a0" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+<rect x="756.8" y="1185.7" width="110.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="812.1" y="1197.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">approved (all items</text><text x="812.1" y="1209.1" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">cleared, trigger)</text>
+<rect x="1530" y="520" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="1530" y="520" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="1530" y="536" width="725" height="14" fill="#ebddf6"/>
+<text x="1550.0" y="540.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">G. Document requests</text>
+<rect x="1574.0" y="610.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="1578.0" y="614.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="1639.0" y="634.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student</text>
+<rect x="1574.0" y="790.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="1578.0" y="794.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="1639.0" y="814.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Registrar</text>
+<rect x="1807.0" y="682.0" width="170" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1892.0" y="710.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">9.0</text><text x="1892.0" y="724.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Process document</text><text x="1892.0" y="738.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">requests</text>
+<rect x="2044.0" y="611.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M2078.0 611.0 V649.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="2061.0" y="634.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D9</text>
+<text x="2141.0" y="634.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Document requests</text>
+<line x1="1695.2" y1="650.0" x2="1807.0" y2="689.8" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1695.8" y="651.9" width="110.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1751.1" y="663.2" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">request (1 to 5</text><text x="1751.1" y="675.2" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">documents), purpose</text>
+<path d="M1807.0 689.8 Q1741.1 698.1 1695.2 650.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1704.3" y="684.0" width="83.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1746.1" y="695.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">ticket number,</text><text x="1746.1" y="707.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">status</text>
+<line x1="1695.2" y1="790.0" x2="1807.0" y2="750.2" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1703.9" y="756.1" width="94.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1751.1" y="767.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">process, reject,</text><text x="1751.1" y="779.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">release</text>
+<line x1="1977.0" y1="687.0" x2="2075.0" y2="649.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="2000.4" y="660.0" width="51.2" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="2026.0" y="671.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">requests</text>
+<rect x="1530" y="950" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="1530" y="950" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="1530" y="966" width="725" height="14" fill="#ebddf6"/>
+<text x="1550.0" y="970.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">H. Virtual queue (Registrar window)</text>
+<rect x="1574.0" y="1040.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="1578.0" y="1044.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="1639.0" y="1064.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student</text>
+<rect x="1574.0" y="1225.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="1578.0" y="1229.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="1639.0" y="1249.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Registrar</text>
+<rect x="1802.0" y="1112.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1892.0" y="1140.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">10.0</text><text x="1892.0" y="1154.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Manage the</text><text x="1892.0" y="1168.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">queue</text>
+<rect x="2044.0" y="1041.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M2078.0 1041.0 V1079.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="2061.0" y="1064.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D13</text>
+<text x="2141.0" y="1064.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Queue</text>
+<rect x="2044.0" y="1231.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M2078.0 1231.0 V1269.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="2061.0" y="1254.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D1</text>
+<text x="2141.0" y="1254.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Accounts</text>
+<line x1="1695.2" y1="1080.0" x2="1802.0" y2="1118.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1709.5" y="1079.0" width="78.2" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1748.6" y="1090.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">get ticket,</text><text x="1748.6" y="1102.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">cancel ticket</text>
+<path d="M1802.0 1118.0 Q1738.6 1127.3 1695.2 1080.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1701.8" y="1113.1" width="83.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1743.6" y="1124.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">ticket number,</text><text x="1743.6" y="1136.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">QR, status</text>
+<line x1="1692.3" y1="1225.0" x2="1802.0" y2="1183.8" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1691.8" y="1190.4" width="110.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1747.1" y="1201.7" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">scan QR, call next,</text><text x="1747.1" y="1213.7" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">hold, no-show, done</text>
+<line x1="1982.0" y1="1115.1" x2="2075.0" y2="1079.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="1978.6" y="1089.0" width="99.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="2028.5" y="1100.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">tickets, counters</text>
+<line x1="2079.9" y1="1231.0" x2="1980.2" y2="1188.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1993.6" y="1201.5" width="72.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="2030.0" y="1212.8" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">student card</text>
+<rect x="40" y="1380" width="725" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="40" y="1380" width="725" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="40" y="1396" width="725" height="14" fill="#ebddf6"/>
+<text x="60.0" y="1400.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">I. Notifications</text>
+<rect x="84.0" y="1560.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="88.0" y="1564.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="149.0" y="1577.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Student or</text><text x="149.0" y="1591.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">staff user</text>
+<rect x="312.0" y="1542.0" width="180" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="402.0" y="1570.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">11.0</text><text x="402.0" y="1584.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Send and show</text><text x="402.0" y="1598.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">notifications</text>
+<rect x="554.0" y="1471.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M588.0 1471.0 V1509.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="571.0" y="1494.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D14</text>
+<text x="651.0" y="1494.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Notifications</text>
+<rect x="549.0" y="1658.0" width="170" height="44" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M583.0 1658.0 V1702.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="634.0" y="1683.7" font-size="10.5" font-weight="600" fill="#1b1c26" text-anchor="middle">D4, D7, D9, D13, D5, D8, D11</text>
+<line x1="583.0" y1="1658.0" x2="490.2" y2="1618.0" stroke="#8a86a0" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+<rect x="486.7" y="1624.0" width="99.8" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="536.6" y="1635.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">events: status</text><text x="536.6" y="1647.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">changes (trigger)</text>
+<line x1="492.0" y1="1545.1" x2="585.0" y2="1509.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="502.1" y="1519.0" width="72.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="538.5" y="1530.4" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">notification</text>
+<path d="M312.0 1580.0 Q263.0 1610.0 214.0 1580.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="207.7" y="1595.0" width="110.6" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="263.0" y="1606.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">bell, unread count,</text><text x="263.0" y="1618.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">list</text>
+<line x1="214.0" y1="1580.0" x2="312.0" y2="1580.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="226.6" y="1564.0" width="72.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="263.0" y="1575.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">mark as read</text>
+<rect x="785" y="1380" width="1470" height="410" rx="12" fill="#ffffff" stroke="#c9c3d6" stroke-width="1.3"/>
+<rect x="785" y="1380" width="1470" height="30" rx="12" fill="#ebddf6" stroke="#c9c3d6"/>
+<rect x="785" y="1396" width="1470" height="14" fill="#ebddf6"/>
+<text x="805.0" y="1400.0" font-size="13" font-weight="800" fill="#1b1c26" text-anchor="start">J. Administration and audit trail</text>
+<rect x="829.0" y="1470.0" width="130" height="40" fill="#ffffff" stroke="#1b1c26" stroke-width="1.4"/>
+<rect x="833.0" y="1474.0" width="122" height="32" fill="none" stroke="#c9c3d6"/>
+<text x="894.0" y="1494.0" font-size="11.5" font-weight="700" fill="#1b1c26" text-anchor="middle">Admin</text>
+<rect x="1110.0" y="1452.0" width="190" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1205.0" y="1480.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">12.0</text><text x="1205.0" y="1494.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Manage accounts,</text><text x="1205.0" y="1508.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">roles and catalog</text>
+<rect x="1120.0" y="1642.0" width="170" height="76" rx="14" fill="#ebddf6" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1205.0" y="1670.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">13.0</text><text x="1205.0" y="1684.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">Record audit</text><text x="1205.0" y="1698.2" font-size="12" font-weight="800" fill="#1b1c26" text-anchor="middle">trail</text>
+<rect x="1510.0" y="1431.0" width="150" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1544.0 1431.0 V1469.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1527.0" y="1454.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D1</text>
+<text x="1602.0" y="1454.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Accounts</text>
+<rect x="1495.0" y="1511.0" width="180" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1529.0 1511.0 V1549.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1512.0" y="1534.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D3</text>
+<text x="1602.0" y="1534.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Academic catalog</text>
+<rect x="1505.0" y="1661.0" width="160" height="38" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M1539.0 1661.0 V1699.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="1522.0" y="1684.0" font-size="11" font-weight="800" fill="#1b1c26" text-anchor="middle">D10</text>
+<text x="1602.0" y="1684.0" font-size="11" font-weight="600" fill="#1b1c26" text-anchor="middle">Audit log</text>
+<rect x="794.0" y="1728.0" width="200" height="44" fill="#fbf0b8" stroke="#1b1c26" stroke-width="1.4"/>
+<path d="M828.0 1728.0 V1772.0" stroke="#1b1c26" stroke-width="1.4"/>
+<text x="894.0" y="1746.7" font-size="10.5" font-weight="600" fill="#1b1c26" text-anchor="middle">Critical changes in</text><text x="894.0" y="1760.7" font-size="10.5" font-weight="600" fill="#1b1c26" text-anchor="middle">D1, D3, D4, D5, D6, D7</text>
+<line x1="959.0" y1="1490.0" x2="1110.0" y2="1490.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="990.0" y="1458.0" width="89.0" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1034.5" y="1469.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">users, roles,</text><text x="1034.5" y="1481.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">catalog changes</text>
+<path d="M1110.0 1490.0 Q1034.5 1514.0 959.0 1490.0" fill="none" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="998.1" y="1520.0" width="72.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1034.5" y="1531.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">confirmation</text>
+<line x1="1300.0" y1="1480.0" x2="1510.0" y2="1457.9" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="1379.4" y="1460.9" width="51.2" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1405.0" y="1472.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">accounts</text>
+<line x1="1300.0" y1="1500.0" x2="1495.0" y2="1520.5" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
+<rect x="1374.6" y="1502.3" width="45.8" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1397.5" y="1513.6" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">catalog</text>
+<line x1="991.7" y1="1728.0" x2="1120.0" y2="1699.1" stroke="#8a86a0" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+<rect x="995.2" y="1705.6" width="121.4" height="16" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1055.9" y="1716.9" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">row changes (trigger)</text>
+<line x1="1290.0" y1="1680.0" x2="1505.0" y2="1680.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1358.4" y="1666.0" width="78.2" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1397.5" y="1677.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">audit entries</text><text x="1397.5" y="1689.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">(append only)</text>
+<line x1="1142.8" y1="1642.0" x2="926.7" y2="1510.0" stroke="#1b1c26" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="971.1" y="1562.0" width="67.4" height="28" rx="3" fill="#faf9fc" opacity="0.92"/>
+<text x="1004.8" y="1573.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">audit log</text><text x="1004.8" y="1585.3" font-size="9.5" font-weight="500" fill="#3a3950" text-anchor="middle">(read-only)</text>
 </svg>
-<text x="40" y="487.5" font-family="Arial" font-size="19" font-weight="bold" fill="#222">B. Enrollment (REQ-STU-02, REQ-STU-05, REQ-REG-04)</text><line x1="40" y1="495.5" x2="1860" y2="495.5" stroke="#cccccc"/><svg x="40" y="501.5" width="1316" height="231"
- viewBox="0.00 0.00 1052.60 185.04" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 174.24)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-174.24 1041.8,-174.24 1041.8,10.8 -10.8,10.8"/>
-<!-- ST -->
-<g id="node1" class="node">
-<title>ST</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="77,-163.44 4,-163.44 4,-127.44 77,-127.44 77,-163.44"/>
-<text text-anchor="middle" x="40.5" y="-142.04" font-family="Arial" font-size="13.00">Student</text>
-</g>
-<!-- P2 -->
-<g id="node2" class="node">
-<title>P2</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M487,-126.94C487,-126.94 416,-126.94 416,-126.94 410,-126.94 404,-120.94 404,-114.94 404,-114.94 404,-79.94 404,-79.94 404,-73.94 410,-67.94 416,-67.94 416,-67.94 487,-67.94 487,-67.94 493,-67.94 499,-73.94 499,-79.94 499,-79.94 499,-114.94 499,-114.94 499,-120.94 493,-126.94 487,-126.94"/>
-<text text-anchor="start" x="442" y="-107.54" font-family="Arial" font-weight="bold" font-size="13.00">2.0</text>
-<text text-anchor="start" x="427" y="-94.54" font-family="Arial" font-size="13.00">Manage</text>
-<text text-anchor="start" x="420" y="-81.54" font-family="Arial" font-size="13.00">enrollment</text>
-</g>
-<!-- ST&#45;&gt;P2 -->
-<g id="edge1" class="edge">
-<title>ST&#45;&gt;P2</title>
-<path fill="none" stroke="#444444" d="M77.11,-147.97C130.53,-151.02 234.38,-154.09 321,-139.44 346.44,-135.14 373.74,-126.86 396.68,-118.79"/>
-<polygon fill="#444444" stroke="#444444" points="397.79,-121.18 403.97,-116.18 396.02,-116.24 397.79,-121.18"/>
-<text text-anchor="middle" x="242.5" y="-153.64" font-family="Arial" font-size="11.00">8 &#160;Subject and section selections</text>
-</g>
-<!-- P2&#45;&gt;ST -->
-<g id="edge7" class="edge">
-<title>P2&#45;&gt;ST</title>
-<path fill="none" stroke="#444444" d="M403.73,-100.75C346.91,-105.03 248.19,-113.27 164,-124.44 137.46,-127.96 107.87,-133 84.42,-137.26"/>
-<polygon fill="#444444" stroke="#444444" points="83.94,-134.68 77.04,-138.61 84.89,-139.84 83.94,-134.68"/>
-<text text-anchor="middle" x="242.5" y="-127.64" font-family="Arial" font-size="11.00">14 &#160;Enrollment status</text>
-</g>
-<!-- D4 -->
-<g id="node4" class="node">
-<title>D4</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="827.5,-116.44 827.5,-151.44 857.5,-151.44 857.5,-116.44 827.5,-116.44"/>
-<polyline fill="none" stroke="black" points="857.5,-151.44 827.5,-151.44 827.5,-116.44 857.5,-116.44 "/>
-<text text-anchor="start" x="833.5" y="-131.24" font-family="Arial" font-weight="bold" font-size="14.00">D4</text>
-<polyline fill="none" stroke="black" points="857.5,-116.44 993.5,-116.44 "/>
-<polyline fill="none" stroke="black" points="993.5,-151.44 857.5,-151.44 "/>
-<text text-anchor="start" x="863.5" y="-135.24" font-family="Arial" font-weight="bold" font-size="14.00">Enrollments</text>
-<text text-anchor="start" x="863.5" y="-125.24" font-family="Arial" font-size="9.00" fill="#555555">enrollments, enrollment_items</text>
-</g>
-<!-- P2&#45;&gt;D4 -->
-<g id="edge3" class="edge">
-<title>P2&#45;&gt;D4</title>
-<path fill="none" stroke="#444444" d="M499.23,-102.44C523.84,-104.99 554.54,-108.05 582,-110.44 662.39,-117.42 754.01,-124.02 819.85,-128.52"/>
-<polygon fill="#444444" stroke="#444444" points="819.69,-131.14 827.35,-129.03 820.05,-125.9 819.69,-131.14"/>
-<text text-anchor="middle" x="644.5" y="-122.64" font-family="Arial" font-size="11.00">10 &#160;Pending enrollment</text>
-</g>
-<!-- RG -->
-<g id="node5" class="node">
-<title>RG</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="81,-68.44 0,-68.44 0,-32.44 81,-32.44 81,-68.44"/>
-<text text-anchor="middle" x="40.5" y="-47.04" font-family="Arial" font-size="13.00">Registrar</text>
-</g>
-<!-- P2&#45;&gt;RG -->
-<g id="edge5" class="edge">
-<title>P2&#45;&gt;RG</title>
-<path fill="none" stroke="#444444" d="M418.48,-67.93C393.86,-47.37 357.92,-21.69 321,-10.44 241.57,13.76 144.88,-11.58 88.55,-31.49"/>
-<polygon fill="#444444" stroke="#444444" points="87.38,-29.12 81.21,-34.14 89.16,-34.06 87.38,-29.12"/>
-<text text-anchor="middle" x="242.5" y="-13.64" font-family="Arial" font-size="11.00">12 &#160;Enrollments to review</text>
-</g>
-<!-- D3 -->
-<g id="node3" class="node">
-<title>D3</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="790.5,-22.44 790.5,-57.44 820.5,-57.44 820.5,-22.44 790.5,-22.44"/>
-<polyline fill="none" stroke="black" points="820.5,-57.44 790.5,-57.44 790.5,-22.44 820.5,-22.44 "/>
-<text text-anchor="start" x="796.5" y="-37.24" font-family="Arial" font-weight="bold" font-size="14.00">D3</text>
-<polyline fill="none" stroke="black" points="820.5,-22.44 1031.5,-22.44 "/>
-<polyline fill="none" stroke="black" points="1031.5,-57.44 820.5,-57.44 "/>
-<text text-anchor="start" x="826.5" y="-41.24" font-family="Arial" font-weight="bold" font-size="14.00">Academic catalog</text>
-<text text-anchor="start" x="826.5" y="-31.24" font-family="Arial" font-size="9.00" fill="#555555">departments, programs, terms, subjects, sections</text>
-</g>
-<!-- D3&#45;&gt;P2 -->
-<g id="edge2" class="edge">
-<title>D3&#45;&gt;P2</title>
-<path fill="none" stroke="#444444" d="M789.72,-48.11C727.55,-52.93 650.47,-60.2 582,-70.44 557,-74.18 529.55,-79.69 506.38,-84.77"/>
-<polygon fill="#444444" stroke="#444444" points="505.78,-82.21 499.02,-86.4 506.91,-87.34 505.78,-82.21"/>
-<text text-anchor="middle" x="644.5" y="-73.64" font-family="Arial" font-size="11.00">9 &#160;Open sections</text>
-</g>
-<!-- D4&#45;&gt;P2 -->
-<g id="edge4" class="edge">
-<title>D4&#45;&gt;P2</title>
-<path fill="none" stroke="#444444" d="M836.4,-116.88C798.12,-108.57 750.3,-99.57 707,-95.44 651.7,-90.16 637.55,-95.01 582,-95.44 557.35,-95.63 530.07,-96.02 506.93,-96.41"/>
-<polygon fill="#444444" stroke="#444444" points="506.71,-93.79 499.25,-96.54 506.8,-99.04 506.71,-93.79"/>
-<text text-anchor="middle" x="644.5" y="-98.64" font-family="Arial" font-size="11.00">11 &#160;Submitted enrollments</text>
-</g>
-<!-- RG&#45;&gt;P2 -->
-<g id="edge6" class="edge">
-<title>RG&#45;&gt;P2</title>
-<path fill="none" stroke="#444444" d="M81.06,-50.77C135.4,-51.7 236.09,-55.11 321,-67.44 346.04,-71.07 373.38,-77.1 396.46,-82.8"/>
-<polygon fill="#444444" stroke="#444444" points="395.89,-85.36 403.8,-84.63 397.16,-80.27 395.89,-85.36"/>
-<text text-anchor="middle" x="242.5" y="-70.64" font-family="Arial" font-size="11.00">13 &#160;Enrollment decision</text>
-</g>
-</g>
-</svg>
-<text x="40" y="788.75" font-family="Arial" font-size="19" font-weight="bold" fill="#222">C. Grades (REQ-STU-02, REQ-REG-01)</text><line x1="40" y1="796.75" x2="1860" y2="796.75" stroke="#cccccc"/><svg x="40" y="802.75" width="1149" height="214"
- viewBox="0.00 0.00 918.60 171.10" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 160.3)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-160.3 907.8,-160.3 907.8,10.8 -10.8,10.8"/>
-<!-- D4 -->
-<g id="node1" class="node">
-<title>D4</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="731,-114 731,-149 761,-149 761,-114 731,-114"/>
-<polyline fill="none" stroke="black" points="761,-149 731,-149 731,-114 761,-114 "/>
-<text text-anchor="start" x="737" y="-128.8" font-family="Arial" font-weight="bold" font-size="14.00">D4</text>
-<polyline fill="none" stroke="black" points="761,-114 897,-114 "/>
-<polyline fill="none" stroke="black" points="897,-149 761,-149 "/>
-<text text-anchor="start" x="767" y="-132.8" font-family="Arial" font-weight="bold" font-size="14.00">Enrollments</text>
-<text text-anchor="start" x="767" y="-122.8" font-family="Arial" font-size="9.00" fill="#555555">enrollments, enrollment_items</text>
-</g>
-<!-- P3 -->
-<g id="node2" class="node">
-<title>P3</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M420,-104.5C420,-104.5 363,-104.5 363,-104.5 357,-104.5 351,-98.5 351,-92.5 351,-92.5 351,-57.5 351,-57.5 351,-51.5 357,-45.5 363,-45.5 363,-45.5 420,-45.5 420,-45.5 426,-45.5 432,-51.5 432,-57.5 432,-57.5 432,-92.5 432,-92.5 432,-98.5 426,-104.5 420,-104.5"/>
-<text text-anchor="start" x="382" y="-85.1" font-family="Arial" font-weight="bold" font-size="13.00">3.0</text>
-<text text-anchor="start" x="367" y="-72.1" font-family="Arial" font-size="13.00">Manage</text>
-<text text-anchor="start" x="370.5" y="-59.1" font-family="Arial" font-size="13.00">grades</text>
-</g>
-<!-- D4&#45;&gt;P3 -->
-<g id="edge1" class="edge">
-<title>D4&#45;&gt;P3</title>
-<path fill="none" stroke="#444444" d="M730.84,-120.86C643.97,-109.09 509.97,-90.92 439.5,-81.37"/>
-<polygon fill="#444444" stroke="#444444" points="439.84,-78.77 432.06,-80.36 439.14,-83.97 439.84,-78.77"/>
-<text text-anchor="middle" x="581.5" y="-111.2" font-family="Arial" font-size="11.00">15 &#160;Approved enrollments</text>
-</g>
-<!-- RG -->
-<g id="node3" class="node">
-<title>RG</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="81,-131 0,-131 0,-95 81,-95 81,-131"/>
-<text text-anchor="middle" x="40.5" y="-109.6" font-family="Arial" font-size="13.00">Registrar</text>
-</g>
-<!-- P3&#45;&gt;RG -->
-<g id="edge2" class="edge">
-<title>P3&#45;&gt;RG</title>
-<path fill="none" stroke="#444444" d="M350.92,-70.7C305.48,-66.68 228.86,-62.68 164,-73 138.38,-77.08 110.84,-85.67 88.37,-93.84"/>
-<polygon fill="#444444" stroke="#444444" points="87.38,-91.41 81.26,-96.48 89.21,-96.33 87.38,-91.41"/>
-<text text-anchor="middle" x="216" y="-76.2" font-family="Arial" font-size="11.00">16 &#160;Class list</text>
-</g>
-<!-- D5 -->
-<g id="node4" class="node">
-<title>D5</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="751,-20 751,-55 781,-55 781,-20 751,-20"/>
-<polyline fill="none" stroke="black" points="781,-55 751,-55 751,-20 781,-20 "/>
-<text text-anchor="start" x="757" y="-34.8" font-family="Arial" font-weight="bold" font-size="14.00">D5</text>
-<polyline fill="none" stroke="black" points="781,-20 878,-20 "/>
-<polyline fill="none" stroke="black" points="878,-55 781,-55 "/>
-<text text-anchor="start" x="787" y="-38.8" font-family="Arial" font-weight="bold" font-size="14.00">Grades</text>
-<text text-anchor="start" x="787" y="-28.8" font-family="Arial" font-size="9.00" fill="#555555">grades, grade_scale</text>
-</g>
-<!-- P3&#45;&gt;D5 -->
-<g id="edge4" class="edge">
-<title>P3&#45;&gt;D5</title>
-<path fill="none" stroke="#444444" d="M432.06,-71.52C503.18,-65.26 653.5,-52.03 742.58,-44.2"/>
-<polygon fill="#444444" stroke="#444444" points="742.97,-46.8 750.21,-43.53 742.51,-41.57 742.97,-46.8"/>
-<text text-anchor="middle" x="581.5" y="-67.2" font-family="Arial" font-size="11.00">18 &#160;Grade records</text>
-</g>
-<!-- ST -->
-<g id="node5" class="node">
-<title>ST</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="77,-36 4,-36 4,0 77,0 77,-36"/>
-<text text-anchor="middle" x="40.5" y="-14.6" font-family="Arial" font-size="13.00">Student</text>
-</g>
-<!-- P3&#45;&gt;ST -->
-<g id="edge6" class="edge">
-<title>P3&#45;&gt;ST</title>
-<path fill="none" stroke="#444444" d="M350.8,-63.52C326.96,-56.99 295.94,-49.12 268,-44 204.7,-32.41 130.44,-25.05 84.67,-21.23"/>
-<polygon fill="#444444" stroke="#444444" points="84.72,-18.6 77.03,-20.6 84.29,-23.83 84.72,-18.6"/>
-<text text-anchor="middle" x="216" y="-47.2" font-family="Arial" font-size="11.00">20 &#160;Grade report</text>
-</g>
-<!-- RG&#45;&gt;P3 -->
-<g id="edge3" class="edge">
-<title>RG&#45;&gt;P3</title>
-<path fill="none" stroke="#444444" d="M81.19,-108.68C145.88,-101.64 273.74,-87.71 343.09,-80.16"/>
-<polygon fill="#444444" stroke="#444444" points="343.67,-82.74 350.84,-79.32 343.1,-77.52 343.67,-82.74"/>
-<text text-anchor="middle" x="216" y="-102.2" font-family="Arial" font-size="11.00">17 &#160;Grades to encode</text>
-</g>
-<!-- D5&#45;&gt;P3 -->
-<g id="edge5" class="edge">
-<title>D5&#45;&gt;P3</title>
-<path fill="none" stroke="#444444" d="M750.26,-29.48C689.59,-22.89 595.3,-17.02 515,-31 489.19,-35.5 461.63,-44.95 439.2,-53.94"/>
-<polygon fill="#444444" stroke="#444444" points="438.05,-51.57 432.1,-56.84 440.04,-56.43 438.05,-51.57"/>
-<text text-anchor="middle" x="581.5" y="-34.2" font-family="Arial" font-size="11.00">19 &#160;Grades and grade scale</text>
-</g>
-</g>
-</svg>
-<text x="40" y="1072.5" font-family="Arial" font-size="19" font-weight="bold" fill="#222">D. Payments and finance clearance (REQ-CSH-01 to REQ-CSH-03)</text><line x1="40" y1="1080.5" x2="1860" y2="1080.5" stroke="#cccccc"/><svg x="40" y="1086.5" width="1289" height="189"
- viewBox="0.00 0.00 1030.60 150.60" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 139.8)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-139.8 1019.8,-139.8 1019.8,10.8 -10.8,10.8"/>
-<!-- CA -->
-<g id="node1" class="node">
-<title>CA</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="73,-92.5 0,-92.5 0,-56.5 73,-56.5 73,-92.5"/>
-<text text-anchor="middle" x="36.5" y="-71.1" font-family="Arial" font-size="13.00">Cashier</text>
-</g>
-<!-- P4 -->
-<g id="node2" class="node">
-<title>P4</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M492,-104C492,-104 426,-104 426,-104 420,-104 414,-98 414,-92 414,-92 414,-57 414,-57 414,-51 420,-45 426,-45 426,-45 492,-45 492,-45 498,-45 504,-51 504,-57 504,-57 504,-92 504,-92 504,-98 498,-104 492,-104"/>
-<text text-anchor="start" x="449.5" y="-84.6" font-family="Arial" font-weight="bold" font-size="13.00">4.0</text>
-<text text-anchor="start" x="434.5" y="-71.6" font-family="Arial" font-size="13.00">Process</text>
-<text text-anchor="start" x="430" y="-58.6" font-family="Arial" font-size="13.00">payments</text>
-</g>
-<!-- CA&#45;&gt;P4 -->
-<g id="edge1" class="edge">
-<title>CA&#45;&gt;P4</title>
-<path fill="none" stroke="#444444" d="M73.35,-74.5C147.87,-74.5 319.71,-74.5 406.24,-74.5"/>
-<polygon fill="#444444" stroke="#444444" points="406.33,-77.13 413.83,-74.5 406.33,-71.88 406.33,-77.13"/>
-<text text-anchor="middle" x="243.5" y="-77.7" font-family="Arial" font-size="11.00">21 &#160;Charges, payments, Cleared tag</text>
-</g>
-<!-- P4&#45;&gt;CA -->
-<g id="edge4" class="edge">
-<title>P4&#45;&gt;CA</title>
-<path fill="none" stroke="#444444" d="M413.87,-64.94C389.55,-60.15 358.76,-54.89 331,-52.5 253.51,-45.84 233.45,-45.37 156,-52.5 130.73,-54.83 102.8,-59.89 80.41,-64.57"/>
-<polygon fill="#444444" stroke="#444444" points="79.83,-62.01 73.04,-66.14 80.92,-67.14 79.83,-62.01"/>
-<text text-anchor="middle" x="243.5" y="-55.7" font-family="Arial" font-size="11.00">24 &#160;Student balances</text>
-</g>
-<!-- D6 -->
-<g id="node3" class="node">
-<title>D6</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="845,-93.5 845,-128.5 875,-128.5 875,-93.5 845,-93.5"/>
-<polyline fill="none" stroke="black" points="875,-128.5 845,-128.5 845,-93.5 875,-93.5 "/>
-<text text-anchor="start" x="851" y="-108.3" font-family="Arial" font-weight="bold" font-size="14.00">D6</text>
-<polyline fill="none" stroke="black" points="875,-93.5 1009,-93.5 "/>
-<polyline fill="none" stroke="black" points="1009,-128.5 875,-128.5 "/>
-<text text-anchor="start" x="881" y="-112.3" font-family="Arial" font-weight="bold" font-size="14.00">Finance</text>
-<text text-anchor="start" x="881" y="-102.3" font-family="Arial" font-size="9.00" fill="#555555">charges, payments, fee_types</text>
-</g>
-<!-- P4&#45;&gt;D6 -->
-<g id="edge3" class="edge">
-<title>P4&#45;&gt;D6</title>
-<path fill="none" stroke="#444444" d="M504.05,-79.35C528.47,-81.96 559.4,-85.11 587,-87.5 671.76,-94.84 768.59,-101.52 837,-105.96"/>
-<polygon fill="#444444" stroke="#444444" points="837.12,-108.6 844.78,-106.47 837.46,-103.36 837.12,-108.6"/>
-<text text-anchor="middle" x="674.5" y="-102.7" font-family="Arial" font-size="11.00">23 &#160;Payment record, charge status</text>
-</g>
-<!-- D7 -->
-<g id="node4" class="node">
-<title>D7</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="847,0.5 847,-34.5 877,-34.5 877,0.5 847,0.5"/>
-<polyline fill="none" stroke="black" points="877,-34.5 847,-34.5 847,0.5 877,0.5 "/>
-<text text-anchor="start" x="853" y="-14.3" font-family="Arial" font-weight="bold" font-size="14.00">D7</text>
-<polyline fill="none" stroke="black" points="877,0.5 1007,0.5 "/>
-<polyline fill="none" stroke="black" points="1007,-34.5 877,-34.5 "/>
-<text text-anchor="start" x="883" y="-18.3" font-family="Arial" font-weight="bold" font-size="14.00">Clearances</text>
-<text text-anchor="start" x="883" y="-8.3" font-family="Arial" font-size="9.00" fill="#555555">clearances, clearance_items</text>
-</g>
-<!-- P4&#45;&gt;D7 -->
-<g id="edge5" class="edge">
-<title>P4&#45;&gt;D7</title>
-<path fill="none" stroke="#444444" d="M504.08,-62.81C528.38,-56.78 559.17,-49.8 587,-45.5 672.14,-32.33 770.32,-25.08 839.04,-21.28"/>
-<polygon fill="#444444" stroke="#444444" points="839.51,-23.88 846.85,-20.85 839.22,-18.64 839.51,-23.88"/>
-<text text-anchor="middle" x="674.5" y="-48.7" font-family="Arial" font-size="11.00">25 &#160;Finance item cleared (automatic)</text>
-</g>
-<!-- D6&#45;&gt;P4 -->
-<g id="edge2" class="edge">
-<title>D6&#45;&gt;P4</title>
-<path fill="none" stroke="#444444" d="M867.01,-93.95C836.05,-85.64 797.32,-76.64 762,-72.5 684.75,-63.44 664.78,-71.89 587,-72.5 562.24,-72.69 534.76,-73.1 511.71,-73.5"/>
-<polygon fill="#444444" stroke="#444444" points="511.53,-70.88 504.08,-73.64 511.62,-76.13 511.53,-70.88"/>
-<text text-anchor="middle" x="674.5" y="-75.7" font-family="Arial" font-size="11.00">22 &#160;Charges and payments</text>
-</g>
-</g>
-</svg>
-<text x="40" y="1331.25" font-family="Arial" font-size="19" font-weight="bold" fill="#222">E. Clearance (REQ-STU-03, REQ-STU-06, REQ-DPT-01 to 03, REQ-REG-03)</text><line x1="40" y1="1339.25" x2="1860" y2="1339.25" stroke="#cccccc"/><svg x="40" y="1345.25" width="1488" height="679"
- viewBox="0.00 0.00 1189.60 542.81" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 532.01)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-532.01 1178.8,-532.01 1178.8,10.8 -10.8,10.8"/>
-<!-- ST -->
-<g id="node1" class="node">
-<title>ST</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="102.5,-198.21 29.5,-198.21 29.5,-162.21 102.5,-162.21 102.5,-198.21"/>
-<text text-anchor="middle" x="66" y="-176.81" font-family="Arial" font-size="13.00">Student</text>
-</g>
-<!-- P5 -->
-<g id="node2" class="node">
-<title>P5</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M595.5,-252.71C595.5,-252.71 495.5,-252.71 495.5,-252.71 489.5,-252.71 483.5,-246.71 483.5,-240.71 483.5,-240.71 483.5,-205.71 483.5,-205.71 483.5,-199.71 489.5,-193.71 495.5,-193.71 495.5,-193.71 595.5,-193.71 595.5,-193.71 601.5,-193.71 607.5,-199.71 607.5,-205.71 607.5,-205.71 607.5,-240.71 607.5,-240.71 607.5,-246.71 601.5,-252.71 595.5,-252.71"/>
-<text text-anchor="start" x="536" y="-233.31" font-family="Arial" font-weight="bold" font-size="13.00">5.0</text>
-<text text-anchor="start" x="512" y="-220.31" font-family="Arial" font-size="13.00">Initiate and</text>
-<text text-anchor="start" x="499.5" y="-207.31" font-family="Arial" font-size="13.00">track clearance</text>
-</g>
-<!-- ST&#45;&gt;P5 -->
-<g id="edge1" class="edge">
-<title>ST&#45;&gt;P5</title>
-<path fill="none" stroke="#444444" d="M102.71,-176.55C162.66,-171.18 287.16,-163.3 391,-178.21 419.39,-182.29 449.86,-190.4 476.11,-198.63"/>
-<polygon fill="#444444" stroke="#444444" points="475.45,-201.17 483.4,-200.95 477.05,-196.17 475.45,-201.17"/>
-<text text-anchor="middle" x="303" y="-181.41" font-family="Arial" font-size="11.00">26 &#160;Clearance request</text>
-</g>
-<!-- P5&#45;&gt;ST -->
-<g id="edge6" class="edge">
-<title>P5&#45;&gt;ST</title>
-<path fill="none" stroke="#444444" d="M483.1,-217.68C384.98,-208.85 195.27,-191.76 110.16,-184.1"/>
-<polygon fill="#444444" stroke="#444444" points="110.21,-181.47 102.5,-183.41 109.73,-186.7 110.21,-181.47"/>
-<text text-anchor="middle" x="303" y="-212.41" font-family="Arial" font-size="11.00">31 &#160;Clearance status per department</text>
-</g>
-<!-- D7 -->
-<g id="node4" class="node">
-<title>D7</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="967.5,-162.21 967.5,-197.21 997.5,-197.21 997.5,-162.21 967.5,-162.21"/>
-<polyline fill="none" stroke="black" points="997.5,-197.21 967.5,-197.21 967.5,-162.21 997.5,-162.21 "/>
-<text text-anchor="start" x="973.5" y="-177.01" font-family="Arial" font-weight="bold" font-size="14.00">D7</text>
-<polyline fill="none" stroke="black" points="997.5,-162.21 1127.5,-162.21 "/>
-<polyline fill="none" stroke="black" points="1127.5,-197.21 997.5,-197.21 "/>
-<text text-anchor="start" x="1003.5" y="-181.01" font-family="Arial" font-weight="bold" font-size="14.00">Clearances</text>
-<text text-anchor="start" x="1003.5" y="-171.01" font-family="Arial" font-size="9.00" fill="#555555">clearances, clearance_items</text>
-</g>
-<!-- P5&#45;&gt;D7 -->
-<g id="edge3" class="edge">
-<title>P5&#45;&gt;D7</title>
-<path fill="none" stroke="#444444" d="M607.7,-215.93C635.8,-212.72 669.56,-209.04 700,-206.21 788.38,-198 889.63,-190.64 959.76,-185.86"/>
-<polygon fill="#444444" stroke="#444444" points="960,-188.48 967.3,-185.35 959.64,-183.24 960,-188.48"/>
-<text text-anchor="middle" x="772" y="-209.41" font-family="Arial" font-size="11.00">28 &#160;New clearance and items</text>
-</g>
-<!-- D3 -->
-<g id="node3" class="node">
-<title>D3</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="927.5,-304.21 927.5,-339.21 957.5,-339.21 957.5,-304.21 927.5,-304.21"/>
-<polyline fill="none" stroke="black" points="957.5,-339.21 927.5,-339.21 927.5,-304.21 957.5,-304.21 "/>
-<text text-anchor="start" x="933.5" y="-319.01" font-family="Arial" font-weight="bold" font-size="14.00">D3</text>
-<polyline fill="none" stroke="black" points="957.5,-304.21 1168.5,-304.21 "/>
-<polyline fill="none" stroke="black" points="1168.5,-339.21 957.5,-339.21 "/>
-<text text-anchor="start" x="963.5" y="-323.01" font-family="Arial" font-weight="bold" font-size="14.00">Academic catalog</text>
-<text text-anchor="start" x="963.5" y="-313.01" font-family="Arial" font-size="9.00" fill="#555555">departments, programs, terms, subjects, sections</text>
-</g>
-<!-- D3&#45;&gt;P5 -->
-<g id="edge2" class="edge">
-<title>D3&#45;&gt;P5</title>
-<path fill="none" stroke="#444444" d="M926.67,-313.47C859.4,-306.95 774.3,-296.02 700,-278.21 671.57,-271.4 641.09,-261.13 614.84,-251.3"/>
-<polygon fill="#444444" stroke="#444444" points="615.5,-248.75 607.56,-248.55 613.65,-253.66 615.5,-248.75"/>
-<text text-anchor="middle" x="772" y="-306.41" font-family="Arial" font-size="11.00">27 &#160;Required departments</text>
-</g>
-<!-- D7&#45;&gt;P5 -->
-<g id="edge4" class="edge">
-<title>D7&#45;&gt;P5</title>
-<path fill="none" stroke="#444444" d="M967.5,-170.23C896.9,-163.24 790.88,-157.51 700,-172.21 671.49,-176.82 641.12,-185.96 614.98,-195.24"/>
-<polygon fill="#444444" stroke="#444444" points="613.89,-192.84 607.73,-197.86 615.67,-197.78 613.89,-192.84"/>
-<text text-anchor="middle" x="772" y="-175.41" font-family="Arial" font-size="11.00">29 &#160;Item status</text>
-</g>
-<!-- P6 -->
-<g id="node7" class="node">
-<title>P6</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M605,-493.71C605,-493.71 486,-493.71 486,-493.71 480,-493.71 474,-487.71 474,-481.71 474,-481.71 474,-446.71 474,-446.71 474,-440.71 480,-434.71 486,-434.71 486,-434.71 605,-434.71 605,-434.71 611,-434.71 617,-440.71 617,-446.71 617,-446.71 617,-481.71 617,-481.71 617,-487.71 611,-493.71 605,-493.71"/>
-<text text-anchor="start" x="536" y="-474.31" font-family="Arial" font-weight="bold" font-size="13.00">6.0</text>
-<text text-anchor="start" x="490" y="-461.31" font-family="Arial" font-size="13.00">Clear departments</text>
-<text text-anchor="start" x="490" y="-448.31" font-family="Arial" font-size="13.00">and manage holds</text>
-</g>
-<!-- D7&#45;&gt;P6 -->
-<g id="edge8" class="edge">
-<title>D7&#45;&gt;P6</title>
-<path fill="none" stroke="#444444" d="M967.09,-196.3C871.91,-216.03 722.36,-248.66 700,-263.21 636.29,-304.67 588.55,-381.97 564.32,-427.68"/>
-<polygon fill="#444444" stroke="#444444" points="561.92,-426.6 560.77,-434.46 566.57,-429.03 561.92,-426.6"/>
-<text text-anchor="middle" x="772" y="-266.41" font-family="Arial" font-size="11.00">33 &#160;Pending items</text>
-</g>
-<!-- P7 -->
-<g id="node8" class="node">
-<title>P7</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M580,-95.71C580,-95.71 511,-95.71 511,-95.71 505,-95.71 499,-89.71 499,-83.71 499,-83.71 499,-48.71 499,-48.71 499,-42.71 505,-36.71 511,-36.71 511,-36.71 580,-36.71 580,-36.71 586,-36.71 592,-42.71 592,-48.71 592,-48.71 592,-83.71 592,-83.71 592,-89.71 586,-95.71 580,-95.71"/>
-<text text-anchor="start" x="536" y="-76.31" font-family="Arial" font-weight="bold" font-size="13.00">7.0</text>
-<text text-anchor="start" x="515" y="-63.31" font-family="Arial" font-size="13.00">Issue final</text>
-<text text-anchor="start" x="516" y="-50.31" font-family="Arial" font-size="13.00">clearance</text>
-</g>
-<!-- D7&#45;&gt;P7 -->
-<g id="edge13" class="edge">
-<title>D7&#45;&gt;P7</title>
-<path fill="none" stroke="#444444" d="M1029.93,-162.57C997.82,-129.82 923.25,-60.66 844,-35.21 761.5,-8.72 660.15,-29.93 599.58,-47.92"/>
-<polygon fill="#444444" stroke="#444444" points="598.45,-45.52 592.04,-50.2 599.98,-50.54 598.45,-45.52"/>
-<text text-anchor="middle" x="772" y="-38.41" font-family="Arial" font-size="11.00">38 &#160;Clearance and item status</text>
-</g>
-<!-- D8 -->
-<g id="node5" class="node">
-<title>D8</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="974.5,-475.21 974.5,-510.21 1004.5,-510.21 1004.5,-475.21 974.5,-475.21"/>
-<polyline fill="none" stroke="black" points="1004.5,-510.21 974.5,-510.21 974.5,-475.21 1004.5,-475.21 "/>
-<text text-anchor="start" x="980.5" y="-490.01" font-family="Arial" font-weight="bold" font-size="14.00">D8</text>
-<polyline fill="none" stroke="black" points="1004.5,-475.21 1121.5,-475.21 "/>
-<polyline fill="none" stroke="black" points="1121.5,-510.21 1004.5,-510.21 "/>
-<text text-anchor="start" x="1010.5" y="-494.01" font-family="Arial" font-weight="bold" font-size="14.00">Academic holds</text>
-<text text-anchor="start" x="1010.5" y="-484.01" font-family="Arial" font-size="9.00" fill="#555555">academic_holds</text>
-</g>
-<!-- D8&#45;&gt;P5 -->
-<g id="edge5" class="edge">
-<title>D8&#45;&gt;P5</title>
-<path fill="none" stroke="#444444" d="M1019.47,-475.7C981.38,-451.5 909.27,-407.41 844,-377.21 782.25,-348.64 760.77,-355.82 700,-325.21 661.58,-305.86 621.18,-278.71 591.48,-257.28"/>
-<polygon fill="#444444" stroke="#444444" points="592.92,-255.08 585.3,-252.8 589.83,-259.33 592.92,-255.08"/>
-<text text-anchor="middle" x="772" y="-380.41" font-family="Arial" font-size="11.00">30 &#160;Active holds</text>
-</g>
-<!-- D8&#45;&gt;P6 -->
-<g id="edge11" class="edge">
-<title>D8&#45;&gt;P6</title>
-<path fill="none" stroke="#444444" d="M973.85,-501.74C903.53,-508.48 794.05,-514.97 700,-503.21 675.15,-500.1 648.55,-494.27 624.6,-488.05"/>
-<polygon fill="#444444" stroke="#444444" points="625.17,-485.48 617.25,-486.1 623.83,-490.56 625.17,-485.48"/>
-<text text-anchor="middle" x="772" y="-512.41" font-family="Arial" font-size="11.00">36 &#160;Active holds</text>
-</g>
-<!-- DH -->
-<g id="node6" class="node">
-<title>DH</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="132,-482.21 0,-482.21 0,-446.21 132,-446.21 132,-482.21"/>
-<text text-anchor="middle" x="66" y="-460.81" font-family="Arial" font-size="13.00">Department Head</text>
-</g>
-<!-- DH&#45;&gt;P6 -->
-<g id="edge7" class="edge">
-<title>DH&#45;&gt;P6</title>
-<path fill="none" stroke="#444444" d="M132.14,-448.08C157.79,-442.5 187.61,-436.96 215,-434.21 292.83,-426.4 313.14,-426.67 391,-434.21 415.74,-436.61 442.41,-441.12 466.47,-445.94"/>
-<polygon fill="#444444" stroke="#444444" points="465.97,-448.52 473.85,-447.44 467.02,-443.37 465.97,-448.52"/>
-<text text-anchor="middle" x="303" y="-437.41" font-family="Arial" font-size="11.00">32 &#160;Hold placed or lifted, approval</text>
-</g>
-<!-- P6&#45;&gt;D7 -->
-<g id="edge9" class="edge">
-<title>P6&#45;&gt;D7</title>
-<path fill="none" stroke="#444444" d="M617.21,-460.26C680.98,-453.8 775.07,-436.81 844,-392.21 894.53,-359.52 885.76,-329.05 927,-285.21 955.78,-254.61 992.55,-223.31 1017.65,-202.94"/>
-<polygon fill="#444444" stroke="#444444" points="1019.58,-204.75 1023.77,-198 1016.29,-200.67 1019.58,-204.75"/>
-<text text-anchor="middle" x="772" y="-448.41" font-family="Arial" font-size="11.00">34 &#160;Cleared items</text>
-</g>
-<!-- P6&#45;&gt;D8 -->
-<g id="edge10" class="edge">
-<title>P6&#45;&gt;D8</title>
-<path fill="none" stroke="#444444" d="M617.08,-468.3C709.07,-473.64 869.57,-482.95 966.15,-488.55"/>
-<polygon fill="#444444" stroke="#444444" points="966.21,-491.18 973.85,-489 966.51,-485.94 966.21,-491.18"/>
-<text text-anchor="middle" x="772" y="-484.41" font-family="Arial" font-size="11.00">35 &#160;Hold records</text>
-</g>
-<!-- P6&#45;&gt;DH -->
-<g id="edge12" class="edge">
-<title>P6&#45;&gt;DH</title>
-<path fill="none" stroke="#444444" d="M473.69,-464.21C384.15,-464.21 230.78,-464.21 140.15,-464.21"/>
-<polygon fill="#444444" stroke="#444444" points="139.89,-461.59 132.39,-464.21 139.89,-466.84 139.89,-461.59"/>
-<text text-anchor="middle" x="303" y="-467.41" font-family="Arial" font-size="11.00">37 &#160;Students pending clearance</text>
-</g>
-<!-- P7&#45;&gt;ST -->
-<g id="edge17" class="edge">
-<title>P7&#45;&gt;ST</title>
-<path fill="none" stroke="#444444" d="M498.82,-77.12C406.73,-99.1 199.92,-148.48 110.05,-169.93"/>
-<polygon fill="#444444" stroke="#444444" points="109.19,-167.44 102.5,-171.74 110.4,-172.55 109.19,-167.44"/>
-<text text-anchor="middle" x="303" y="-146.41" font-family="Arial" font-size="11.00">42 &#160;Clearance approved notice</text>
-</g>
-<!-- P7&#45;&gt;D7 -->
-<g id="edge16" class="edge">
-<title>P7&#45;&gt;D7</title>
-<path fill="none" stroke="#444444" d="M592.2,-76.63C676.01,-95.74 855.46,-136.65 962.03,-160.95"/>
-<polygon fill="#444444" stroke="#444444" points="961.68,-163.56 969.58,-162.67 962.85,-158.45 961.68,-163.56"/>
-<text text-anchor="middle" x="772" y="-136.41" font-family="Arial" font-size="11.00">41 &#160;Approved clearance</text>
-</g>
-<!-- RG -->
-<g id="node9" class="node">
-<title>RG</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="106.5,-56.21 25.5,-56.21 25.5,-20.21 106.5,-20.21 106.5,-56.21"/>
-<text text-anchor="middle" x="66" y="-34.81" font-family="Arial" font-size="13.00">Registrar</text>
-</g>
-<!-- P7&#45;&gt;RG -->
-<g id="edge14" class="edge">
-<title>P7&#45;&gt;RG</title>
-<path fill="none" stroke="#444444" d="M498.77,-43.54C468.91,-30.03 428.61,-14.19 391,-7.21 293.57,10.87 177.58,-10.37 114.18,-25.54"/>
-<polygon fill="#444444" stroke="#444444" points="113.38,-23.04 106.71,-27.36 114.62,-28.14 113.38,-23.04"/>
-<text text-anchor="middle" x="303" y="-10.41" font-family="Arial" font-size="11.00">39 &#160;Clearances ready</text>
-</g>
-<!-- RG&#45;&gt;P7 -->
-<g id="edge15" class="edge">
-<title>RG&#45;&gt;P7</title>
-<path fill="none" stroke="#444444" d="M106.89,-40.55C192.66,-45.58 394.64,-57.42 491.23,-63.09"/>
-<polygon fill="#444444" stroke="#444444" points="491.2,-65.72 498.85,-63.53 491.51,-60.47 491.2,-65.72"/>
-<text text-anchor="middle" x="303" y="-60.41" font-family="Arial" font-size="11.00">40 &#160;Final approval</text>
-</g>
-</g>
-</svg>
-<text x="40" y="2080.0" font-family="Arial" font-size="19" font-weight="bold" fill="#222">F. Document requests (REQ-STU-04, REQ-REG-02, REQ-DOC-01, REQ-DOC-02)</text><line x1="40" y1="2088.0" x2="1860" y2="2088.0" stroke="#cccccc"/><svg x="40" y="2094.0" width="1318" height="231"
- viewBox="0.00 0.00 1053.60 184.51" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 173.71)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-173.71 1042.8,-173.71 1042.8,10.8 -10.8,10.8"/>
-<!-- ST -->
-<g id="node1" class="node">
-<title>ST</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="77,-162.91 4,-162.91 4,-126.91 77,-126.91 77,-162.91"/>
-<text text-anchor="middle" x="40.5" y="-141.51" font-family="Arial" font-size="13.00">Student</text>
-</g>
-<!-- P8 -->
-<g id="node2" class="node">
-<title>P8</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M518,-126.41C518,-126.41 398,-126.41 398,-126.41 392,-126.41 386,-120.41 386,-114.41 386,-114.41 386,-79.41 386,-79.41 386,-73.41 392,-67.41 398,-67.41 398,-67.41 518,-67.41 518,-67.41 524,-67.41 530,-73.41 530,-79.41 530,-79.41 530,-114.41 530,-114.41 530,-120.41 524,-126.41 518,-126.41"/>
-<text text-anchor="start" x="448.5" y="-107.01" font-family="Arial" font-weight="bold" font-size="13.00">8.0</text>
-<text text-anchor="start" x="402" y="-94.01" font-family="Arial" font-size="13.00">Process document</text>
-<text text-anchor="start" x="432" y="-81.01" font-family="Arial" font-size="13.00">requests</text>
-</g>
-<!-- ST&#45;&gt;P8 -->
-<g id="edge1" class="edge">
-<title>ST&#45;&gt;P8</title>
-<path fill="none" stroke="#444444" d="M77.26,-146.82C127.83,-148.91 223.01,-150.55 303,-138.91 327.85,-135.29 354.41,-128.97 378.35,-122.31"/>
-<polygon fill="#444444" stroke="#444444" points="379.18,-124.8 385.69,-120.24 377.76,-119.75 379.18,-124.8"/>
-<text text-anchor="middle" x="233.5" y="-151.11" font-family="Arial" font-size="11.00">43 &#160;Document request</text>
-</g>
-<!-- P8&#45;&gt;ST -->
-<g id="edge4" class="edge">
-<title>P8&#45;&gt;ST</title>
-<path fill="none" stroke="#444444" d="M385.78,-101.91C326.34,-106.46 239.46,-113.98 164,-123.91 137.46,-127.4 107.87,-132.44 84.42,-136.71"/>
-<polygon fill="#444444" stroke="#444444" points="83.94,-134.13 77.04,-138.06 84.89,-139.29 83.94,-134.13"/>
-<text text-anchor="middle" x="233.5" y="-127.11" font-family="Arial" font-size="11.00">46 &#160;Ticket number and status</text>
-</g>
-<!-- D9 -->
-<g id="node3" class="node">
-<title>D9</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="836,-78.91 836,-113.91 866,-113.91 866,-78.91 836,-78.91"/>
-<polyline fill="none" stroke="black" points="866,-113.91 836,-113.91 836,-78.91 866,-78.91 "/>
-<text text-anchor="start" x="842" y="-93.71" font-family="Arial" font-weight="bold" font-size="14.00">D9</text>
-<polyline fill="none" stroke="black" points="866,-78.91 1032,-78.91 "/>
-<polyline fill="none" stroke="black" points="1032,-113.91 866,-113.91 "/>
-<text text-anchor="start" x="872" y="-97.71" font-family="Arial" font-weight="bold" font-size="14.00">Document requests</text>
-<text text-anchor="start" x="872" y="-87.71" font-family="Arial" font-size="9.00" fill="#555555">document_requests, document_types</text>
-</g>
-<!-- P8&#45;&gt;D9 -->
-<g id="edge3" class="edge">
-<title>P8&#45;&gt;D9</title>
-<path fill="none" stroke="#444444" d="M530.22,-96.91C609.28,-96.91 737.64,-96.91 828.18,-96.91"/>
-<polygon fill="#444444" stroke="#444444" points="828.22,-99.53 835.72,-96.91 828.22,-94.28 828.22,-99.53"/>
-<text text-anchor="middle" x="683" y="-100.11" font-family="Arial" font-size="11.00">45 &#160;Ticket and status updates</text>
-</g>
-<!-- RG -->
-<g id="node4" class="node">
-<title>RG</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="81,-67.91 0,-67.91 0,-31.91 81,-31.91 81,-67.91"/>
-<text text-anchor="middle" x="40.5" y="-46.51" font-family="Arial" font-size="13.00">Registrar</text>
-</g>
-<!-- P8&#45;&gt;RG -->
-<g id="edge5" class="edge">
-<title>P8&#45;&gt;RG</title>
-<path fill="none" stroke="#444444" d="M417.98,-67.33C388.24,-46.73 345.32,-21.03 303,-9.91 243.25,5.8 225.01,-0.2 164,-9.91 138.38,-13.98 110.84,-22.57 88.37,-30.75"/>
-<polygon fill="#444444" stroke="#444444" points="87.38,-28.32 81.26,-33.39 89.21,-33.24 87.38,-28.32"/>
-<text text-anchor="middle" x="233.5" y="-13.11" font-family="Arial" font-size="11.00">47 &#160;Pending requests</text>
-</g>
-<!-- D9&#45;&gt;P8 -->
-<g id="edge2" class="edge">
-<title>D9&#45;&gt;P8</title>
-<path fill="none" stroke="#444444" d="M845.47,-79.34C816.2,-74.26 783.31,-69.42 753,-66.91 690.99,-61.77 674.93,-60.93 613,-66.91 588.31,-69.29 561.69,-73.77 537.65,-78.56"/>
-<polygon fill="#444444" stroke="#444444" points="537.1,-76 530.27,-80.06 538.14,-81.14 537.1,-76"/>
-<text text-anchor="middle" x="683" y="-70.11" font-family="Arial" font-size="11.00">44 &#160;Requests and types</text>
-</g>
-<!-- RG&#45;&gt;P8 -->
-<g id="edge6" class="edge">
-<title>RG&#45;&gt;P8</title>
-<path fill="none" stroke="#444444" d="M81.08,-50.91C132.43,-52.57 224.72,-56.78 303,-66.91 327.6,-70.09 354.19,-74.81 378.24,-79.56"/>
-<polygon fill="#444444" stroke="#444444" points="377.75,-82.14 385.62,-81.04 378.78,-76.99 377.75,-82.14"/>
-<text text-anchor="middle" x="233.5" y="-70.11" font-family="Arial" font-size="11.00">48 &#160;Processing decision</text>
-</g>
-</g>
-</svg>
-<text x="40" y="2381.25" font-family="Arial" font-size="19" font-weight="bold" fill="#222">G. Administration and audit trail (REQ-ADM-01 to 03)</text><line x1="40" y1="2389.25" x2="1860" y2="2389.25" stroke="#cccccc"/><svg x="40" y="2395.25" width="1599" height="346"
- viewBox="0.00 0.00 1278.60 276.60" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(10.8 265.8)">
-<title>G</title>
-<polygon fill="white" stroke="transparent" points="-10.8,10.8 -10.8,-265.8 1267.8,-265.8 1267.8,10.8 -10.8,10.8"/>
-<!-- AD -->
-<g id="node1" class="node">
-<title>AD</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="114.5,-241.5 50.5,-241.5 50.5,-205.5 114.5,-205.5 114.5,-241.5"/>
-<text text-anchor="middle" x="82.5" y="-220.1" font-family="Arial" font-size="13.00">Admin</text>
-</g>
-<!-- P9 -->
-<g id="node2" class="node">
-<title>P9</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M699,-214C699,-214 581,-214 581,-214 575,-214 569,-208 569,-202 569,-202 569,-167 569,-167 569,-161 575,-155 581,-155 581,-155 699,-155 699,-155 705,-155 711,-161 711,-167 711,-167 711,-202 711,-202 711,-208 705,-214 699,-214"/>
-<text text-anchor="start" x="630.5" y="-194.6" font-family="Arial" font-weight="bold" font-size="13.00">9.0</text>
-<text text-anchor="start" x="585" y="-181.6" font-family="Arial" font-size="13.00">Manage accounts,</text>
-<text text-anchor="start" x="588.5" y="-168.6" font-family="Arial" font-size="13.00">roles and catalog</text>
-</g>
-<!-- AD&#45;&gt;P9 -->
-<g id="edge1" class="edge">
-<title>AD&#45;&gt;P9</title>
-<path fill="none" stroke="#444444" d="M114.57,-221.71C182.16,-217.76 347.56,-207.85 486,-197.5 510.47,-195.67 537.12,-193.48 561.22,-191.42"/>
-<polygon fill="#444444" stroke="#444444" points="561.7,-194.01 568.95,-190.75 561.25,-188.78 561.7,-194.01"/>
-<text text-anchor="middle" x="367" y="-215.7" font-family="Arial" font-size="11.00">49 &#160;Account, role and catalog data</text>
-</g>
-<!-- P9&#45;&gt;AD -->
-<g id="edge7" class="edge">
-<title>P9&#45;&gt;AD</title>
-<path fill="none" stroke="#444444" d="M568.76,-178.8C490.26,-173.66 359.51,-168.81 248,-182.5 204,-187.9 154.84,-201.14 121.81,-211.12"/>
-<polygon fill="#444444" stroke="#444444" points="121.01,-208.62 114.61,-213.33 122.55,-213.64 121.01,-208.62"/>
-<text text-anchor="middle" x="367" y="-185.7" font-family="Arial" font-size="11.00">55 &#160;Users and audit log view</text>
-</g>
-<!-- D1 -->
-<g id="node3" class="node">
-<title>D1</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="1032.5,-219.5 1032.5,-254.5 1062.5,-254.5 1062.5,-219.5 1032.5,-219.5"/>
-<polyline fill="none" stroke="black" points="1062.5,-254.5 1032.5,-254.5 1032.5,-219.5 1062.5,-219.5 "/>
-<text text-anchor="start" x="1038.5" y="-234.3" font-family="Arial" font-weight="bold" font-size="14.00">D1</text>
-<polyline fill="none" stroke="black" points="1062.5,-219.5 1241.5,-219.5 "/>
-<polyline fill="none" stroke="black" points="1241.5,-254.5 1062.5,-254.5 "/>
-<text text-anchor="start" x="1068.5" y="-238.3" font-family="Arial" font-weight="bold" font-size="14.00">Accounts</text>
-<text text-anchor="start" x="1068.5" y="-228.3" font-family="Arial" font-size="9.00" fill="#555555">roles, profiles, students, department_staff</text>
-</g>
-<!-- P9&#45;&gt;D1 -->
-<g id="edge2" class="edge">
-<title>P9&#45;&gt;D1</title>
-<path fill="none" stroke="#444444" d="M711.18,-199.59C737.1,-204.69 766.79,-209.98 794,-213.5 870.48,-223.4 957.16,-229.43 1024.05,-232.97"/>
-<polygon fill="#444444" stroke="#444444" points="1024.07,-235.6 1031.7,-233.37 1024.34,-230.36 1024.07,-235.6"/>
-<text text-anchor="middle" x="863.5" y="-229.7" font-family="Arial" font-size="11.00">50 &#160;Profile, role, active status</text>
-</g>
-<!-- D3 -->
-<g id="node4" class="node">
-<title>D3</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="1016.5,-125.5 1016.5,-160.5 1046.5,-160.5 1046.5,-125.5 1016.5,-125.5"/>
-<polyline fill="none" stroke="black" points="1046.5,-160.5 1016.5,-160.5 1016.5,-125.5 1046.5,-125.5 "/>
-<text text-anchor="start" x="1022.5" y="-140.3" font-family="Arial" font-weight="bold" font-size="14.00">D3</text>
-<polyline fill="none" stroke="black" points="1046.5,-125.5 1257.5,-125.5 "/>
-<polyline fill="none" stroke="black" points="1257.5,-160.5 1046.5,-160.5 "/>
-<text text-anchor="start" x="1052.5" y="-144.3" font-family="Arial" font-weight="bold" font-size="14.00">Academic catalog</text>
-<text text-anchor="start" x="1052.5" y="-134.3" font-family="Arial" font-size="9.00" fill="#555555">departments, programs, terms, subjects, sections</text>
-</g>
-<!-- P9&#45;&gt;D3 -->
-<g id="edge4" class="edge">
-<title>P9&#45;&gt;D3</title>
-<path fill="none" stroke="#444444" d="M711.37,-160.37C737.05,-152.73 766.53,-145.29 794,-141.5 864.27,-131.81 943.44,-131.62 1007.85,-134.16"/>
-<polygon fill="#444444" stroke="#444444" points="1008.03,-136.79 1015.63,-134.48 1008.25,-131.55 1008.03,-136.79"/>
-<text text-anchor="middle" x="863.5" y="-144.7" font-family="Arial" font-size="11.00">52 &#160;Catalog data</text>
-</g>
-<!-- SA -->
-<g id="node5" class="node">
-<title>SA</title>
-<polygon fill="#fff0b3" stroke="#8a7a2a" points="147.5,-148.5 17.5,-148.5 17.5,-106.5 147.5,-106.5 147.5,-148.5"/>
-<text text-anchor="middle" x="82.5" y="-131.1" font-family="Arial" font-size="13.00">Supabase Auth</text>
-<text text-anchor="middle" x="82.5" y="-117.1" font-family="Arial" font-size="13.00">(external service)</text>
-</g>
-<!-- P9&#45;&gt;SA -->
-<g id="edge5" class="edge">
-<title>P9&#45;&gt;SA</title>
-<path fill="none" stroke="#444444" d="M568.94,-167.04C543.04,-161.2 513.33,-155.24 486,-151.5 370.94,-135.76 235.97,-130.34 155.22,-128.48"/>
-<polygon fill="#444444" stroke="#444444" points="155.14,-125.85 147.58,-128.31 155.02,-131.1 155.14,-125.85"/>
-<text text-anchor="middle" x="367" y="-154.7" font-family="Arial" font-size="11.00">53 &#160;Create or deactivate login</text>
-</g>
-<!-- D1&#45;&gt;P9 -->
-<g id="edge3" class="edge">
-<title>D1&#45;&gt;P9</title>
-<path fill="none" stroke="#444444" d="M1058.5,-219.99C1020.86,-212.12 974.77,-203.5 933,-198.5 860.78,-189.86 777.91,-186.5 718.94,-185.23"/>
-<polygon fill="#444444" stroke="#444444" points="718.7,-182.6 711.15,-185.07 718.59,-187.85 718.7,-182.6"/>
-<text text-anchor="middle" x="863.5" y="-201.7" font-family="Arial" font-size="11.00">51 &#160;User list</text>
-</g>
-<!-- D10 -->
-<g id="node6" class="node">
-<title>D10</title>
-<polygon fill="#e2e2e2" stroke="transparent" points="1082.5,-31.5 1082.5,-66.5 1119.5,-66.5 1119.5,-31.5 1082.5,-31.5"/>
-<polyline fill="none" stroke="black" points="1119.5,-66.5 1082.5,-66.5 1082.5,-31.5 1119.5,-31.5 "/>
-<text text-anchor="start" x="1088.5" y="-46.3" font-family="Arial" font-weight="bold" font-size="14.00">D10</text>
-<polyline fill="none" stroke="black" points="1119.5,-31.5 1190.5,-31.5 "/>
-<polyline fill="none" stroke="black" points="1190.5,-66.5 1119.5,-66.5 "/>
-<text text-anchor="start" x="1125.5" y="-50.3" font-family="Arial" font-weight="bold" font-size="14.00">Audit log</text>
-<text text-anchor="start" x="1125.5" y="-40.3" font-family="Arial" font-size="9.00" fill="#555555">audit_logs</text>
-</g>
-<!-- D10&#45;&gt;P9 -->
-<g id="edge6" class="edge">
-<title>D10&#45;&gt;P9</title>
-<path fill="none" stroke="#444444" d="M1082.34,-54.44C1014.22,-61.8 893.11,-78.36 794,-110.5 761.79,-120.95 727.7,-136.9 699.9,-151.32"/>
-<polygon fill="#444444" stroke="#444444" points="698.4,-149.15 692.98,-154.95 700.84,-153.8 698.4,-149.15"/>
-<text text-anchor="middle" x="863.5" y="-113.7" font-family="Arial" font-size="11.00">54 &#160;Audit entries</text>
-</g>
-<!-- P10 -->
-<g id="node7" class="node">
-<title>P10</title>
-<path fill="#dbe6ff" stroke="#3b5aa6" stroke-width="1.5" d="M671.5,-59C671.5,-59 608.5,-59 608.5,-59 602.5,-59 596.5,-53 596.5,-47 596.5,-47 596.5,-12 596.5,-12 596.5,-6 602.5,0 608.5,0 608.5,0 671.5,0 671.5,0 677.5,0 683.5,-6 683.5,-12 683.5,-12 683.5,-47 683.5,-47 683.5,-53 677.5,-59 671.5,-59"/>
-<text text-anchor="start" x="626.5" y="-39.6" font-family="Arial" font-weight="bold" font-size="13.00">10.0</text>
-<text text-anchor="start" x="618" y="-26.6" font-family="Arial" font-size="13.00">Record</text>
-<text text-anchor="start" x="612.5" y="-13.6" font-family="Arial" font-size="13.00">audit trail</text>
-</g>
-<!-- P10&#45;&gt;D10 -->
-<g id="edge8" class="edge">
-<title>P10&#45;&gt;D10</title>
-<path fill="none" stroke="#444444" d="M683.54,-28.79C714.24,-28.32 756.68,-27.74 794,-27.5 855.78,-27.1 871.31,-24.16 933,-27.5 980.67,-30.08 1034.38,-36.06 1074.5,-41.13"/>
-<polygon fill="#444444" stroke="#444444" points="1074.56,-43.79 1082.33,-42.13 1075.23,-38.58 1074.56,-43.79"/>
-<text text-anchor="middle" x="863.5" y="-30.7" font-family="Arial" font-size="11.00">56 &#160;Audit entries</text>
-</g>
-<!-- GRP -->
-<g id="node8" class="node">
-<title>GRP</title>
-<polygon fill="#f2f2f2" stroke="#888888" stroke-dasharray="5,2" points="165,-50.5 0,-50.5 0,-8.5 165,-8.5 165,-50.5"/>
-<text text-anchor="middle" x="82.5" y="-33.1" font-family="Arial" font-size="13.00">Processes 2.0 to 9.0</text>
-<text text-anchor="middle" x="82.5" y="-19.1" font-family="Arial" font-size="13.00">(any change to a table)</text>
-</g>
-<!-- GRP&#45;&gt;P10 -->
-<g id="edge9" class="edge">
-<title>GRP&#45;&gt;P10</title>
-<path fill="none" stroke="#888888" stroke-dasharray="5,2" d="M165.17,-29.5C281.88,-29.5 492.89,-29.5 588.95,-29.5"/>
-<polygon fill="#888888" stroke="#888888" points="588.99,-32.13 596.49,-29.5 588.99,-26.88 588.99,-32.13"/>
-<text text-anchor="middle" x="367" y="-32.7" font-family="Arial" font-size="11.00" fill="#555555">57 &#160;Change events (automatic, database triggers)</text>
-</g>
-</g>
-</svg>
-<text x="40" y="2818" font-size="13" fill="#666">Data stores are only reached through processes. Student payments are not an input: the Cashier logs payments (no payment gateway, per the charter). D10 audit_logs receives every change through process 10.0.</text></svg>

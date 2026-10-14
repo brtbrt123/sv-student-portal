@@ -624,7 +624,7 @@ export type Database = {
           charge_id: number
           amount_paid: number
           paid_at?: string
-          receipt_number: string
+          receipt_number?: string
           recorded_by: string
         }
         Update: {
