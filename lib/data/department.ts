@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTerm, type CurrentTerm } from '@/lib/data/clearance'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for the signed-in Department user. Every query runs with the user's own session
 // (anon key + auth cookies), so Row Level Security does the isolation: a Department user only receives
@@ -149,10 +150,10 @@ export async function getDepartmentState(): Promise<DepartmentState> {
       if (error) return { kind: 'error' }
       for (const p of data ?? []) names.set(p.profile_id, `${p.last_name}, ${p.first_name}`)
     }
-    const studentName = (id: string) => names.get(id) ?? studentRows.get(id)?.student_number ?? 'Student'
+    const studentName = (id: string) => names.get(id) ?? (formatStudentId(studentRows.get(id)?.student_number) || 'Student')
     const staffName = (id: string) =>
       id === userId ? `${names.get(id) ?? 'You'} (you)` : (names.get(id) ?? 'Department staff')
-    const studentNo = (id: string) => studentRows.get(id)?.student_number ?? '-'
+    const studentNo = (id: string) => formatStudentId(studentRows.get(id)?.student_number) || '-'
     const programCode = (id: string) => {
       const s = studentRows.get(id)
       return s ? (programs.get(s.program_id)?.code ?? '-') : '-'
@@ -202,8 +203,8 @@ export async function getDepartmentState(): Promise<DepartmentState> {
       .filter((s) => programs.get(s.program_id)?.department_id === department.id)
       .map((s) => ({
         studentId: s.student_id,
-        studentNo: s.student_number,
-        name: names.get(s.student_id) ?? s.student_number,
+        studentNo: formatStudentId(s.student_number),
+        name: names.get(s.student_id) ?? formatStudentId(s.student_number),
         program: programs.get(s.program_id)?.code ?? '-',
       }))
       .sort((a, b) => a.name.localeCompare(b.name))

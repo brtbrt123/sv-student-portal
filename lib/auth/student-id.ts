@@ -13,6 +13,11 @@ export function normalizeStudentId(id: string): string {
   return /^\d{8,10}$/.test(t) ? `${t.slice(0, 4)}-${t.slice(4)}` : t.toLowerCase()
 }
 
+// How a student ID is shown to people: the 8 digits with no hyphen (20260001). It is stored with the hyphen.
+export function formatStudentId(id: string | null | undefined): string {
+  return (id ?? '').replace(/-/g, '')
+}
+
 export function studentIdToEmail(id: string): string {
   return `${normalizeStudentId(id)}@${STUDENT_EMAIL_DOMAIN}`
 }

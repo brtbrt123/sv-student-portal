@@ -16,26 +16,26 @@ describe('queue QR token (UT-50..60)', () => {
     const { token } = createQueueToken(STUDENT, SECRET, T0)
     expect(token).toMatch(/^CUQ1\.[0-9a-f-]{36}\.\d+\.[A-Za-z0-9_-]{22}$/)
   })
-  it('UT-52 the code changes with every 15-second window', () => {
+  it('UT-52 the code changes with every 30-second window', () => {
     const a = createQueueToken(STUDENT, SECRET, T0).token
-    const sameWindow = createQueueToken(STUDENT, SECRET, T0 + 14 * SEC).token
-    const nextWindow = createQueueToken(STUDENT, SECRET, T0 + 15 * SEC).token
+    const sameWindow = createQueueToken(STUDENT, SECRET, T0 + 29 * SEC).token
+    const nextWindow = createQueueToken(STUDENT, SECRET, T0 + 30 * SEC).token
     expect(sameWindow).toBe(a)
     expect(nextWindow).not.toBe(a)
   })
   it('UT-53 refreshInSeconds is the time left in the window', () => {
     expect(createQueueToken(STUDENT, SECRET, T0).refreshInSeconds).toBe(QR_WINDOW_SECONDS)
-    expect(createQueueToken(STUDENT, SECRET, T0 + 10 * SEC).refreshInSeconds).toBe(5)
-    expect(createQueueToken(STUDENT, SECRET, T0 + 14.2 * SEC).refreshInSeconds).toBe(1)
+    expect(createQueueToken(STUDENT, SECRET, T0 + 20 * SEC).refreshInSeconds).toBe(10)
+    expect(createQueueToken(STUDENT, SECRET, T0 + 29.2 * SEC).refreshInSeconds).toBe(1)
   })
   it('UT-54 a code is still accepted in the next window (grace, so a scan at the edge still works)', () => {
-    const { token } = createQueueToken(STUDENT, SECRET, T0 + 14 * SEC) // made in window 0
-    expect(verifyQueueToken(token, SECRET, T0 + 16 * SEC)).toEqual({ ok: true, studentId: STUDENT }) // window 1
-    expect(verifyQueueToken(token, SECRET, T0 + 29 * SEC).ok).toBe(true) // still window 1
+    const { token } = createQueueToken(STUDENT, SECRET, T0 + 29 * SEC) // made in window 0
+    expect(verifyQueueToken(token, SECRET, T0 + 31 * SEC)).toEqual({ ok: true, studentId: STUDENT }) // window 1
+    expect(verifyQueueToken(token, SECRET, T0 + 59 * SEC).ok).toBe(true) // still window 1
   })
   it('UT-55 a code two windows old is expired, so a screenshot stops working', () => {
-    const { token } = createQueueToken(STUDENT, SECRET, T0 + 14 * SEC) // made in window 0
-    expect(verifyQueueToken(token, SECRET, T0 + 31 * SEC)).toEqual({ ok: false, reason: 'expired' }) // window 2
+    const { token } = createQueueToken(STUDENT, SECRET, T0 + 29 * SEC) // made in window 0
+    expect(verifyQueueToken(token, SECRET, T0 + 61 * SEC)).toEqual({ ok: false, reason: 'expired' }) // window 2
     expect(verifyQueueToken(token, SECRET, T0 + 5 * 60 * SEC)).toEqual({ ok: false, reason: 'expired' })
   })
   it('UT-56 a code from a window far in the future is rejected', () => {

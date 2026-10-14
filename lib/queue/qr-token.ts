@@ -4,14 +4,14 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 //
 //   CUQ1.<student id>.<time window>.<signature>
 //
-// A time window is 15 seconds long. The signature is an HMAC-SHA256 over the student id and the window,
+// A time window is 30 seconds long. The signature is an HMAC-SHA256 over the student id and the window,
 // made with a server-only secret (QUEUE_QR_SECRET), so a code cannot be forged. A code works in the window
-// it was made in and in the next one, so a screenshot stops working after 30 seconds at most. One window
+// it was made in and in the next one, so a screenshot stops working after 60 seconds at most. One window
 // ahead is also accepted, for clock differences between servers. Pure functions: no database, no
 // environment. The secret is passed in, so tests can use their own.
 
 export const QR_PREFIX = 'CUQ1'
-export const QR_WINDOW_SECONDS = 15
+export const QR_WINDOW_SECONDS = 30
 export const QR_MIN_SECRET_LENGTH = 32
 
 const SIGNATURE_LENGTH = 22
@@ -31,7 +31,7 @@ function sign(secret: string, studentId: string, window: number): string {
   return createHmac('sha256', secret).update(`queue-qr:${studentId}:${window}`).digest('base64url').slice(0, SIGNATURE_LENGTH)
 }
 
-// Makes the code for one student at one moment. `refreshInSeconds` is how long until the 15-second window
+// Makes the code for one student at one moment. `refreshInSeconds` is how long until the 30-second window
 // ends: the page asks for a new code then.
 export function createQueueToken(studentId: string, secret: string, now: number = Date.now()): QueueToken {
   if (!UUID_RE.test(studentId)) throw new Error('A queue code needs a student id.')

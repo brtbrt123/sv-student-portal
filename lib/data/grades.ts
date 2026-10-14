@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTerm, type CurrentTerm } from '@/lib/data/clearance'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for grades. Every query runs with the signed-in user's own session (anon key +
 // auth cookies), so Row Level Security does the isolation. No server-only key is used here. Import
@@ -179,7 +180,7 @@ export async function getRegistrarGradesState(): Promise<RegistrarGradesState> {
     const grades = new Map((gradeRes.data ?? []).map((g) => [g.enrollment_item_id, g.grade_code]))
     // Names and numbers are a convenience: fall back to a label when they cannot be read.
     const names = new Map((profRes.data ?? []).map((p) => [p.profile_id, fullName(p)]))
-    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, s.student_number]))
+    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, formatStudentId(s.student_number)]))
 
     const result: EncodableItem[] = items.map((i) => {
       const sec = sectionMap.get(i.section_id)

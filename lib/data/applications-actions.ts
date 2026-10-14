@@ -11,6 +11,7 @@ import { acceptanceEmail, rejectionEmail, sendMail } from '@/lib/mail'
 import { studentIdToEmail } from '@/lib/auth/student-id'
 import { APPLICATION_COLUMNS } from '@/lib/data/applications'
 import { applicationDecisionErrorMessage } from '@/lib/data/db-errors'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server Actions for the Registrar's applications screen.
 //
@@ -152,7 +153,7 @@ async function provision(admin: Db, app: AppRow): Promise<Provisioned> {
       ok: false,
       message: clean
         ? cleanMessage
-        : `Account setup stopped halfway and could not be fully undone. Ask the Admin to check student ID ${studentNumber} before retrying.`,
+        : `Account setup stopped halfway and could not be fully undone. Ask the Admin to check student ID ${formatStudentId(studentNumber)} before retrying.`,
     }
   }
 
@@ -236,11 +237,11 @@ async function setUpAndEmail(admin: Db, app: AppRow): Promise<ApplicationActionS
 
   const sent = await sendCredentials(admin, app, studentId, studentNumber)
   if (!sent) {
-    return { status: 'warning', message: `Account created (student ID ${studentNumber}) but the email failed: use "Resend email".` }
+    return { status: 'warning', message: `Account created (student ID ${formatStudentId(studentNumber)}) but the email failed: use "Resend email".` }
   }
   return {
     status: 'success',
-    message: `Student ID ${studentNumber} is ready. The set-password email was sent to ${(app.email ?? '').trim()}.`,
+    message: `Student ID ${formatStudentId(studentNumber)} is ready. The set-password email was sent to ${(app.email ?? '').trim()}.`,
   }
 }
 

@@ -34,3 +34,7 @@ export function lineSlots(position: number, waitingTotal: number, maxShown = 7):
   // Far back in the line: the first three, a gap, then you.
   return [slot(1), slot(2), slot(3), { kind: 'gap' }, slot(me)]
 }
+
+/** A ticket still in the line: waiting, on hold, or being served. */
+export const isActiveTicketStatus = (status: string | null | undefined): boolean =>
+  status === 'Waiting' || status === 'Held' || status === 'Serving'

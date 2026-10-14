@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for document requests. Every query runs with the signed-in user's own session
 // (anon key + auth cookies), so Row Level Security does the isolation: a student sees only their own
@@ -126,7 +127,7 @@ export async function getRegistrarDocumentsState(): Promise<RegistrarDocumentsSt
         : Promise.resolve({ data: [], error: null }),
     ])
     const names = new Map((profRes.data ?? []).map((p) => [p.profile_id, `${p.last_name}, ${p.first_name}`]))
-    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, s.student_number]))
+    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, formatStudentId(s.student_number)]))
     const typeNames = new Map(types.map((t) => [t.id, t.name]))
 
     const requests: RegistrarDocumentRequest[] = rows.map((r) => ({

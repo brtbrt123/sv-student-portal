@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTerm, type CurrentTerm } from '@/lib/data/clearance'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for the Cashier screens. Every query runs with the signed-in user's own session
 // (anon key + auth cookies), so Row Level Security decides what the Cashier can see. No server-only
@@ -144,7 +145,7 @@ export async function getCashierLedger(): Promise<LedgerState> {
         chargeId: c.charge_id,
         studentId: c.student_id,
         studentName: personName(first(student?.profiles) ?? null) ?? NAME_FALLBACK,
-        studentNo: student?.student_number ?? '-',
+        studentNo: student?.student_number ? formatStudentId(student.student_number) : '-',
         feeType: first(c.fee_types)?.name ?? 'Fee',
         amount,
         dueDate: c.due_date,
@@ -221,7 +222,7 @@ export async function getFinanceClearance(ledger?: CashierLedger): Promise<Finan
       for (const s of data ?? []) {
         names.set(s.student_id, {
           name: personName(first(s.profiles)) ?? NAME_FALLBACK,
-          no: s.student_number,
+          no: formatStudentId(s.student_number),
         })
       }
     }

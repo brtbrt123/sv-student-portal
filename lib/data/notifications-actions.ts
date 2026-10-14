@@ -34,9 +34,9 @@ export async function markNotificationsRead(ids?: number[]): Promise<MarkReadRes
   }
 }
 
-// The unread count, for the badge to refresh itself.
+// The unread count, for the badge to refresh itself. No profile check here on purpose: the database function
+// refuses a signed-out or deactivated account (getUnreadCount then returns 0), and a check in front of it
+// would add two database round trips to every poll.
 export async function fetchUnreadCount(): Promise<number> {
-  const profile = await getCurrentProfile()
-  if (!profile) return 0
   return getUnreadCount()
 }

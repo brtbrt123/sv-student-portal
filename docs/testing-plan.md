@@ -70,7 +70,7 @@ clearance items can only be cleared by SQL as the database owner (recorded as te
 | 2. Integration | SQL suites TC-01 to TC-71 (clearance slice, hardening) and TC-72 to TC-122 (lockout, grades, documents, enrollment), all run on the live database | Pass (some rehearsal failures found real defects, section 6) | App-to-database calls are only covered through the browser checks of level 3. TC-94 has no recorded file |
 | 3. System | Browser walk E2E-01 to E2E-13 (clearance, 2026-10-11) and browser checks S-01 to S-12 (2026-10-12, grades, documents, enrollment, lockout in the app) | Pass, with the gaps on the right | Student enrollment submit/add/remove forms, Reject button, friendly error messages, audit rows of the new writes, phone width, dark mode, every role on the deployed site |
 | 4. Acceptance | None run | Not done | A script per SRS requirement with a sign-off by team members (section 9). Nobody is assigned yet |
-| 5. Performance | None measured | Not done | PER-01 (2.5 s) and PER-02 (500 ms) never measured (issue #109) |
+| 5. Performance | PER-02 measured 2026-10-14 (0.1 to 1.5 ms per query); PER-01 analysed, fixes in a pull request | Partly done | PER-02 pass; PER-01 not verified as met on signed-in pages, re-measure after deploy (issue #109) |
 | 6. Security | Isolation, grants, audit and lockout tests (SQL and browser); vulnerabilities table in section 10 | Partly done: 3 of the candidate vulnerabilities have a fix and a recorded test (rls_auto_enable, brute force, rate limiting) | SQL injection has no direct test; rate limiting tested on the sign-in route only; lockout residual risks not tested; at least 3 vulnerabilities with solutions needed |
 
 ## 5. Level 1: Unit testing
@@ -289,6 +289,32 @@ Not verified in the browser (stays "Not done", section 12): the camera scan and 
 the QR on a real phone, "Leave the queue", the No-show button, several students in one line (order and "You are 25th"
 numbers), the audit rows of the ticket changes on the Admin screen, phone widths and light mode, and the deployed Vercel site.
 
+### 7.4 Enrollment submit, Reject and Approve in the app (browser, 2026-10-14)
+
+Run by: the Project Manager signed in and clicked (student 2026-0008 Justinbril Abarquez; Registrar Cruz, Rey) on localhost against the
+live database. Claude read the pages and checked every result with read-only SELECTs on the live project. For issues #101 and #102.
+One test enrollment (id 58) was used. A Rejected enrollment is final in the database, so after the Reject the owner ran a one-off
+script that put that single row back to Pending (the trigger `require_enrollment_rules` was switched off for that one change and
+switched on again, checked); the reset is itself in the audit log. Then the enrollment was approved.
+
+| ID | Role and steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| E-01 | Student (2026-0008, no enrollment yet): Enrollment page, choose Year 3, submit | One enrollment, status Pending, year level 3 | Page: Pending, Year 3, submitted Oct 14, 2026. Database: enrollment 58, Pending, year_level 3, not reviewed | Pass |
+| E-02 | Student: add two sections (CS101 A, GE101 A) | Both listed with units and schedule; items saved | Page: 2 subjects, 6 units. Database: 2 items (A/CS101, A/GE101) | Pass |
+| E-03 | Student: the "Add a section" picker after two sections were added | Only sections not yet chosen are offered (a duplicate cannot be picked) | Picker listed only CS102 (the one section left). The duplicate-section message itself is covered by UT-48 and TC-109 to TC-122, not by a click | Pass (by design) |
+| E-04 | Student: the page text while Pending | Items can be added or removed only while Pending | "Sections can be added or removed only while the enrollment is Pending. The Registrar checks for a free seat when approving." | Pass |
+| E-05 | Registrar: Enrollments page shows the pending enrollment | Student, program, year level, subjects and sections, free seats | The Registrar found the enrollment on this page and rejected and approved it from there (E-06, E-08); what the list showed (columns, seat figures) was not written down | Partly recorded |
+| E-06 | Registrar: Reject with remarks "Test: missing requirements" | Status Rejected, `reviewed_by` the Registrar, `reviewed_at` set, student notified | Database: Rejected, remarks saved, reviewer Cruz, Rey, reviewed_at set, 2 audit rows, student notification "Your enrollment was rejected" | Pass |
+| E-07 | Owner: reset enrollment 58 to Pending (one-off script) | Exactly one row changed, trigger enabled again | Pending, review fields cleared, trigger state enabled (`O`), 2 items kept | Pass |
+| E-08 | Registrar: Approve | Status Approved, reviewer named, `reviewed_at` set, audit rows, student notified | Database: Approved, reviewer Cruz, Rey, reviewed_at set, 4 audit rows (submit, reject, reset, approve), notifications "rejected" and "approved", 2 items | Pass |
+| E-09 | Registrar: Encode Grades lists the approved enrollment's subjects | CS101 and GE101 of 2026-0008 appear | PM confirmed both rows are there | Pass (reported by the PM) |
+| E-10 | Isolation: one student cannot see another student's enrollment | 0 rows of another student | Regression TC-14 on the live project, 2026-10-14, before and after the catalog and admin grants: "s2 ... enrollments 0 -> OK" (SQL level; not repeated by clicking as a second student) | Pass |
+
+Not verified in this run (stays in section 12): Reject pressed with EMPTY remarks (the refusal text was not reported); the student
+page after the Reject (the "not approved" box and the remarks were not looked at); the Remove button; a second enrollment for the
+same term from the screen; the Registrar list's free-seat figures; the same checks on the deployed Vercel site and on a phone.
+Gap against issue #101: the section picker shows "capacity 40", not the free places left.
+
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 
 | ID | Case | Expected | Actual | Result |
@@ -332,13 +358,42 @@ Planned acceptance script (checks to run on the live site; each needs a name and
 
 ### 10.1 Level 5: Performance testing
 
-Status: **Not done.** Nothing was measured. PER-01 (UI loads in under 2.5 s) and PER-02 (grade and clearance queries under
-500 ms) have no result. Planned: issue #109. Owner and date: not set.
+Status: **PER-02 measured and passed (2026-10-14). PER-01 not met on signed-in pages by analysis; fixes are in a pull request and
+must be re-measured on the live site after they are deployed.** Issue #109.
+
+**PERF-02 (PER-02: grade and clearance queries under 500 ms): Pass.** Run by Claude with a read-only, rolled-back script in the
+Supabase SQL editor on the live project (as a student with row-level security on: role `authenticated` and the JWT claim of
+student1). Each query was run 30 times; the figures are the average per call, in milliseconds.
+
+| Query | ms per call | Limit |
+| --- | --- | --- |
+| `v_grades` | 1.46 | 500 |
+| `v_clearance_items` | 0.89 | 500 |
+| `v_clearances` | 0.45 | 500 |
+| profile and role lookup | 0.14 | 500 |
+| `enrollments` | 0.28 | 500 |
+| `list_my_notifications(20, false)` | 0.09 | 500 |
+| `queue_my_status('Enrollment')` | 0.80 | 500 |
+
+These are database times on a small data set. They do not include the network between the app and the database.
+
+**PERF-01 (PER-01: UI loads in under 2.5 s): not verified as met.** Measured from the Project Manager's machine on the deployed site
+with `curl` on 2026-10-14: a static file from the edge takes 0.18 s to the first byte; `/login` (no database call) takes 0.43 to
+0.46 s warm and 1.8 s on a cold start; `/apply` 0.47 s. Signed-in pages were not timed on the live site (a login is needed). Findings:
+- The Supabase project is in Sydney (`ap-southeast-2`) but Vercel runs the app's functions in Washington DC (`iad1`, the default;
+  response header `X-Vercel-Id: sin1::iad1`). Every database call from a page crosses that distance (about 230 ms each).
+- A signed-in page made about 7 to 9 database calls in a row: the proxy (`getUser` and a profile query), the page's `requireRole`
+  (the same two again), the page data, then the sidebar's unread count. That is an estimate of 1.6 to 2.1 s plus the 0.27 s region
+  penalty; it was not measured on the live site.
+- The unread-count poll was a separate request that also repeated the profile check.
+Fixes (branch `feature/performance-fixes`): Vercel functions to Sydney (`vercel.json`, `syd1`); `getCurrentProfile` and
+`getUnreadCount` cached per request and the unread count started early so it runs while the page loads; the poll no longer repeats
+the profile check; queue auto-refresh 5 s to 10 s. Not done: the proxy still asks Supabase Auth and the profile table on every request.
 
 | ID | Requirement | What to measure | Status |
 | --- | --- | --- | --- |
-| PERF-01 | PER-01 | Page load time of the main pages on the live site | Not done |
-| PERF-02 | PER-02 | Query time for grades and clearance status (for example `EXPLAIN ANALYZE` on the views) | Not done |
+| PERF-01 | PER-01 | Page load time of the main pages on the live site (public pages measured; signed-in pages to be re-measured after the fixes are deployed) | Not verified |
+| PERF-02 | PER-02 | Query time for grades and clearance status (`v_grades`, `v_clearance_items`, `v_clearances` and others, as a student, 30 runs) | Pass, 2026-10-14 |
 
 ### 10.2 Level 6: Security testing
 
@@ -402,12 +457,12 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | --- | --- | --- | --- |
 | Unit tests | 1 | Done (78 of 78 pass) | Section 5. Not covered: React components and the Server Actions as a whole (levels 2 and 3) |
 | Acceptance script run and signed off by team members | 4 | Not done | Section 9. Before the freeze on 2026-10-15. Owner: to be named by the PM |
-| Performance: PER-01 and PER-02 | 5 | Not done | Issue #109. Owner and date not set |
+| Performance: PER-01 (signed-in pages on the live site) | 5 | Not done | Re-measure after the region and caching fixes are deployed (issue #109); PER-02 is done |
 | Rate limiting (SEC-04) | 6 | Done (sign-in route) | Vercel firewall rule "Limit POST requests per IP" (POST, 60 s fixed window, 20 requests per IP, 429) tested 2026-10-12: 429 after about 24 POSTs in a minute from one IP; see `docs/rate-limiting.md` |
 | SQL injection direct test | 6 | Not done | Issue #108. Owner and date not set |
 | Lockout residual risks (DoS lockout, direct Auth endpoint, race) | 6 | Not tested | Documented as accepted risks; test or mitigate if time allows |
-| Student enrollment submit, add and remove forms | 3 | Not done | No seed student without an enrollment; needs a new test student or a throwaway term |
-| Reject button on the Registrar enrollments screen | 3 | Not done | Needs a second Pending enrollment |
+| Student enrollment submit, add and remove forms | 3 | Partly done | Submit and add done 2026-10-14 (E-01 to E-04); Remove button and a second enrollment from the screen not clicked |
+| Reject button on the Registrar enrollments screen | 3 | Done with gaps | Reject with remarks done 2026-10-14 (E-06); Reject with EMPTY remarks and the student's view of the rejection not recorded |
 | Friendly error messages of the new screens | 3 | Not done | Trigger each message in the browser |
 | Audit rows of the 2026-10-12 browser writes | 3, 6 | Not done | Admin audit log screen |
 | Admin user accounts and academic catalog (REQ-ADM-01, REQ-ADM-04) | 3 | Not done | Admin users is a stretch item; no test recorded for either |
@@ -453,7 +508,8 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | SEC-04 rate limiting | `docs/rate-limiting.md` | Pass (sign-in route; server actions not tested one by one) |
 | SEC-05 SQL injection | none direct | Not done |
 | SEC-06 secret handling | pre-commit scrub command only | Not done as a recorded test |
-| PER-01, PER-02 | none | Not done |
+| PER-01 | PERF-01 | Not verified |
+| PER-02 | PERF-02 | Pass |
 | PER-03 deploy on merge to main | Vercel deployment of main verified 2026-10-11 (signed in as student1; see HANDOFF.md) | Partly: not a written test case |
 | ETH-01 privacy between students | N-01, N-02, TC-12 to TC-14 | Pass |
 | ETH-02 data minimization | none | Not tested: a review item for the ethical analysis (issue #111) |

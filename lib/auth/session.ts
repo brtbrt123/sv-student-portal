@@ -1,6 +1,8 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isRoleName, ROLE_HOME, type RoleName } from '@/lib/auth/roles'
+import { getUnreadCount } from '@/lib/data/notifications'
 
 export type CurrentProfile = {
   id: string
@@ -11,8 +13,9 @@ export type CurrentProfile = {
 }
 
 // Returns the signed-in user's profile and role, or null when signed out,
-// deactivated, or without a profile row.
-export async function getCurrentProfile(): Promise<CurrentProfile | null> {
+// deactivated, or without a profile row. Wrapped in cache(): within one request (page, layout, shell)
+// the two database round trips are made once, however many parts of the page ask.
+export const getCurrentProfile = cache(async function getCurrentProfile(): Promise<CurrentProfile | null> {
   const supabase = await createClient()
   const { data: userData } = await supabase.auth.getUser()
   const user = userData.user
@@ -36,7 +39,7 @@ export async function getCurrentProfile(): Promise<CurrentProfile | null> {
     lastName: profile.last_name,
     role: roleName,
   }
-}
+})
 
 // Call at the top of a module page. Sends signed-out users to /login and
 // users with another role to their own dashboard.
@@ -44,5 +47,8 @@ export async function requireRole(role: RoleName): Promise<CurrentProfile> {
   const profile = await getCurrentProfile()
   if (!profile) redirect('/login')
   if (profile.role !== role) redirect(ROLE_HOME[profile.role])
+  // Start the sidebar's unread count now so it runs while the page loads its own data; DashboardShell
+  // awaits the same cached call later. (getUnreadCount never throws.)
+  void getUnreadCount()
   return profile
 }
