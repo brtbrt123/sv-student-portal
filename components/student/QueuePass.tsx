@@ -282,7 +282,7 @@ function CancelControl({
   return confirming ? (
     <span className="flex flex-wrap items-center gap-2">
       <span className="text-sm font-medium">Cancel your ticket? You lose your place.</span>
-      <Button variant="danger" onClick={onConfirm} disabled={pending} aria-busy={pending}>
+      <Button variant="danger" className="border-danger bg-danger text-background hover:bg-danger/90" onClick={onConfirm} disabled={pending} aria-busy={pending}>
         {pending ? 'Cancelling...' : 'Yes, cancel'}
       </Button>
       <Button variant="ghost" onClick={() => setConfirming(false)} disabled={pending}>
@@ -290,7 +290,7 @@ function CancelControl({
       </Button>
     </span>
   ) : (
-    <Button variant="ghost" onClick={() => setConfirming(true)} disabled={pending}>
+    <Button variant="danger" onClick={() => setConfirming(true)} disabled={pending}>
       Cancel ticket
     </Button>
   )
