@@ -34,25 +34,36 @@ export default function QueuePass({
   return (
     <Card tone="warm" className="flex flex-col gap-5 p-5 sm:p-6">
       <AutoRefresh everySeconds={10} />
-      <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="mt-1 max-w-[60ch] text-sm leading-6 text-muted">{intro}</p>
+      <div className="flex items-start gap-3">
+        <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold text-[#18181b]">
+          <Icon name="queue" className="size-5" />
+        </span>
+        <div>
+          <h2 className="text-lg leading-tight font-semibold">{title}</h2>
+          <p className="mt-1 max-w-[60ch] text-sm leading-6 text-muted">{intro}</p>
+        </div>
       </div>
 
       {status === null ? (
-        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
           We could not load the queue. Reload the page, and if it keeps happening, come back in a few minutes.
         </p>
       ) : !status.isOpen ? (
-        <p role="status" className="rounded-md border border-edge bg-card px-3 py-2 text-sm">
+        <p role="status" className="rounded-xl border border-edge bg-card px-4 py-3 text-sm font-medium">
           The queue is closed right now. Come back when the Registrar opens it.
         </p>
       ) : active ? (
         <TicketView service={service} status={status} />
       ) : served ? (
-        <p role="status" className="rounded-md border border-edge bg-card px-4 py-3 text-sm font-medium">
-          You were served today ({status.ticketLabel}). You are all set.
-        </p>
+        // Served once today, but the pass is only shown while there is still a reason to queue (another open
+        // request, a pending enrollment), so the code is offered again for a new number.
+        <>
+          <p role="status" className="rounded-xl border border-edge bg-card px-4 py-3 text-sm leading-6">
+            <span className="font-semibold">You were served today ({status.ticketLabel}).</span> Need another number for a new
+            request? Show the code below.
+          </p>
+          <QrView closedNote={null} />
+        </>
       ) : (
         <QrView closedNote={status.hasTicket ? `Your last ticket (${status.ticketLabel}) was closed. Show the code again to get a new number.` : null} />
       )}
@@ -94,9 +105,9 @@ function QrView({ closedNote }: { closedNote: string | null }) {
   }, [])
 
   return (
-    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-      <div className="flex flex-col items-center gap-2">
-        <div className="rounded-2xl bg-white p-3 shadow-elev-sm">
+    <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-7">
+      <div className="mx-auto flex w-full max-w-[16.5rem] flex-col items-center gap-3 sm:mx-0">
+        <div className="rounded-3xl bg-white p-3 shadow-elev-md ring-1 ring-black/5">
           {token ? (
             <QRCodeSVG value={token} size={208} level="M" marginSize={1} bgColor="#ffffff" fgColor="#18181b" title="Your queue code, it changes every 30 seconds" />
           ) : (
@@ -105,26 +116,43 @@ function QrView({ closedNote }: { closedNote: string | null }) {
             </div>
           )}
         </div>
-        <div aria-hidden="true" className="h-1.5 w-full overflow-hidden rounded-full bg-hover-tint">
-          <div
-            className="h-full rounded-full bg-gold transition-[width] duration-500 ease-linear motion-reduce:transition-none"
-            style={{ width: `${(left / WINDOW_SECONDS) * 100}%` }}
-          />
+        <div className="w-full">
+          <div aria-hidden="true" className="h-1.5 w-full overflow-hidden rounded-full bg-hover-tint">
+            <div
+              className="h-full rounded-full bg-gold transition-[width] duration-500 ease-linear motion-reduce:transition-none"
+              style={{ width: `${(left / WINDOW_SECONDS) * 100}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-center text-xs text-muted tabular-nums">New code in {left}s</p>
         </div>
       </div>
-      <div className="flex max-w-[44ch] flex-col gap-2 text-sm leading-6">
+
+      <div className="flex flex-col gap-4 text-sm leading-6">
         {error && (
-          <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-danger">
+          <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 font-medium text-danger">
             {error}
           </p>
         )}
-        {closedNote && <p className="font-medium">{closedNote}</p>}
-        <p>
-          <span className="font-semibold">At the school,</span> hold this code up to the Registrar&apos;s scanner. You get your queue
-          number right away.
-        </p>
-        <p className="text-muted">
-          The code changes every 30 seconds, so a screenshot of it will not work. Keep this page open on your phone.
+        {closedNote && <p className="rounded-xl border border-edge bg-card px-4 py-3 font-medium">{closedNote}</p>}
+        <div>
+          <p className="text-base font-semibold">How to get your number</p>
+          <ol className="mt-2 flex flex-col gap-2.5">
+            {[
+              'Go to the Registrar window at the school.',
+              'Hold this code up to the Registrar\u2019s camera or scanner.',
+              'Your queue number appears here right away. Keep this page open.',
+            ].map((step, i) => (
+              <li key={step} className="flex items-start gap-3">
+                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-extrabold text-[#18181b]">
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <p className="text-[13px] text-muted">
+          The code changes every 30 seconds, so a screenshot of it will not work.
         </p>
       </div>
     </div>
@@ -151,35 +179,36 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
     })
   }
 
+  const pill = serving ? 'Your turn' : held ? 'On hold' : status.peopleAhead === 0 ? 'You are next' : `${ordinal(place)} in line`
+
   return (
     <div role="status" aria-live="polite" className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      {/* The ticket: the number is the one thing to remember. */}
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 rounded-3xl bg-ink px-5 py-5 text-ink-foreground shadow-elev-md">
         <div>
-          <p className="text-[13px] font-medium text-muted">Your ticket</p>
-          <p className="text-4xl leading-none font-extrabold tracking-tight tabular-nums sm:text-5xl">{status.ticketLabel}</p>
+          <p className="text-[13px] font-semibold tracking-wide text-white/70 uppercase">Your ticket</p>
+          <p className="mt-1 text-5xl leading-none font-extrabold tracking-tight text-gold tabular-nums sm:text-6xl">{status.ticketLabel}</p>
         </div>
-        {!serving && !held && (
-          <p className="rounded-full bg-gold px-4 py-1.5 text-sm font-bold text-[#18181b]">
-            {status.peopleAhead === 0 ? 'You are next' : `${ordinal(place)} in line`}
-          </p>
-        )}
+        <p className={cn('rounded-full px-4 py-1.5 text-sm font-bold text-[#18181b]', serving ? 'bg-success-soft text-success' : held ? 'bg-white/85' : 'bg-gold')}>
+          {pill}
+        </p>
       </div>
 
       {serving ? (
-        <div className="rounded-2xl bg-success-soft px-5 py-5 text-success ring-2 ring-success motion-safe:animate-pulse">
+        <div className="rounded-3xl bg-success-soft px-5 py-5 text-success ring-2 ring-success motion-safe:animate-pulse">
           <p className="text-2xl font-extrabold">It is your turn</p>
-          <p className="mt-1 text-base font-semibold">
+          <p className="mt-1 text-lg font-semibold">
             {status.windowLabel ? `Go to ${status.windowLabel} now.` : 'Go to the Registrar window now.'}
           </p>
-          <p className="mt-1 text-sm">Bring your valid ID and your requirements.</p>
+          <p className="mt-2 text-sm">Bring a valid ID. The Registrar will check it against your name.</p>
         </div>
       ) : held ? (
-        <div className="flex flex-col gap-4 rounded-2xl border border-warm-edge bg-warm-glass px-5 py-5">
+        <div className="flex flex-col gap-4 rounded-3xl border border-warm-edge bg-warm-glass px-5 py-5">
           <div>
             <p className="text-xl font-extrabold">Your place is on hold</p>
             <p className="mt-1 text-sm leading-6">
-              The Registrar skips your number and calls the people behind you. Tap <strong>I&apos;m back</strong> when you are at the
-              school again and you will be next.
+              The Registrar skips your number and serves the people behind you. When you are back at the school, tap{' '}
+              <strong>I&apos;m back</strong> and you will be next.
             </p>
           </div>
           {status.heldUntil && <HoldCountdown until={status.heldUntil} />}
@@ -194,37 +223,44 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
         <>
           <LineView position={place} waitingTotal={status.waitingTotal} />
 
-          <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl border border-edge bg-card px-4 py-3">
-              <dt className="text-[13px] text-muted">People ahead</dt>
-              <dd className="text-2xl font-bold tabular-nums">{status.peopleAhead}</dd>
+          <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-2xl border border-edge bg-card px-4 py-3">
+              <dt className="text-[13px] text-muted">People ahead of you</dt>
+              <dd className="text-3xl font-extrabold tabular-nums">{status.peopleAhead}</dd>
             </div>
-            <div className="rounded-xl border border-edge bg-card px-4 py-3">
+            <div className="rounded-2xl border border-edge bg-card px-4 py-3">
               <dt className="text-[13px] text-muted">Estimated wait</dt>
-              <dd className="text-2xl font-bold">{wait ? formatWait(wait) : 'Any moment'}</dd>
-              {wait && <p className="text-[13px] text-muted">about {MINUTES_PER_PERSON.min} to {MINUTES_PER_PERSON.max} min each</p>}
+              <dd className="text-3xl font-extrabold">{wait ? formatWait(wait) : 'Any moment'}</dd>
+              {wait && <p className="text-[12px] text-muted">about {MINUTES_PER_PERSON.min} to {MINUTES_PER_PERSON.max} min each</p>}
+            </div>
+            <div className="rounded-2xl border border-edge bg-card px-4 py-3">
+              <dt className="text-[13px] text-muted">Now serving</dt>
+              <dd className="text-3xl font-extrabold tabular-nums">{status.nowServing ?? '-'}</dd>
+              {!status.nowServing && <p className="text-[12px] text-muted">nobody has been called yet</p>}
             </div>
           </dl>
-          <p className="text-sm text-muted">
-            {status.nowServing ? `Last called: ${status.nowServing}. ` : 'Nobody has been called yet. '}
-            The page updates by itself.
-          </p>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" onClick={() => run(() => holdMyTicket(service))} disabled={pending} aria-busy={pending}>
-              Hold my place
-            </Button>
-            <CancelControl confirming={confirming} setConfirming={setConfirming} pending={pending} onConfirm={() => run(() => cancelMyTicket(service))} />
+          <div className="flex flex-col gap-3 rounded-2xl border border-edge bg-card px-4 py-4">
+            <p className="text-sm leading-6">
+              <span className="font-semibold">Stay near the Registrar.</span> If you are not at the window when your number is
+              called, it is skipped. This page updates by itself.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button variant="outline" onClick={() => run(() => holdMyTicket(service))} disabled={pending} aria-busy={pending}>
+                Hold my place
+              </Button>
+              <CancelControl confirming={confirming} setConfirming={setConfirming} pending={pending} onConfirm={() => run(() => cancelMyTicket(service))} />
+            </div>
+            <p className="text-[13px] leading-5 text-muted">
+              Need a short break (bathroom, an emergency)? Hold your place. The line moves on without you, and when you tap
+              I&apos;m back you are next.
+            </p>
           </div>
-          <p className="text-sm text-muted">
-            Need a short break (bathroom, an emergency)? Hold your place: the line moves on without you and when you are back you are next.
-            Stay close to the Registrar: if you are not at the window when your number is called, it is skipped.
-          </p>
         </>
       )}
 
       {message && (
-        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
           {message}
         </p>
       )}

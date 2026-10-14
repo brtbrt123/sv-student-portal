@@ -80,31 +80,38 @@ export async function unholdMyTicket(service: QueueService): Promise<QueueAction
   return changeMyHold(service, 'queue_unhold_my_ticket', 'Welcome back. You are next.')
 }
 
-// ---- Registrar: the queue desk (scan, check the card, approve)
+// ---- Registrar: the queue desk (one scan = one ticket)
 
-// Two steps on one action. "lookup": the scanned (or typed) rotating QR code is checked and the student's
-// card is returned for the Registrar to compare with the ID in hand; nothing is issued. "approve": the
-// ticket is issued for the student of that card. A Registrar can issue a ticket for any active student
-// anyway, so the approve step does not need the code again (it may have expired while the ID was checked).
+// A scan checks the rotating QR code and issues the ticket in the same step: no Approve button. The student's
+// card (name, number, program) comes back with the result so the Registrar can see who was scanned; the
+// real identity check (ID against the person) happens at the window, when the ticket is called and the name is
+// shown again. A student who already has a ticket in this line is not given a second one: the result says so.
 export type DeskState =
   | { status: 'idle'; message: string }
   | { status: 'error'; message: string; stamp: number }
   | {
-      status: 'found'
+      status: 'issued'
       message: string
       stamp: number
-      studentId: string
+      label: string
+      peopleAhead: number
       studentName: string
       studentNumber: string
       programCode: string
       programName: string
-      alreadyQueuedLabel: string | null
     }
-  | { status: 'issued'; message: string; stamp: number; label: string; peopleAhead: number }
+  | {
+      status: 'duplicate'
+      message: string
+      stamp: number
+      label: string | null
+      studentName: string
+      studentNumber: string
+      programCode: string
+      programName: string
+    }
 
 type IssuedRow = { ticket_label: string; people_ahead: number | null }
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const TOKEN_MESSAGES = {
   malformed: 'This is not a portal queue code.',
@@ -116,7 +123,6 @@ const deskError = (message: string): DeskState => ({ status: 'error', message, s
 
 export async function queueDeskAction(_prev: DeskState, formData: FormData): Promise<DeskState> {
   void _prev
-  const step = formData.get('step')
   const service = formData.get('service')
   if (!isQueueService(service)) return deskError('Choose the queue first.')
 
@@ -125,49 +131,50 @@ export async function queueDeskAction(_prev: DeskState, formData: FormData): Pro
     if (!profile) return deskError(SESSION_ENDED)
     if (profile.role !== 'Registrar') return deskError(NOT_ALLOWED)
 
-    if (step === 'lookup') {
-      const token = String(formData.get('token') ?? '').trim()
-      if (token === '') return deskError('Scan the student\u2019s code first.')
-      const secret = getQueueSecret()
-      if (!secret) return deskError(NOT_CONFIGURED)
-      const checked = verifyQueueToken(token, secret)
-      if (!checked.ok) return deskError(TOKEN_MESSAGES[checked.reason])
+    const token = String(formData.get('token') ?? '').trim()
+    if (token === '') return deskError('Scan the student\u2019s code first.')
+    const secret = getQueueSecret()
+    if (!secret) return deskError(NOT_CONFIGURED)
+    const checked = verifyQueueToken(token, secret)
+    if (!checked.ok) return deskError(TOKEN_MESSAGES[checked.reason])
 
-      const res = await getQueueStudentCard(checked.studentId)
-      if ('error' in res) return deskError(queueErrorMessage(res.error.code, res.error.message))
-      return {
-        status: 'found',
-        message: 'Compare the screen with the ID, then approve.',
-        stamp: Date.now(),
-        studentId: res.card.studentId,
-        studentName: res.card.studentName,
-        studentNumber: res.card.studentNumber,
-        programCode: res.card.programCode,
-        programName: res.card.programName,
-        alreadyQueuedLabel: res.card.alreadyQueuedLabel,
-      }
+    const res = await getQueueStudentCard(checked.studentId)
+    if ('error' in res) return deskError(queueErrorMessage(res.error.code, res.error.message))
+    const { card } = res
+    const who = {
+      studentName: card.studentName,
+      studentNumber: card.studentNumber,
+      programCode: card.programCode,
+      programName: card.programName,
     }
 
-    if (step === 'approve') {
-      const studentId = String(formData.get('studentId') ?? '')
-      if (!UUID_RE.test(studentId)) return deskError('Scan the code again.')
-      const rpc = await queueRpc()
-      const { data, error } = await rpc<IssuedRow[]>('issue_queue_ticket', { p_student_id: studentId, p_service: service })
-      if (error) return deskError(queueErrorMessage(error.code, error.message))
-      const row = Array.isArray(data) ? data[0] : null
-      if (!row) return deskError(queueErrorMessage(undefined, undefined))
-
-      revalidatePath('/registrar', 'layout')
-      return {
-        status: 'issued',
-        message: `Ticket ${row.ticket_label} issued.`,
-        stamp: Date.now(),
-        label: row.ticket_label,
-        peopleAhead: row.people_ahead ?? 0,
+    const rpc = await queueRpc()
+    const { data, error } = await rpc<IssuedRow[]>('issue_queue_ticket', { p_student_id: card.studentId, p_service: service })
+    if (error) {
+      if (error.code === 'P0001' && error.message?.startsWith('already queued:')) {
+        const label = /#\d{7}/.exec(error.message)?.[0] ?? null
+        return {
+          status: 'duplicate',
+          message: label ? `${card.studentName} already has ticket ${label} in this line.` : `${card.studentName} already has a ticket in this line.`,
+          stamp: Date.now(),
+          label,
+          ...who,
+        }
       }
+      return deskError(queueErrorMessage(error.code, error.message))
     }
+    const row = Array.isArray(data) ? data[0] : null
+    if (!row) return deskError(queueErrorMessage(undefined, undefined))
 
-    return deskError('This request is not valid. Reload the page.')
+    revalidatePath('/registrar', 'layout')
+    return {
+      status: 'issued',
+      message: `Ticket ${row.ticket_label} issued to ${card.studentName}.`,
+      stamp: Date.now(),
+      label: row.ticket_label,
+      peopleAhead: row.people_ahead ?? 0,
+      ...who,
+    }
   } catch {
     return deskError(queueErrorMessage(undefined, undefined))
   }

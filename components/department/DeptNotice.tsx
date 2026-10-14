@@ -12,7 +12,7 @@ export function ActionMessage({ state, className }: { state: DeptActionState; cl
       role="status"
       aria-live="polite"
       className={
-        (isError ? 'text-sm font-medium text-danger' : 'text-sm text-ink') +
+        (isError ? 'text-sm font-medium text-danger' : 'text-sm text-foreground') +
         (state.message ? ' rounded-md border border-edge bg-card px-4 py-3' : '') +
         (className ? ` ${className}` : '')
       }

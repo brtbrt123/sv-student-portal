@@ -36,13 +36,13 @@ export default async function StudentEnrollmentPage({
       subtitle={state.kind === 'ready' ? `${termLabel} · your enrolled subjects` : 'Enroll in your subjects for the term'}
     >
       {noticeText && state.kind === 'ready' && (
-        <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-ink">
+        <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-foreground">
           {noticeText}
         </p>
       )}
       {showQueue && (
         <div className="mb-6">
-          <QueueNotice status={queue} text="Finish your enrollment in person at the school. Get your queue number from your phone." />
+          <QueueNotice status={queue} text="Finish your enrollment in person: show your code there to get a queue number, then follow the line from your phone." />
         </div>
       )}
       {state.kind === 'error' ? (
