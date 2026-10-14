@@ -15,7 +15,7 @@ export function DropSectionButton({ enrollmentId, itemId, label }: { enrollmentI
     <form action={formAction}>
       <input type="hidden" name="enrollmentId" value={enrollmentId} />
       <input type="hidden" name="enrollmentItemId" value={itemId} />
-      <Button type="submit" variant="outline" disabled={pending} aria-disabled={pending} aria-label={`Drop ${label}`}>
+      <Button type="submit" variant="danger" disabled={pending} aria-disabled={pending} aria-label={`Drop ${label}`}>
         {pending ? 'Dropping...' : 'Drop'}
       </Button>
       <p role="status" aria-live="polite" className={state.message && state.status === 'error' ? 'mt-2 max-w-[40ch] text-sm font-medium whitespace-normal text-danger' : 'sr-only'}>
