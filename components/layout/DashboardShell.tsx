@@ -1,12 +1,13 @@
 import { logout } from '@/app/(auth)/login/actions'
 import type { CurrentProfile } from '@/lib/auth/session'
+import { getUnreadCount } from '@/lib/data/notifications'
 import { NAV_ITEMS } from '@/lib/nav'
 import { Icon } from './Icon'
 import ShellFrame from './ShellFrame'
 
 // Shared frame for every module page: flat role-based sidebar, optional page header and sign-out.
 // Build each module's real UI inside {children}.
-export default function DashboardShell({
+export default async function DashboardShell({
   profile,
   title,
   subtitle,
@@ -32,6 +33,7 @@ export default function DashboardShell({
   children: React.ReactNode
 }) {
   const shell = variant ?? (profile.role === 'Student' ? 'student' : 'staff')
+  const unreadCount = await getUnreadCount()
   return (
     <ShellFrame
       items={NAV_ITEMS[profile.role]}
@@ -42,6 +44,7 @@ export default function DashboardShell({
       settingsHref={settingsHref}
       variant={shell}
       title={title}
+      unreadCount={unreadCount}
       signOut={
         <form action={logout}>
           <button className="flex h-10 w-full items-center gap-3 rounded-full px-3 text-sm font-medium text-rail-muted transition-colors max-lg:h-11 hover:bg-rail-hover hover:text-rail-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rail-ring">

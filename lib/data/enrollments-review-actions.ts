@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
+import { enrollmentDecisionErrorMessage } from '@/lib/data/db-errors'
 
 // Server Action for the Registrar's enrollment decision. It runs with the signed-in user's own session:
 // the database (RLS, column grants, enrollment rules trigger) is the final gate; the checks here only
@@ -12,31 +13,8 @@ import { getCurrentProfile } from '@/lib/auth/session'
 export type DecideEnrollmentState = { status: 'idle' | 'success' | 'error'; message: string }
 
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
-const NOT_ALLOWED = 'Your account is not allowed to do this.'
 const GENERIC = 'We could not save the decision. Please try again in a few minutes.'
 const MAX_REMARKS = 300
-
-function friendlyError(code: string | undefined, message: string | undefined, details: string | null | undefined): string {
-  if (code === 'P0001' && message) {
-    if (message.startsWith('section full:')) {
-      const list = details?.replace(/^full sections:\s*/, '').slice(0, 400)
-      return list
-        ? `This enrollment cannot be approved because a section has no seat left. Full sections: ${list}. Ask the student to pick another section, or reject the enrollment.`
-        : 'This enrollment cannot be approved because a section has no seat left.'
-    }
-    if (message.startsWith('no items:')) {
-      return 'This enrollment has no sections, so it cannot be approved. Reject it, or wait until the student adds sections.'
-    }
-    if (message.startsWith('wrong term:')) {
-      return 'A section in this enrollment belongs to another term, so it cannot be approved. Reject it so the student can be told.'
-    }
-    if (message.startsWith('enrollment locked:')) {
-      return 'This enrollment was already decided and cannot be changed. Reload the page.'
-    }
-  }
-  if (code === '42501') return NOT_ALLOWED
-  return GENERIC
-}
 
 // Approves or rejects one Pending enrollment. The update is limited to the status the Registrar saw
 // (`from`, always Pending), so an enrollment someone else decided meanwhile is reported, not overwritten.
@@ -73,7 +51,7 @@ export async function decideEnrollment(_prev: DecideEnrollmentState, formData: F
       .eq('enrollment_id', enrollmentId)
       .eq('status', 'Pending')
       .select('enrollment_id')
-    if (error) return { status: 'error', message: friendlyError(error.code, error.message, error.details) }
+    if (error) return { status: 'error', message: enrollmentDecisionErrorMessage(error.code, error.message, error.details) }
     if (!updated || updated.length === 0) {
       return { status: 'error', message: 'This enrollment was not changed. Someone may have decided it already. Reload the page.' }
     }

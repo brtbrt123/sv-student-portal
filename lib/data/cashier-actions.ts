@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
 import { formatPeso } from '@/components/cashier/format'
+import { paymentErrorMessage, chargeTagErrorMessage } from '@/lib/data/db-errors'
 
 // Server Actions for the Cashier. They run with the signed-in user's own session: the database (RLS,
 // column grants, triggers) is the final gate; the checks here only give friendly messages. Dates are
@@ -20,7 +21,6 @@ export type TagChargeState = { status: 'idle' | 'success' | 'error'; message: st
 const GENERIC_PAYMENT = 'We could not log this payment. Please try again in a few minutes.'
 const GENERIC_TAG = 'We could not update this charge. Please try again in a few minutes.'
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
-const NOT_ALLOWED = 'Your account is not allowed to do this.'
 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
@@ -89,13 +89,8 @@ export async function logPayment(_prev: LogPaymentState, formData: FormData): Pr
       recorded_by: profile.id,
     })
     if (error) {
-      if (error.code === '23505') {
-        return err('That receipt number is already used.', { receipt: 'This receipt number is already used. Use a new one.' })
-      }
-      if (error.code === '42501') return err(NOT_ALLOWED)
-      if (error.code === '23503') return err('We could not find that charge.', { charge: 'Choose the charge this payment is for.' })
-      if (error.code === '23514') return err('Enter an amount greater than 0.', { amount: 'Enter an amount greater than 0.' })
-      return err(GENERIC_PAYMENT)
+      const mapped = paymentErrorMessage(error.code, GENERIC_PAYMENT)
+      return err(mapped.message, mapped.fieldErrors)
     }
   } catch {
     return err(GENERIC_PAYMENT)
@@ -155,10 +150,7 @@ export async function tagCharge(_prev: TagChargeState, formData: FormData): Prom
       .eq('charge_id', chargeId)
       .eq('status', 'Unpaid')
       .select('charge_id')
-    if (error) {
-      if (error.code === '42501') return { status: 'error', message: NOT_ALLOWED }
-      return { status: 'error', message: GENERIC_TAG }
-    }
+    if (error) return { status: 'error', message: chargeTagErrorMessage(error.code, GENERIC_TAG) }
     if (!updated || updated.length === 0) {
       return { status: 'error', message: 'This charge was not changed. It may already be settled. Reload the page.' }
     }

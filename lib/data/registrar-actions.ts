@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { finalClearanceErrorMessage } from '@/lib/data/db-errors'
 
 export type IssueClearanceState = { status: 'idle' | 'success' | 'error'; message: string }
 
@@ -35,13 +36,8 @@ export async function issueFinalClearance(
       .select('clearance_id')
 
     if (error) {
-      if (error.code === 'P0001' && error.message.startsWith('pending items:')) {
-        return {
-          status: 'error',
-          message: 'An office has not cleared this student yet, so final clearance cannot be issued. Reload to see the latest status.',
-        }
-      }
-      return generic
+      const known = finalClearanceErrorMessage(error.code, error.message)
+      return known ? { status: 'error', message: known } : generic
     }
     if (!data || data.length === 0) {
       revalidatePath('/registrar', 'layout')

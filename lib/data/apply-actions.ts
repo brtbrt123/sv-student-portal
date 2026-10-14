@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { applicationFormErrorMessage } from '@/lib/data/db-errors'
 
 // Server Action for the public enrollment application (/apply). It runs with the anon session only.
 // The database rpc submit_application is the final gate; the checks here mirror its rules and give
@@ -70,15 +71,7 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
       p_mobile: mobile === '' ? null : mobile,
       p_program_id: programId,
     })
-    if (error) {
-      if (error.code === '22023' && error.message?.startsWith('invalid application:')) {
-        return { status: 'error', message: 'Some details were not accepted. Please check the form and try again.', values }
-      }
-      if (error.code === 'P0001' && error.message?.startsWith('try later:')) {
-        return { status: 'error', message: 'Applications are busy right now. Please try again in a little while.', values }
-      }
-      return { status: 'error', message: GENERIC, values }
-    }
+    if (error) return { status: 'error', message: applicationFormErrorMessage(error.code, error.message, GENERIC), values }
   } catch {
     return { status: 'error', message: GENERIC, values }
   }

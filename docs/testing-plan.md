@@ -66,7 +66,7 @@ clearance items can only be cleared by SQL as the database owner (recorded as te
 
 | Level | Evidence we have | Result so far | Main gaps |
 | --- | --- | --- | --- |
-| 1. Unit | None. The project has no unit test framework yet | Not done | All of it. Planned in issue #107 (owner and date not set) |
+| 1. Unit | Vitest, 78 cases UT-01 to UT-78 on the pure functions (section 5), run 2026-10-13 | Pass (78 of 78) | Only functions without a database; React components and the Server Actions themselves are covered at levels 2 and 3 |
 | 2. Integration | SQL suites TC-01 to TC-71 (clearance slice, hardening) and TC-72 to TC-122 (lockout, grades, documents, enrollment), all run on the live database | Pass (some rehearsal failures found real defects, section 6) | App-to-database calls are only covered through the browser checks of level 3. TC-94 has no recorded file |
 | 3. System | Browser walk E2E-01 to E2E-13 (clearance, 2026-10-11) and browser checks S-01 to S-12 (2026-10-12, grades, documents, enrollment, lockout in the app) | Pass, with the gaps on the right | Student enrollment submit/add/remove forms, Reject button, friendly error messages, audit rows of the new writes, phone width, dark mode, every role on the deployed site |
 | 4. Acceptance | None run | Not done | A script per SRS requirement with a sign-off by team members (section 9). Nobody is assigned yet |
@@ -75,14 +75,102 @@ clearance items can only be cleared by SQL as the database owner (recorded as te
 
 ## 5. Level 1: Unit testing
 
-Goal: test single functions (validation, formatting, status rules) without the database or the browser.
+Goal: test single functions (validation, formatting, error messages, routing) without the database or the browser. They need
+no secret and no network.
 
-| ID | What | Status | Planned |
+**Runner:** Vitest 3.2.7 (`npm test`, config `vitest.config.ts`, files in `tests/unit/`). **Run on:** 2026-10-13, Windows,
+Node 24, by Claude Code in the Project Manager's session on the PM's computer. A teammate has not re-run it yet.
+**Result: 78 of 78 passed.** The expected values were written from the documented behaviour of each function before the first
+run. To check that the tests can fail, the `@` was removed from the formula guard of the CSV export: UT-13 failed as it should,
+and the guard was put back.
+
+To make the database-error messages testable they were moved out of the `'use server'` files (which can only export async
+functions) into one pure module, `lib/data/db-errors.ts`; the CSV cell guard moved from the audit log screen to `lib/csv.ts`.
+The wording and the behaviour were not changed.
+
+| ID | Function (file) | Expected result | Result 2026-10-13 |
 | --- | --- | --- | --- |
-| UNIT-* | No unit test exists. No test framework is installed in the project | Not done | Issue #107. Owner: not assigned. Date: not set |
+| UT-01 | `formatPeso(1500)` (`components/cashier/format.ts`) | `₱1,500`, no decimals for whole pesos | Pass |
+| UT-02 | `formatPeso(1500.5)` | `₱1,500.50` | Pass |
+| UT-03 | `formatPeso(0)` | `₱0` | Pass |
+| UT-04 | `formatPeso(1234567.89)` | `₱1,234,567.89` | Pass |
+| UT-05 | `formatTimestamp('2026-09-20T16:00:00Z')`, Asia/Manila | `Sep 21, 2026` (already the next day in Manila) | Pass |
+| UT-06 | `formatTimestamp('2026-09-20T15:59:59Z')` | `Sep 20, 2026` | Pass |
+| UT-07 | `formatTimestamp('not a date')` | `-` | Pass |
+| UT-08 | `formatDateOnly('2026-09-20')` | `Sep 20, 2026` | Pass |
+| UT-09 | `formatDateOnly('2026-09-20T23:30:00+00:00')` | `Sep 20, 2026` (the day never shifts) | Pass |
+| UT-10 | `formatDateOnly('garbage')` | `-` | Pass |
+| UT-11 | `plural(1, 'item')`, `plural(2, 'item')`, `plural(0, 'class', 'classes')` | `1 item`, `2 items`, `0 classes` | Pass |
+| UT-12 | `csvCell('=SUM(A1:A9)')` (`lib/csv.ts`) | `"'=SUM(A1:A9)"` (no formula runs) | Pass |
+| UT-13 | `csvCell` of `+1`, `-2`, `@cmd` | each gets a leading apostrophe | Pass |
+| UT-14 | `csvCell` of a leading tab or carriage return | leading apostrophe | Pass |
+| UT-15 | `csvCell('Insert')` | `"Insert"` | Pass |
+| UT-16 | `csvCell('say "hi"')` | `"say ""hi"""` | Pass |
+| UT-17 | `isRoleName` (`lib/auth/roles.ts`) | true for the five roles, false for `admin`, `Teacher`, `5`, `null` | Pass |
+| UT-18 | `ROLE_HOME` | Student `/student`, Registrar `/registrar`, Cashier `/cashier`, Department `/department`, Admin `/admin` | Pass |
+| UT-19 | `roleForPath` of `/student`, `/cashier/payments`, `/admin/audit-log` | Student, Cashier, Admin | Pass |
+| UT-20 | `roleForPath` of `/studentx`, `/login`, `/` | `null` | Pass |
+| UT-21 | `isPublicPath` of `/apply`, `/apply/enroll`, `/auth/confirm` | true | Pass |
+| UT-22 | `isPublicPath` of `/student`, `/applyx`, `/registrar/applications` | false | Pass |
+| UT-23 | `normalizeStudentId('20260004')` (`lib/auth/student-id.ts`) | `2026-0004` | Pass |
+| UT-24 | `normalizeStudentId('2026-0004')` and with spaces around it | `2026-0004` | Pass |
+| UT-25 | `looksLikeStudentId` | true for `2026-0004`, `20260004`, `2026-000004`; false for `abc`, `2026-00` and an SQL injection string | Pass |
+| UT-26 | `studentIdToEmail('20260004')` and `('2026-0004')` | `2026-0004@students.pnc.test` for both | Pass |
+| UT-27 | `gradeErrorMessage` P0001 `not approved:` (`lib/data/db-errors.ts`) | tells the Registrar to approve the enrollment first | Pass |
+| UT-28 | `gradeErrorMessage` 23503 and an unknown error | grade-scale message; generic message with no raw database text | Pass |
+| UT-29 | `documentStatusErrorMessage` P0001 `bad status change:` | explains "one step at a time" | Pass |
+| UT-30 | `documentStatusErrorMessage` 42501 and unknown | "not allowed" message; generic update message | Pass |
+| UT-31 | `enrollmentErrorMessage` P0001 `enrollment exists:`, `enrollment locked:`, `wrong term:`, `duplicate section:` | one distinct message each | Pass |
+| UT-32 | `enrollmentErrorMessage` 42501 | "not allowed" message | Pass |
+| UT-33 | `enrollmentErrorMessage` unknown error | returns the generic text passed in by the action | Pass |
+| UT-34 | `enrollmentDecisionErrorMessage` `section full:` with details | names the full sections | Pass |
+| UT-35 | `enrollmentDecisionErrorMessage` `section full:` without details | short "no seat left" message | Pass |
+| UT-36 | `enrollmentDecisionErrorMessage` `no items:`, `enrollment locked:`, 42501, unknown | four distinct messages | Pass |
+| UT-37 | `applicationDecisionErrorMessage` `remarks required:`, `bad decision:`, 42501, unknown | four distinct messages | Pass |
+| UT-38 | `departmentApproveErrorMessage` `active hold:` | names the student and says to lift the hold | Pass |
+| UT-39 | `departmentHoldErrorMessage` 42501, 23503, 23514, unknown | four distinct messages | Pass |
+| UT-40 | `cn('p-2', 'p-4')` (`lib/utils.ts`) | `p-4` | Pass |
+| UT-41 | `cn` with falsy values and the custom shadow sizes | `a c`; `shadow-xl` wins over `shadow-elev-sm` | Pass |
+| UT-42 | `paymentErrorMessage` 23505, 23503, 23514, 42501 (cashier, `lib/data/db-errors.ts`) | each rule names its form field (receipt, charge, amount) or the permission message | Pass |
+| UT-43 | `paymentErrorMessage` unknown error; `chargeTagErrorMessage` | generic text with no field; 42501 maps, anything else is generic | Pass |
+| UT-44 | `documentRequestErrorMessage` (new document request) | permission, unknown type with its field, bad purpose or copies, unknown error | Pass |
+| UT-45 | `applicationFormErrorMessage` (public application form) | invalid details, the flood valve ("try later"), unknown error | Pass |
+| UT-46 | `finalClearanceErrorMessage` (Registrar) | `pending items:` is explained; any other error gives `null` | Pass |
+| UT-47 | `enrollmentSubmitErrorMessage` | already enrolled, bad year level with its field (1 to 6), a trigger rule, unknown error | Pass |
+| UT-48 | `enrollmentAddSectionErrorMessage` | duplicate section, unknown section, a trigger rule, unknown error | Pass |
+| UT-49 | `departmentReviewErrorMessage`, `departmentLiftHoldErrorMessage` | permission error named, anything else generic with no database text | Pass |
+| UT-50 | `createQueueToken` then `verifyQueueToken` (`lib/queue/qr-token.ts`) | a fresh queue code verifies and returns the same student | Pass |
+| UT-51 | `createQueueToken` | the code has the shape `CUQ1.<student id>.<window>.<signature>` | Pass |
+| UT-52 | `createQueueToken` at +14 s and +15 s | same code inside a 15-second window, a different code in the next | Pass |
+| UT-53 | `refreshInSeconds` | 15, 5 and 1 at 0 s, 10 s and 14.2 s into a window | Pass |
+| UT-54 | `verifyQueueToken` in the next window | still accepted (grace for a scan at the edge of a window) | Pass |
+| UT-55 | `verifyQueueToken` two windows later and 5 minutes later | rejected as expired, so a screenshot stops working | Pass |
+| UT-56 | `verifyQueueToken` with a code from a far-future window | rejected as expired | Pass |
+| UT-57 | `verifyQueueToken` with a code signed by another secret | rejected as bad signature | Pass |
+| UT-58 | `verifyQueueToken` after changing the student id or the window in the code | rejected as bad signature (no forging a code for another student) | Pass |
+| UT-59 | `verifyQueueToken` with empty, short, wrong-prefix, oversize and wrong-shape input | rejected as malformed, never throws | Pass |
+| UT-60 | `createQueueToken` with a bad id or a short secret; `verifyQueueToken` with a short secret | throws; rejected | Pass |
+| UT-61 | `queueErrorMessage` P0001 `already queued: #8124231` (`lib/data/db-errors.ts`) | names the ticket | Pass |
+| UT-62 | `queueErrorMessage` with a label that is not a ticket label | the text is not echoed (no markup in the message) | Pass |
+| UT-63 | `queueErrorMessage` `finish first:`, `queue closed:`, `queue busy:`, `bad ticket change:` | one distinct message each | Pass |
+| UT-64 | `queueErrorMessage` 22023, 42501 and an unknown error | not-an-active-student message, permission message, generic message with no database text | Pass |
+| UT-65 | `ordinal` (`lib/queue/ordinal.ts`) | 1st, 2nd, 3rd, 4th, 10th, 21st, 22nd, 23rd, 25th, 101st to 103rd | Pass |
+| UT-66 | `ordinal` of 11, 12, 13, 111, 112, 113 | always `th` | Pass |
+| UT-67 | `estimateWait` (`lib/queue/line.ts`) | 3 to 5 minutes per person ahead (4 ahead: 12 to 20 min); nothing when nobody is ahead | Pass |
+| UT-68 | `formatWait` | `12–20 min` with an en dash; `5 min` when both ends are equal | Pass |
+| UT-69 | `lineSlots` for a short line | everybody shown: the people ahead, one "you", the people behind | Pass |
+| UT-70 | `lineSlots(2, 20)` | the first 6 positions and a gap | Pass |
+| UT-71 | `lineSlots(15, 20)` | the first three, a gap, then you (15) | Pass |
+| UT-72 | `lineSlots` with disagreeing counts | always exactly one "you" | Pass |
+| UT-73 | `formatWhen` (`lib/notifications/time.ts`) | under a minute and a time slightly in the future read "Just now" | Pass |
+| UT-74 | `formatWhen` | "5 min ago", "59 min ago", "2 h ago" (up to six hours) | Pass |
+| UT-75 | `formatWhen` | earlier the same Manila day "Today, 8:05 AM"; the day before "Yesterday, 3:30 PM" | Pass |
+| UT-76 | `formatWhen` | older dates "Oct 1, 10:00 AM", the year only for another year; a bad date gives empty text | Pass |
+| UT-77 | `unreadLabel` | nothing for 0, the number up to 99, "99+" from 100 | Pass |
+| UT-78 | `kindIcon` (`lib/notifications/kind.ts`) | each kind code prefix maps to its icon; an unknown kind to the plain bell | Pass |
 
-Nothing here has been run. The database triggers are unit-like checks of single rules, but they are recorded as integration
-tests in section 6 because they run against the live database.
+The database triggers are unit-like checks of single rules, but they are recorded as integration tests in section 6 because
+they run against the live database.
 
 ## 6. Level 2: Integration testing (database suites)
 
@@ -101,8 +189,12 @@ TC-01 to TC-70: `docs/issue-12-testing-guide.md`. Files: `docs/database/` (table
 | Login lockout (SEC-03) | TC-72 to TC-82 (11 cases) | `docs/database/login_lockout_test.sql` | 2026-10-12, PM ran, Claude read | 11 of 11 Pass live. The rehearsal first found a FAIL on TC-81 (finding F-5) |
 | Grades rules (REQ-REG-01) | TC-83 to TC-93 (11 cases) | `docs/database/grades_rules_test.sql` | 2026-10-12, PM ran, Claude read | Pass live |
 | Document request rules (REQ-DOC-01, REQ-DOC-02) | TC-95 to TC-108 (14 cases) | `docs/database/documents_rules_test.sql` | 2026-10-12, PM ran, Claude read | 14 of 14 Pass live. The rehearsal first found 2 failures (finding F-6) |
-| Enrollment rules (REQ-STU-05, REQ-REG-04) | TC-109 to TC-122 (14 cases) | `docs/database/enrollment_rules_test.sql` | 2026-10-12, PM ran, Claude read | Pass live, first time |
+| Enrollment rules (REQ-STU-05, REQ-REG-04) | TC-109 to TC-122 (14 cases) | `docs/database/enrollment_rules_test.sql` | 2026-10-12, PM ran, Claude read | Pass live, first time |
+| Virtual queue for the Registrar window (physical queuing for enrollment) | TC-139 to TC-166 (28 cases) | `docs/database/queue_rules_test.sql` | 2026-10-13, PM ran, Claude read. Rehearsed first (`queue_rules_rehearsal.sql`): 28 of 28 OK, rolled back. Then the live change, then this file again against the live tables | 28 of 28 Pass live, first time |
+| Regression after the queue change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-13, re-run after the queue went live | Unchanged: 15 cells OK plus the one known data-dependent CHECK cell (TC-23, Ben's lifted hold); every TC-27 permission flag as expected |
+| Notifications (in-app inbox for every role) | TC-167 to TC-198 (32 cases) | `docs/database/notifications_rules_test.sql` | 2026-10-13, PM ran, Claude read. Rehearsed first (`notifications_rules_rehearsal.sql`): 32 of 32 OK, rolled back. Then the live change, then this file again against the live tables | 32 of 32 Pass live, first time |
 | Regression after each Sprint 4 change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-12, re-run after the lockout, after grades and documents, and after enrollment | Unchanged each time: 15 cells OK plus one known CHECK cell on TC-24 (the seed data was changed by the 2026-10-11 browser walk, D-1) |
+| Regression after the notifications change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-13, re-run after the notifications went live | Unchanged: 15 cells OK plus the one known data-dependent CHECK cell (TC-23); every TC-27 permission flag as expected |
 
 Notes:
 - TC-94 does not appear in any test file. It is not recorded as a case. Not run, not claimed.
@@ -122,7 +214,9 @@ Mapping of TC ranges to areas:
 | Login lockout | TC-72 to TC-82 |
 | Grades | TC-83 to TC-93 |
 | Documents | TC-95 to TC-108 |
-| Enrollment | TC-109 to TC-122 |
+| Enrollment | TC-109 to TC-122 |
+| Virtual queue (tickets) | TC-139 to TC-166 |
+| Notifications | TC-167 to TC-198 |
 
 ## 7. Level 3: System testing (browser, end to end)
 
@@ -171,6 +265,29 @@ Not verified in the browser (stays "Not done", section 12):
 - the friendly error messages of the new screens;
 - the audit rows written by the browser tests of 2026-10-12;
 - the same checks on the deployed Vercel site.
+
+### 7.3 The virtual queue in the app (browser, 2026-10-13)
+
+Run by: Claude drove the browser on localhost against the live data after `queue_rules.sql` went live; the Project Manager signed
+in. Two pane tabs with separate sign-ins: `localhost:3000` as student 2026-0004 (Test Applicant, no enrollment) and
+`127.0.0.1:3000` as the Registrar (Cruz, Rey). **The camera was not used:** the code was read from the QR component of the
+student page and typed into the scan field of the Registrar page, within the 30 seconds a code lives.
+
+| ID | Role and steps | Expected | Actual (2026-10-13) | Result |
+| --- | --- | --- | --- | --- |
+| Q-01 | Student: open Enrollment | The "Physical enrollment at the Registrar" card with a QR that changes every 15 s | Card shown; the QR pattern changed within 15 to 20 s | Pass |
+| Q-02 | Registrar: open Queue | The page loads from the live database with an empty queue | "Waiting (0)", no error | Pass |
+| Q-03 | Registrar: scan the student's code | The student's card (name, number, program); no ticket yet | "Applicant, Test, 2026-0004, BSCS"; Waiting stayed 0 | Pass |
+| Q-04 | Registrar: Approve and issue ticket | A random 7-digit ticket; the student's page switches to the ticket by itself | Ticket #8503599; student saw "Your ticket #8503599, You are next" within 6 s | Pass |
+| Q-05 | Registrar: Call next with window "Window 1" | The Registrar sees who is being served; the student sees a green "your turn" with the window | "Now serving #8503599 ... Window 1"; student: "It is your turn. Go to Window 1 now." | Pass |
+| Q-06 | Registrar: Done | The line is empty, totals update; the student sees they were served | "Today: 1 done"; student: "You were served today (#8503599)" | Pass |
+| Q-07 | Registrar: scan an expired code (the one used in Q-03) | Rejected as expired, nothing issued | "This code has expired. Ask the student to hold the phone up again; the code refreshes every 15 seconds." | Pass |
+| Q-08 | Registrar: scan a forged code (valid shape, wrong signature) | Rejected | "This is not a valid portal queue code." | Pass |
+| Q-09 | Registrar: scan junk text | Rejected | "This is not a portal queue code." | Pass |
+
+Not verified in the browser (stays "Not done", section 12): the camera scan and a USB barcode scanner (hardware not tried),
+the QR on a real phone, "Leave the queue", the No-show button, several students in one line (order and "You are 25th"
+numbers), the audit rows of the ticket changes on the Admin screen, phone widths and light mode, and the deployed Vercel site.
 
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 
@@ -236,7 +353,9 @@ rate limiting).
 | V-2 | Brute-force on the login (SEC-03) | Login lockout with exponential backoff: 5 failures, 60 s doubling, cap 900 s, 24 h window; checked before the password (`docs/database/login_lockout.sql`) | TC-72 to TC-82 (11 of 11 pass live, 2026-10-12); in the app, 5 wrong passwords then "Too many failed sign-in attempts. Try again in 1 minute." with no password check (S-01) | Fixed, with residual risks below |
 | V-3 | Request flooding / denial of service (SEC-04, rate limiting) | Vercel firewall rule "Limit POST requests per IP" (POST, fixed window 60 s, 20 requests per IP, answer 429) | `docs/rate-limiting.md` | **Fixed and tested 2026-10-12**: 60 quick POSTs to `/login` got 429 after about 24 (approximate count; see the file for all runs, including two earlier runs that found nothing because the rule was not yet enforcing) |
 | V-4 | A document request could not take remarks while Pending (a rule conflict: the table check forbids `processed_by` on Pending, the policy demands it). Found by the documents rehearsal, 2026-10-12 | Trigger and tests changed so the database sets the fields itself | All 14 cases pass live (TC-95 to TC-108), including the "remarks while Pending" case (2026-10-12) | Fixed |
-| V-5 | SQL injection (SEC-05) | All database access goes through the Supabase client with parameters; the test SQL files and the app build no SQL from user input | No direct test. The grants, RLS and trigger tests show that raw columns cannot be written by a client, which limits the damage, but this is not an injection test | **Not done**: a direct test (hostile strings in the forms) is planned in issue #108. Owner and date not set |
+| V-5 | SQL injection (SEC-05) | All database access goes through the Supabase client with parameters; the test SQL files and the app build no SQL from user input | No direct test. The grants, RLS and trigger tests show that raw columns cannot be written by a client, which limits the damage, but this is not an injection test | **Not done**: a direct test (hostile strings in the forms) is planned in issue #108. Owner and date not set |
+| V-6 | Queue QR forgery, replay and sharing (physical queuing). A static or guessable code would let anyone take a ticket for another student, or let a screenshot be passed around | The code is a signed token that changes every 15 seconds: HMAC-SHA256 over the student and the time window with a server-only secret (`QUEUE_QR_SECRET`, at least 32 characters), valid for its own window and the next (30 s at most); the signature is checked first and compared in constant time (`lib/queue/qr-token.ts`); only the server makes and checks it | UT-50 to UT-60 (forged, tampered, other-secret, expired, future and malformed codes); Q-07 to Q-09 in the browser | Pass. Residual: proxy queuing, see V-7 |
+| V-7 | Proxy queuing and ticket trading: someone else takes the place of a student who is not on campus | Tickets are issued only by a Registrar after comparing the student's card on screen with the person and the ID (Approve step); the ticket number shown to people is random and 7 digits, the line order is kept separately and hidden (`ticket_code` vs `ticket_number`); the owner's name is shown again at the window | TC-139 to TC-166 (random codes, order follows issue order, student privacy); Q-03 to Q-06 | Partly. A person holding a student's phone and ID who looks similar can still pass. The student photo (not built, a placeholder is in the SQL and the screen) would reduce this. Accepted residual risk |
 
 Residual risks of the login lockout (V-2), written in the header of `login_lockout.sql`, **not tested**:
 - An attacker can lock a real user out by sending wrong passwords for that email (denial of service on one account).
@@ -254,7 +373,9 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | Brute-force lockout (database) | TC-72 to TC-82 | 2026-10-12 | Pass |
 | Brute-force lockout (app) | S-01, S-02 | 2026-10-12 | Pass |
 | No account enumeration (a made-up email behaves like a real one) | TC-78 | 2026-10-12 | Pass |
-| Rate limiting | `docs/rate-limiting.md` | 2026-10-12 | Pass (approximate count; sign-in route only) |
+| Rate limiting | `docs/rate-limiting.md` | 2026-10-12 | Pass (approximate count; sign-in route only) |
+| Queue QR codes cannot be forged, replayed after 30 s or malformed | UT-50 to UT-60, Q-07 to Q-09 | 2026-10-13 | Pass |
+| Queue: only a Registrar issues, calls and finishes tickets; students see only their own ticket and aggregate numbers; no direct writes | TC-139 to TC-166 | 2026-10-13 | Pass |
 | SQL injection test | none | | Not done |
 | Secret handling (no `service_role` key in the repo or browser) | `docs/database/README.md` gives a pre-commit scrub command. No recorded run as a test case | | Not done as a recorded test |
 
@@ -271,13 +392,15 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | F-7 | Ticket numbers jump (for example DR-2026-000054) because rolled-back tests consume sequence values | Recorded so nobody reads a gap in the numbers as lost requests |
 | D-1 | The browser walk changed the seed data on 2026-10-11: Ben's hold is lifted, his charge is Cleared, a 15,000 payment OR-0003 exists, all four of his items are cleared and his clearance is approved. The audit rows stay (append-only). Resetting needs SQL by the owner. This is why TC-24 shows one known CHECK cell in the regression | Recorded; reset only if a fresh demo is needed |
 | D-2 | Two of the four offices have no staff account, so E2E-09 used SQL | Recorded as setup |
-| D-3 | The browser checks of 2026-10-12 also changed live data: one new document request (DR-2026-000054) moved to Ready, one grade re-saved, Ben's pending enrollment approved (final). The audit rows stay | Recorded |
+| D-3 | The browser checks of 2026-10-12 also changed live data: one new document request (DR-2026-000054) moved to Ready, one grade re-saved, Ben's pending enrollment approved (final). The audit rows stay | Recorded |
+| F-8 | The queue rehearsal (`queue_rules_rehearsal.sql`), 2026-10-13, passed with no failure on its first run, both the first design and the revised one (random ticket codes, window in the student status, student card). Earlier rehearsals found defects (F-4 to F-6); this one found none | Recorded so a clean result is not read as an unchecked one: the live run and the live test file were run as well |
+| D-4 | The browser checks of 2026-10-13 changed live data: one queue ticket (#8503599) for student 2026-0004 went Waiting, Serving, Done, with its audit rows. The audit rows and the ticket stay (append-only) | Recorded; daily numbering restarts each Manila day |
 
 ## 12. Gaps and work not done (nothing is hidden)
 
 | Item | Level | Status | Plan |
 | --- | --- | --- | --- |
-| Unit tests (no framework) | 1 | Not done | Issue #107. Owner and date not set |
+| Unit tests | 1 | Done (78 of 78 pass) | Section 5. Not covered: React components and the Server Actions as a whole (levels 2 and 3) |
 | Acceptance script run and signed off by team members | 4 | Not done | Section 9. Before the freeze on 2026-10-15. Owner: to be named by the PM |
 | Performance: PER-01 and PER-02 | 5 | Not done | Issue #109. Owner and date not set |
 | Rate limiting (SEC-04) | 6 | Done (sign-in route) | Vercel firewall rule "Limit POST requests per IP" (POST, 60 s fixed window, 20 requests per IP, 429) tested 2026-10-12: 429 after about 24 POSTs in a minute from one IP; see `docs/rate-limiting.md` |
@@ -290,7 +413,15 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | Admin user accounts and academic catalog (REQ-ADM-01, REQ-ADM-04) | 3 | Not done | Admin users is a stretch item; no test recorded for either |
 | Same checks on the deployed Vercel site, all roles | 3 | Not done | Issue #116 |
 | Phone-width and dark-mode scans, CSV export | 3 | Not done | Issue #106 |
-| TC-94 | 2 | No case exists | Not claimed |
+| TC-94 | 2 | No case exists | Not claimed |
+| Queue: camera scan and USB barcode scanner | 3 | Not done | Needs the hardware. A USB scanner must be a 2D imager that can read a phone screen |
+| Queue: student photo on the card, visit day in the acceptance email, Realtime | 3 | Not built | A photo placeholder is in the SQL and on the screen. Polling every 5 to 10 s is used instead of Realtime (a student cannot see other tickets under the privacy rules, so Realtime would only signal that something changed) |
+| Queue: Leave the queue, No-show, several students and the 25th-in-line text, audit rows on screen, the Documents queue for students | 3 | Not done | The database supports Documents; only the Enrollment queue is wired to students |
+| Queue: `QUEUE_QR_SECRET` on Vercel | 6 | Not done | The variable must be added to the Vercel project before dev is merged to main, or the QR is "not set up" on the live site |
+| Notifications: older test files after the change | 2 | Not done | `notifications_rules.sql` is live (2026-10-13) and its 32 tests pass. Older test files that compare a table's full trigger list (grades_rules_test.sql TC-83, documents_rules_test.sql TC-95, trigger_dept_approval_test.sql, trigger_finance_autoclear_test.sql, trigger_final_clearance_test.sql) need their expected lists updated; `queue_rules.sql` must not be run again as it stands (its own check expects two triggers on `queue_tickets`) |
+| Notifications: the screens in the browser with real events, the badge, the bell on a phone | 3 | Not done | The database part is live. Only the layout was seen, with fake data at phone width |
+| Notifications: retention and Admin events | 2 | Not decided | Proposed: delete read notifications after 90 days and everything after 12 months (maintenance queries in the SQL header); the Admin receives no event yet |
+| Queue: stale tickets and retention | 2 | Not done | Maintenance m1 (close tickets left open from an earlier day) and the 12-month retention proposal are in the header of `queue_rules.sql`; nothing runs automatically |
 
 ## 13. Coverage: SRS requirement to test cases
 
@@ -325,7 +456,9 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | PER-01, PER-02 | none | Not done |
 | PER-03 deploy on merge to main | Vercel deployment of main verified 2026-10-11 (signed in as student1; see HANDOFF.md) | Partly: not a written test case |
 | ETH-01 privacy between students | N-01, N-02, TC-12 to TC-14 | Pass |
-| ETH-02 data minimization | none | Not tested: a review item for the ethical analysis (issue #111) |
+| ETH-02 data minimization | none | Not tested: a review item for the ethical analysis (issue #111) |
+| Physical queuing for enrollment (professor's pain point) | UT-50 to UT-60 (QR), UT-61 to UT-66, TC-139 to TC-166, Q-01 to Q-09 | Partly: the core flow passes in the browser with a typed code; the camera, a USB scanner, a phone and the photo are not tested; proxy queuing is a documented residual risk (V-7) |
+| Notifications (all roles) | UT-73 to UT-78; TC-167 to TC-198 | Partly: the database part passes live; the screens are not yet tested with real events in the browser |
 
 ## 14. How to re-run, and what is still to fill in
 
@@ -333,7 +466,8 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
    whole tab (each ends in a rollback). The regression is one paste: `docs/database/regression_after_grants.sql`.
 2. Browser walk: sign in to each account in the browser pane in the order of section 7.1; use the throwaway-term steps of
    E2E-01 if no student without a clearance exists.
-3. Before a pull request: `npx tsc --noEmit`, `npx eslint app components lib types`, `npm run build`.
+3. Unit tests: `npm test` (no secret and no database needed). Queue database tests: `docs/database/queue_rules_test.sql` (one rolled-back transaction; run it when nobody is using the queue, TC-165 briefly touches today's Enrollment queue). The queue pages need `QUEUE_QR_SECRET` in `.env.local`.
+4. Before a pull request: `npm test`, `npx tsc --noEmit`, `npx eslint app components lib types`, `npm run build`.
 
-Still to fill in before the freeze (2026-10-15): level 1 (unit), level 4 (acceptance sign-off), level 5 (performance), the
+Still to fill in before the freeze (2026-10-15): level 4 (acceptance sign-off), level 5 (performance), the
 rate limiting test of the write actions, the SQL injection test, and the gaps of section 12.

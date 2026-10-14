@@ -2,17 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { gradeErrorMessage } from '@/lib/data/db-errors'
 
 export type EncodeGradeState = { status: 'idle' | 'success' | 'error'; message: string }
-
-const NOT_APPROVED =
-  "This grade cannot be saved because the student's enrollment is not approved. Approve the enrollment first, then encode the grade."
-
-function mapError(error: { code?: string; message: string }): string {
-  if (error.code === 'P0001' && error.message.startsWith('not approved:')) return NOT_APPROVED
-  if (error.code === '23503') return 'That grade is not on the grade scale. Pick a grade from the list.'
-  return 'We could not save the grade. Please try again in a few minutes.'
-}
 
 // Encodes or corrects one grade. Sends only { enrollment_item_id, grade_code, encoded_by } on insert
 // and { grade_code, encoded_by } on update; encoded_at is stamped by the database. Inserts when the
@@ -41,21 +33,21 @@ export async function encodeGrade(_prev: EncodeGradeState, formData: FormData): 
     }
 
     const existing = await supabase.from('grades').select('grade_id').eq('enrollment_item_id', itemId).limit(1).maybeSingle()
-    if (existing.error) return { status: 'error', message: mapError(existing.error) }
+    if (existing.error) return { status: 'error', message: gradeErrorMessage(existing.error) }
 
     if (existing.data) {
       const res = await update()
-      if (res.error) return { status: 'error', message: mapError(res.error) }
+      if (res.error) return { status: 'error', message: gradeErrorMessage(res.error) }
       if (!res.found) return { status: 'error', message: 'This grade is no longer available. Reload the page.' }
     } else {
       const { error } = await supabase
         .from('grades')
         .insert({ enrollment_item_id: itemId, grade_code: gradeCode, encoded_by: user.id })
       if (error) {
-        if (error.code !== '23505') return { status: 'error', message: mapError(error) }
+        if (error.code !== '23505') return { status: 'error', message: gradeErrorMessage(error) }
         // Someone encoded it a moment ago (one grade per item): correct that one instead.
         const res = await update()
-        if (res.error) return { status: 'error', message: mapError(res.error) }
+        if (res.error) return { status: 'error', message: gradeErrorMessage(res.error) }
       }
     }
   } catch {

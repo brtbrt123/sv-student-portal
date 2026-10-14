@@ -15,15 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui'
+import { csvCell } from '@/lib/csv'
 import type { AuditEntry } from '@/lib/data/audit'
 
 const ACTION_TONE = { Insert: 'success', Update: 'warning', Delete: 'danger' } as const
-
-// Spreadsheet programs run text that starts with these characters as a formula.
-function csvCell(value: string) {
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
-  return `"${safe.replace(/"/g, '""')}"`
-}
 
 // Read-only view of the append-only audit log: no edit or delete controls exist here.
 // Search and the action filter run in the browser over the loaded page of entries (the latest

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getMyDepartment } from '@/lib/data/department'
+import { departmentApproveErrorMessage, departmentHoldErrorMessage, departmentReviewErrorMessage, departmentLiftHoldErrorMessage } from '@/lib/data/db-errors'
 
 // Writes for the Department screens. Everything runs with the signed-in user's own session: Row Level
 // Security and the database triggers decide what is allowed, and the "by" columns always carry the
@@ -22,32 +23,12 @@ export type DeptActionState = {
 const GENERIC = 'Something went wrong on our side. Please try again in a few minutes.'
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
 
-type DbError = { code?: string; message?: string } | null
-
 function fail(message: string, extra: Partial<DeptActionState> = {}): DeptActionState {
   return { status: 'error', message, stamp: Date.now(), ...extra }
 }
 
 function ok(message: string): DeptActionState {
   return { status: 'success', message, stamp: Date.now() }
-}
-
-// Known database errors (SQLSTATE and message prefix) in plain language. Unknown errors get a generic
-// message: no table names, no raw database text.
-function approveError(error: NonNullable<DbError>, who: string): string {
-  const message = error.message ?? ''
-  if (error.code === 'P0001' && message.startsWith('active hold:')) {
-    return `${who} has an active hold from your department. Lift the hold first, then approve this item.`
-  }
-  if (error.code === '42501') return 'You can only approve items that belong to your own department.'
-  return GENERIC
-}
-
-function holdError(error: NonNullable<DbError>): string {
-  if (error.code === '42501') return 'You can only place holds on students of your own department.'
-  if (error.code === '23503') return 'That student could not be found.'
-  if (error.code === '23514') return 'Enter the reason for the hold.'
-  return GENERIC
 }
 
 function text(formData: FormData, key: string, max: number): string {
@@ -89,7 +70,7 @@ export async function reviewItem(_prev: DeptActionState, formData: FormData): Pr
         .eq('clearance_item_id', itemId)
         .is('cleared_at', null)
         .select('clearance_item_id')
-      if (error) return fail(error.code === '42501' ? 'You can only review items of your own department.' : GENERIC)
+      if (error) return fail(departmentReviewErrorMessage(error.code))
       if (!data || data.length === 0) return fail('This item was already cleared or is no longer available.')
       revalidatePath('/department', 'layout')
       return ok(`Rejected for ${studentName}. The student can see your remarks; the item stays pending.`)
@@ -101,7 +82,7 @@ export async function reviewItem(_prev: DeptActionState, formData: FormData): Pr
       .eq('clearance_item_id', itemId)
       .is('cleared_at', null)
       .select('clearance_item_id')
-    if (error) return fail(approveError(error, studentName))
+    if (error) return fail(departmentApproveErrorMessage(error, studentName))
     if (!data || data.length === 0) return fail('This item was already cleared or is no longer available.')
     revalidatePath('/department', 'layout')
     return ok(`Approved for ${studentName}.`)
@@ -131,7 +112,7 @@ export async function placeHold(_prev: DeptActionState, formData: FormData): Pro
       reason,
       placed_by: userId,
     })
-    if (error) return fail(holdError(error), { values })
+    if (error) return fail(departmentHoldErrorMessage(error), { values })
     revalidatePath('/department', 'layout')
     revalidatePath('/student', 'layout')
     return ok('Hold placed. The student will see it, and approval is blocked until you lift it.')
@@ -156,7 +137,7 @@ export async function liftHold(_prev: DeptActionState, formData: FormData): Prom
       .eq('hold_id', holdId)
       .is('lifted_at', null)
       .select('hold_id')
-    if (error) return fail(error.code === '42501' ? 'You can only lift holds placed by your own department.' : GENERIC)
+    if (error) return fail(departmentLiftHoldErrorMessage(error.code))
     if (!data || data.length === 0) return fail('This hold was already lifted or is no longer available.')
     revalidatePath('/department', 'layout')
     revalidatePath('/student', 'layout')
