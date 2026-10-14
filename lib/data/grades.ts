@@ -55,10 +55,12 @@ export async function getStudentGradesState(): Promise<StudentGradesState> {
     const rows = data ?? []
     const termIds = [...new Set(rows.map((r) => r.term_id).filter((v): v is number => v !== null))]
     const { data: termRows, error: termError } = termIds.length
-      ? await supabase.from('terms').select('term_id, school_year, semester').in('term_id', termIds)
+      ? await supabase.from('terms').select('term_id, school_year, semester, start_date').in('term_id', termIds)
       : { data: [], error: null }
     if (termError) return { kind: 'error' }
     const labels = new Map((termRows ?? []).map((t) => [t.term_id, `${t.semester} ${t.school_year}`]))
+    // Newest term first by its start date: term ids follow the order terms were created, not the calendar.
+    const starts = new Map((termRows ?? []).map((t) => [t.term_id, t.start_date]))
 
     const byTerm = new Map<number, StudentGrade[]>()
     for (const r of rows) {
@@ -77,7 +79,7 @@ export async function getStudentGradesState(): Promise<StudentGradesState> {
     }
 
     const terms: StudentTermGrades[] = [...byTerm.entries()]
-      .sort((a, b) => b[0] - a[0])
+      .sort((a, b) => (starts.get(b[0]) ?? '').localeCompare(starts.get(a[0]) ?? '') || b[0] - a[0])
       .map(([termId, grades]) => {
         grades.sort((a, b) => a.subjectCode.localeCompare(b.subjectCode))
         const numeric = grades.filter((g) => g.numericValue !== null)
