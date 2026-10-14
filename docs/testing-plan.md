@@ -315,6 +315,45 @@ page after the Reject (the "not approved" box and the remarks were not looked at
 same term from the screen; the Registrar list's free-seat figures; the same checks on the deployed Vercel site and on a phone.
 Gap against issue #101: the section picker shows "capacity 40", not the free places left.
 
+### 7.5 QA pass: phone width, dark mode, accessibility (browser, 2026-10-14)
+
+Run by: Claude in the browser pane at a phone size (375 x 812, device pixel ratio 2, mobile emulation) on `localhost:3000` against the live
+data; the Project Manager signed in as each role. For issue #106. An audit script was run on every screen after the page loaded. It measured:
+page-level horizontal scroll; elements wider than the screen outside a scroll container; tap targets under 44 px (links, buttons, fields,
+tabs; a checkbox or radio is measured by the label around it, which is the real tap area); text contrast from the computed text colour and
+the effective background (text over a photo or an image is skipped: unknown background); controls without an accessible name; fields without a
+label; images without `alt`; heading order and the number of `h1`; page language, title and the `main` landmark. Keyboard focus was checked by
+pressing Tab on a page and reading the focused element.
+
+| Area | Screens checked | Themes | Result |
+| --- | --- | --- | --- |
+| Public | `/apply`, `/apply/enroll`, login (student view and staff view) | light and dark (`/apply/enroll`: light only) | See findings F-2, F-3, F-5 |
+| Student | `/student`, clearance, documents, enrollment, grades, notifications, queue (7) | light and dark | One finding, F-1 (fixed) |
+| Registrar | dashboard, applications, clearance, documents, enrollments, grades, notifications, queue (Enrollment line and Documents line) (9) | light and dark | No findings |
+| Cashier | dashboard, charges, clearance, payments, notifications (5) | light and dark | No findings |
+| Department | dashboard, clearance, holds, notifications (4) | light and dark | No findings |
+| Admin | dashboard, users, academic setup, audit log, notifications (5) | light and dark | No findings |
+
+Across all of them: no page-level horizontal scroll on any screen (wide tables scroll sideways inside their own box); no control without a
+name and no field without a label; no image without `alt`; headings in order with one `h1`; the page language, title and `main` landmark are
+present; no contrast failure among the text the script could measure; the status badges carry the status word (`StatusBadge` prints the
+text), so status is not colour only. Keyboard focus (7 Tab stops in dark mode and 1 in light mode, on the Admin users page): every control tried showed a 2 px solid outline (gold on fields and the skip link, light
+grey on the header buttons in dark mode; charcoal at 16.4 to 1 against the page in light mode).
+
+| ID | Screen | Problem | Severity | Resolution |
+| --- | --- | --- | --- | --- |
+| F-1 | Student: documents and enrollment pages, the "Open the Queue page" button of the queue banner | 40 px tall, 4 px under the 44 px minimum tap target | Low | **Fixed** (`h-11`, 44 px) on branch `chore/qa-pass` |
+| F-2 | Public: `/apply` and `/apply/enroll`, light mode, the gold "Cabuyao" word in the header | The script measured 1.27 to 1 for the gold text on the pale header. It is the school's logotype with a dark outline and the word "University" under it is dark; logotypes are exempt from the contrast rule | Accepted | Accepted, no change. Looked at in a screenshot: legible |
+| F-3 | Public: `/apply/enroll`, the `website` field (154 x 20 px) | It is the hidden spam-trap field (a honeypot) meant to be invisible to people, so its size does not matter for tapping | Not an issue | None |
+| F-4 | Every signed-in screen, the "Skip to main content" link (32 x 16 px) | It is only shown to keyboard users when focused | Not an issue | None |
+| F-5 | Public: `/apply/enroll`, the white "Start your enrollment" text over the campus photo | The script cannot measure text over an image (it read the page background, 1.08 to 1). The text sits on a black 60 % gradient at the bottom of the photo. By calculation the large title passes even over a bright photo (about 3.9 to 1 against the 3 to 1 needed for large text); the small line under it is estimated at 5 to 1 or better over the grass; not measured | Low | Accepted as judged by eye and by calculation, **not measured**. To be re-checked if the photo changes |
+| F-6 | Every page, the theme button | The label comes from a client-side value, so the server's HTML says "Switch to dark mode" for a moment even in dark mode, then corrects itself after loading. A screen reader could read the wrong label in that moment | Low | Recorded, not fixed (a neutral label such as "Dark mode" with `aria-pressed` would remove it) |
+
+Not tested in this pass: a real phone (a phone emulation is not a phone), text enlarged by the user or browser zoom, a screen reader, the
+screens in their empty and error states and with many rows (the data set is small), the `/set-password` page (it needs a recovery link and
+redirects to the login without one), and `/apply/enroll` in dark mode. The live site was not re-checked after the fix (the fix is not
+deployed). Findings are fixed or listed here; none was filed as a separate GitHub issue.
+
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 
 | ID | Case | Expected | Actual | Result |
