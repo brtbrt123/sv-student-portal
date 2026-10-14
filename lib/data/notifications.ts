@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
 // Server-side reads for the notification inbox. Every call runs with the signed-in user's own session and
@@ -55,7 +56,8 @@ export async function listMyNotifications(limit = 50): Promise<AppNotification[]
 }
 
 // The unread count for the badge. 0 when anything goes wrong: a missing badge is better than a broken page.
-export async function getUnreadCount(): Promise<number> {
+// cache(): requireRole starts this early and DashboardShell awaits the same result (one database call per page).
+export const getUnreadCount = cache(async function getUnreadCount(): Promise<number> {
   try {
     const rpc = await rpcOfUser()
     const { data, error } = await rpc<number>('notification_unread_count')
@@ -64,6 +66,6 @@ export async function getUnreadCount(): Promise<number> {
   } catch {
     return 0
   }
-}
+})
 
 export { rpcOfUser as notificationRpc }
