@@ -4,11 +4,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
 import { ROLE_HOME } from '@/lib/auth/roles'
+import { passwordProblem } from '@/lib/auth/password-policy'
 
 export type SetPasswordState = { error: string | null }
 
-const MIN_LENGTH = 10
-const MAX_LENGTH = 72
 const GENERIC = 'We could not save your password. Please try again in a few minutes.'
 
 // Saves the new password for the signed-in user (the session comes from the /auth/confirm link).
@@ -18,8 +17,9 @@ export async function setPassword(_prev: SetPasswordState, formData: FormData): 
   const password = String(formData.get('password') ?? '')
   const confirm = String(formData.get('confirm') ?? '')
 
-  if (password.length < MIN_LENGTH) return { error: `Use at least ${MIN_LENGTH} characters.` }
-  if (password.length > MAX_LENGTH) return { error: `Use ${MAX_LENGTH} characters at most.` }
+  // 8 to 72 characters with a capital letter, a number and a special character (lib/auth/password-policy.ts).
+  const problem = passwordProblem(password)
+  if (problem) return { error: problem }
   if (password !== confirm) return { error: 'The two passwords do not match.' }
 
   let signedOut = false
@@ -40,7 +40,7 @@ export async function setPassword(_prev: SetPasswordState, formData: FormData): 
       if (error) {
         const code = (error as { code?: string }).code
         if (code === 'same_password') return { error: 'Choose a password you have not used before.' }
-        if (code === 'weak_password') return { error: 'That password is too easy to guess. Try a longer one with a mix of letters, numbers and symbols.' }
+        if (code === 'weak_password') return { error: 'That password is too easy to guess. Try a different one with more letters, numbers and symbols.' }
         return { error: GENERIC }
       }
     }

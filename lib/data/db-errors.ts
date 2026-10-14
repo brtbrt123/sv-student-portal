@@ -206,6 +206,9 @@ export function queueErrorMessage(code: string | undefined, message: string | un
     }
     if (message.startsWith('queue closed:')) return 'This queue is closed right now.'
     if (message.startsWith('queue busy:')) return 'The queue is busy for a moment. Please press Approve again.'
+    if (message.startsWith('hold active:')) {
+      return 'This hold has not run out yet. A held ticket can be marked No-show only after its 30 minutes are over.'
+    }
     if (message.startsWith('hold expired:')) {
       return 'Your hold ran out. Cancel this ticket and ask the Registrar for a new number.'
     }

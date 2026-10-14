@@ -9,7 +9,7 @@ import { getMyQueueStatus } from '@/lib/data/queue'
 import { isActiveTicketStatus } from '@/lib/queue/line'
 
 const NOTICES: Record<string, string> = {
-  requested: 'Request sent. It is listed below as Pending until the Registrar starts processing it.',
+  requested: 'Request sent. Each document is listed below as Pending until the Registrar starts processing it.',
 }
 
 export default async function StudentDocumentsPage({

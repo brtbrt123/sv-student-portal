@@ -1,8 +1,10 @@
 import DashboardShell from '@/components/layout/DashboardShell'
+import { AutoRefresh } from '@/components/queue/AutoRefresh'
 import EnrollmentView from '@/components/student/EnrollmentView'
 import QueueNotice from '@/components/student/QueueNotice'
 import { EmptyState } from '@/components/ui'
 import { requireRole } from '@/lib/auth/session'
+import { isSubjectSetByProgram } from '@/lib/data/applicant-type'
 import { getStudentEnrollmentState } from '@/lib/data/enrollment'
 import { getMyQueueStatus } from '@/lib/data/queue'
 import { isActiveTicketStatus } from '@/lib/queue/line'
@@ -19,7 +21,11 @@ export default async function StudentEnrollmentPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const profile = await requireRole('Student')
-  const [state, queue] = await Promise.all([getStudentEnrollmentState(), getMyQueueStatus('Enrollment')])
+  const [state, queue, setByProgram] = await Promise.all([
+    getStudentEnrollmentState(),
+    getMyQueueStatus('Enrollment'),
+    isSubjectSetByProgram(),
+  ])
   const { notice } = await searchParams
   const noticeText = typeof notice === 'string' ? NOTICES[notice] : undefined
   // The queue pass is for the physical step at the Registrar: shown until the enrollment is Approved, and
@@ -35,6 +41,8 @@ export default async function StudentEnrollmentPage({
       title="Enrollment"
       subtitle={state.kind === 'ready' ? `${termLabel} · your enrolled subjects` : 'Enroll in your subjects for the term'}
     >
+      {/* A Pending enrollment is decided by the Registrar meanwhile: re-read it so the status changes by itself. */}
+      {pending && <AutoRefresh everySeconds={15} />}
       {noticeText && state.kind === 'ready' && (
         <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-foreground">
           {noticeText}
@@ -61,6 +69,7 @@ export default async function StudentEnrollmentPage({
           enrollment={state.enrollment}
           chosen={state.chosen}
           available={state.available}
+          setByProgram={setByProgram}
         />
       )}
     </DashboardShell>

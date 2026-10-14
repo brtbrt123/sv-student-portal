@@ -18,7 +18,8 @@ describe('queue: database error to message (UT-61..64)', () => {
     expect(queueErrorMessage('P0001', 'bad ticket change: Done -> Waiting')).toContain('Reload the page')
   })
   it('UT-79 hold and unhold errors each have a plain message', () => {
-    expect(queueErrorMessage('P0001', 'hold expired: ticket #1000007 was on hold for more than 15 minutes')).toContain('hold ran out')
+    expect(queueErrorMessage('P0001', 'hold expired: ticket #1000007 was on hold for more than 30 minutes')).toContain('hold ran out')
+    expect(queueErrorMessage('P0001', 'hold active: ticket #1000007 is on hold until 03:42 (Manila time); wait or ask the student')).toContain('30 minutes are over')
     expect(queueErrorMessage('P0001', 'bad ticket change: ticket #1000007 is already on hold')).toBe('Your place is already on hold.')
     expect(queueErrorMessage('P0001', 'bad ticket change: ticket #1000007 is being served and cannot be put on hold')).toContain('your turn')
     expect(queueErrorMessage('P0001', 'bad ticket change: no ticket on hold')).toBe('Your place is not on hold.')

@@ -3,6 +3,10 @@
 // The Registrar's rough time per applicant at the window (PM decision 2026-10-13: 3 to 5 minutes each).
 export const MINUTES_PER_PERSON = { min: 3, max: 5 } as const
 
+// How long a student may keep a place on hold. The database decides (private.queue_hold_limit); this copy is for the
+// screen. After it the hold is closed as a No-show by the database and the student is told.
+export const HOLD_MINUTES = 30
+
 export type WaitRange = { min: number; max: number }
 
 // The wait before it is your turn: people ahead times 3 to 5 minutes. Null when nobody is ahead.
@@ -38,3 +42,16 @@ export function lineSlots(position: number, waitingTotal: number, maxShown = 7):
 /** A ticket still in the line: waiting, on hold, or being served. */
 export const isActiveTicketStatus = (status: string | null | undefined): boolean =>
   status === 'Waiting' || status === 'Held' || status === 'Serving'
+
+// A student needs a NEW queue number only for something that happened after their last finished (Done) ticket in
+// that line: a request filed or moved on (Processing, Ready), an enrollment submitted. What was already there when
+// they were served is handled. `eventTimes` are ISO times of the open items; `lastServedAt` is the finish time of
+// their last Done ticket in the line, null when they were never served. A closed (Cancelled) or missed (No-show)
+// ticket is not a service, so it does not count here and the code comes back for the same item.
+export function needsNewNumber(eventTimes: readonly (string | null)[], lastServedAt: string | null): boolean {
+  const open = eventTimes.filter((t): t is string => typeof t === 'string' && !Number.isNaN(Date.parse(t)))
+  if (open.length === 0) return false
+  if (lastServedAt === null || Number.isNaN(Date.parse(lastServedAt))) return true
+  const served = Date.parse(lastServedAt)
+  return open.some((t) => Date.parse(t) > served)
+}

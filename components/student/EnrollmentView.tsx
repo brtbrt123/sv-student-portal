@@ -22,11 +22,14 @@ export default function EnrollmentView({
   enrollment,
   chosen,
   available,
+  setByProgram,
 }: {
   termLabel: string
   enrollment: StudentEnrollment | null
   chosen: ChosenSection[]
   available: EnrollmentSectionInfo[]
+  /** A new student's subjects are set by their program: no picking or removing; the Registrar drops one on request. */
+  setByProgram: boolean
 }) {
   const pending = enrollment?.status === 'Pending'
   const units = chosen.reduce((sum, s) => sum + s.units, 0)
@@ -37,7 +40,7 @@ export default function EnrollmentView({
     { key: 'units', header: 'Units', className: 'w-20', cell: (s) => s.units },
     { key: 'section', header: 'Section', cell: (s) => s.sectionCode },
     { key: 'schedule', header: 'Schedule', cell: (s) => s.schedule ?? 'To be announced' },
-    ...(pending && enrollment
+    ...(pending && enrollment && !setByProgram
       ? [
           {
             key: 'remove',
@@ -98,7 +101,14 @@ export default function EnrollmentView({
         </div>
       )}
 
-      {enrollment === null ? (
+      {enrollment === null && setByProgram ? (
+        <Section title="Your enrollment" description={termLabel}>
+          <p className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted">
+            Your first-year subjects are set by your program and are added when the Registrar accepts your application. They are
+            not here yet. Please ask the Registrar to set up your enrollment.
+          </p>
+        </Section>
+      ) : enrollment === null ? (
         <Section title="Submit enrollment" description={`${termLabel}. New enrollments start as Pending until the Registrar reviews them.`}>
           <EnrollmentSubmitForm termLabel={termLabel} />
         </Section>
@@ -110,11 +120,20 @@ export default function EnrollmentView({
               rows={chosen}
               rowKey={(s) => s.itemId}
               caption={`Enrolled subjects, ${termLabel}`}
-              empty={pending ? 'No subjects yet. Add a section with the form below.' : 'No subjects were added to this enrollment.'}
+              empty={pending && !setByProgram ? 'No subjects yet. Add a section with the form below.' : 'No subjects were added to this enrollment.'}
             />
           </Section>
 
-          {pending && (
+          {pending && setByProgram && (
+            <Section title="Dropping a subject" description="Your subjects are set by your program.">
+              <p className="rounded-lg border border-edge bg-card px-4 py-4 text-sm text-muted">
+                You do not need to pick subjects. If you need to drop one, tell the Registrar at the window and they will remove
+                it for you while your enrollment is Pending.
+              </p>
+            </Section>
+          )}
+
+          {pending && !setByProgram && (
             <Section
               title="Add a section"
               description="Sections can be added or removed only while the enrollment is Pending. The Registrar checks for a free seat when approving."

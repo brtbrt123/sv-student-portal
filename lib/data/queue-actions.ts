@@ -56,7 +56,7 @@ export async function cancelMyTicket(service: QueueService): Promise<QueueAction
 // ---- Student: hold my place (bathroom, emergency) and come back
 
 // Hold keeps the ticket's original order but Call next skips it, so the people behind get served. When
-// the student is back, the ticket is next. A hold lasts a limited time (the database decides, 15 minutes).
+// the student is back, the ticket is next. A hold lasts a limited time (the database decides, 30 minutes).
 async function changeMyHold(service: QueueService, fn: 'queue_hold_my_ticket' | 'queue_unhold_my_ticket', ok: string): Promise<QueueActionState> {
   try {
     if (!isQueueService(service)) return { status: 'error', message: 'Unknown queue.' }
