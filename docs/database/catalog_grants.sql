@@ -75,15 +75,15 @@
 -- any error, including a failed check, rolls back everything. Re-runnable.
 --   - Before running: run diagnostics (a), (b) and (c) at the bottom and SAVE the output.
 --     (c) must return no rows, or the checks in section 1 stop the run.
---   - Rehearse first: docs/database/issue_39_catalog_grants_rehearsal.sql runs this change
+--   - Rehearse first: docs/database/catalog_grants_rehearsal.sql runs this change
 --     and the tests below in ONE rolled-back transaction.
--- Test AFTER: the rehearsal block at the bottom of this file (TC-139 to TC-146).
+-- Test AFTER: the rehearsal block at the bottom of this file (TC-218 to TC-225).
 -- Undo: the ROLLBACK block after COMMIT.
 --
 -- Status: NOT RUN LIVE YET. Tested 2026-10-13 on a local PostgreSQL 16 rebuilt from schema.sql,
 -- views.sql, seed.sql, private_functions.sql, rls.sql, hardening.sql and hardening2.sql (with
 -- a stand-in for auth.users / auth.uid() and Supabase-style default grants): the change ran
--- clean, a second run was clean too, TC-139 to TC-146 pass (all_ok true), the rehearsal file
+-- clean, a second run was clean too, TC-218 to TC-225 pass (all_ok true), the rehearsal file
 -- leaves the database unchanged, a second current term in the data stops the run in section
 -- 1, and the ROLLBACK block restored the old grants. NOT yet rehearsed on the live project
 -- (PostgreSQL 17); do that first.
@@ -443,10 +443,10 @@ COMMIT;
 
 
 -- ==========================================
--- REHEARSAL / TESTS TC-139 to TC-146 (run AFTER the change is live; ends in ROLLBACK)
+-- REHEARSAL / TESTS TC-218 to TC-225 (run AFTER the change is live; ends in ROLLBACK)
 -- ==========================================
 -- One script, one transaction that ends in ROLLBACK, ONE result row. Nothing is committed.
--- docs/database/issue_39_catalog_grants_rehearsal.sql is this file's change (sections 1 to
+-- docs/database/catalog_grants_rehearsal.sql is this file's change (sections 1 to
 -- 5, without COMMIT) plus this block, for a run BEFORE the live change.
 --
 -- How to run: Supabase SQL editor, as postgres, a new tab. Paste from "begin;" (below) to
@@ -463,14 +463,14 @@ COMMIT;
 -- or "-> FAIL"; all_ok must be true.
 --
 -- Cases:
---   TC-139 installed as intended (index, checks, 5 audit triggers, grants, anon nothing)
---   TC-140 the Admin inserts and updates a row in each of the 5 tables
---   TC-141 the Admin cannot DELETE, and cannot change the locked columns
---   TC-142 Student and Registrar read the catalog and cannot write it (RLS)
---   TC-143 anon is denied everything
---   TC-144 a second current term is refused; clearing the old one first then works
---   TC-145 bad term dates and capacity 0 are refused (insert and update)
---   TC-146 the Admin's writes are in the audit log (actor = the Admin)
+--   TC-218 installed as intended (index, checks, 5 audit triggers, grants, anon nothing)
+--   TC-219 the Admin inserts and updates a row in each of the 5 tables
+--   TC-220 the Admin cannot DELETE, and cannot change the locked columns
+--   TC-221 Student and Registrar read the catalog and cannot write it (RLS)
+--   TC-222 anon is denied everything
+--   TC-223 a second current term is refused; clearing the old one first then works
+--   TC-224 bad term dates and capacity 0 are refused (insert and update)
+--   TC-225 the Admin's writes are in the audit log (actor = the Admin)
 
 begin;
 
@@ -496,7 +496,7 @@ select set_config('app.log_mark', coalesce((select max(log_id)::text from public
 select set_config('app.cur_term', (select term_id::text from public.terms where is_current), true);
 
 -- ==========================================
--- TC-139: installed as intended (as postgres)
+-- TC-218: installed as intended (as postgres)
 -- ==========================================
 select set_config('app.r139', format(
   'unique_index %s, date_check %s, capacity_check %s, audit_triggers %s/5, auth_table_privs_beyond_select %s, anon_any %s -> %s',
@@ -537,7 +537,7 @@ select set_config('app.r139', format(
        then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-140: the Admin inserts and updates a row in each table
+-- TC-219: the Admin inserts and updates a row in each table
 -- ==========================================
 set local role authenticated;
 select set_config('request.jwt.claims',
@@ -587,7 +587,7 @@ select set_config('app.r140', format('dep %s/%s, prg %s/%s, trm %s/%s, sub %s/%s
        then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-141: the Admin cannot DELETE and cannot change the locked columns
+-- TC-220: the Admin cannot DELETE and cannot change the locked columns
 -- ==========================================
 set local role authenticated;
 select set_config('request.jwt.claims',
@@ -642,7 +642,7 @@ select set_config('app.r141', format('%s of 11 denied, rows still there: dep %s 
        then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-142: Student 1 and the Registrar read the catalog and cannot write it
+-- TC-221: Student 1 and the Registrar read the catalog and cannot write it
 -- ==========================================
 select set_config('app.who', 's1', true);
 set local role authenticated;
@@ -718,7 +718,7 @@ select set_config('app.r142', format('student read %s, ins %s/%s, upd %s/%s/%s; 
        then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-143: anon is denied everything
+-- TC-222: anon is denied everything
 -- ==========================================
 set local role anon;
 do $$
@@ -755,7 +755,7 @@ select set_config('app.r143', format('%s of 8 denied -> %s',
               where current_setting('app.t143_' || x) like 'denied: %') = 8 then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-144: one current term (Admin session)
+-- TC-223: one current term (Admin session)
 -- ==========================================
 set local role authenticated;
 select set_config('request.jwt.claims',
@@ -796,7 +796,7 @@ select set_config('app.r144', format('second_current [%s], set_without_clear [%s
        then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-145: bad term dates and capacity 0 are refused (Admin session)
+-- TC-224: bad term dates and capacity 0 are refused (Admin session)
 -- ==========================================
 set local role authenticated;
 select set_config('request.jwt.claims',
@@ -837,7 +837,7 @@ select set_config('app.r145', format('%s of 6 refused (check), capacity now %s -
        then 'OK' else 'FAIL' end), true);
 
 -- ==========================================
--- TC-146: the Admin's writes are in the audit log
+-- TC-225: the Admin's writes are in the audit log
 -- ==========================================
 select set_config('app.r146', (select format('%s -> %s',
   string_agg(format('%s i%s u%s', a.table_name, a.ins, a.upd), ', ' order by a.table_name),
@@ -858,8 +858,8 @@ select (current_setting('app.r139') like '%-> OK' and current_setting('app.r140'
         and current_setting('app.r141') like '%-> OK' and current_setting('app.r142') like '%-> OK'
         and current_setting('app.r143') like '%-> OK' and current_setting('app.r144') like '%-> OK'
         and current_setting('app.r145') like '%-> OK' and current_setting('app.r146') like '%-> OK') as all_ok,
-  current_setting('app.r139') as tc139, current_setting('app.r140') as tc140, current_setting('app.r141') as tc141,
-  current_setting('app.r142') as tc142, current_setting('app.r143') as tc143, current_setting('app.r144') as tc144,
-  current_setting('app.r145') as tc145, current_setting('app.r146') as tc146;
+  current_setting('app.r139') as tc218, current_setting('app.r140') as tc219, current_setting('app.r141') as tc220,
+  current_setting('app.r142') as tc221, current_setting('app.r143') as tc222, current_setting('app.r144') as tc223,
+  current_setting('app.r145') as tc224, current_setting('app.r146') as tc225;
 
 rollback;
