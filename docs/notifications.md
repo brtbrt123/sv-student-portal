@@ -17,7 +17,7 @@ Notifications page of each role, the unread badge in the sidebar and the bell in
 | Recipient | Notification | When |
 | --- | --- | --- |
 | Student | You are in line / It is your turn / You were skipped | a queue ticket is issued / called / marked No-show |
-| Student | Your hold ran out (kind `queue_hold_expired`) | a held queue ticket is closed as No-show after its 30-minute hold ran out, automatically or by the Registrar (`docs/database/queue_hold_v2.sql`, not run yet) |
+| Student | Your hold ran out (kind `queue_hold_expired`) | a held queue ticket is closed as No-show after its 30-minute hold ran out, automatically or by the Registrar (`docs/database/queue_hold_v2.sql`, run live 2026-10-14) |
 | Student | Your enrollment was approved / rejected | the Registrar decides |
 | Student | Document request DR-...: Processing / Ready / Released / Rejected | the Registrar moves the request |
 | Student | `<office>` cleared you / `<office>` left a note / Your clearance is approved | an office clears, leaves remarks, or the Registrar gives the final approval |

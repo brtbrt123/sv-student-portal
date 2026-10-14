@@ -36,7 +36,7 @@ the ticket number), so a hold cannot be used to jump the line. A hold lasts 15 m
 that unhold is refused and the Registrar can mark the ticket No-show (or the student cancels). **Cancel ticket** has a confirm step.
 Expired holds do not end by themselves and keep blocking a new ticket for that student and service that day until No-show or cancel.
 
-**Hold v2 (`docs/database/queue_hold_v2.sql`, NOT RUN YET; tests TC-248..259).** A hold lasts **30 minutes**. The Registrar can
+**Hold v2 (`docs/database/queue_hold_v2.sql`, run live 2026-10-14; tests TC-248..259).** A hold lasts **30 minutes**. The Registrar can
 mark a held ticket No-show only after the hold ran out (before that the database answers `hold active:`). Expired holds are
 closed by the database function `queue_expire_holds()` (Held to No-show, no handler), which the app calls on every refresh of the
 Registrar's queue page and when the student's queue page loads (pg_cron is optional, not required). The student then gets the
