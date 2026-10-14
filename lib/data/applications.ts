@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for the Registrar's applications screen. Every query runs with the signed-in
 // user's own session (anon key + auth cookies), so Row Level Security does the isolation: the
@@ -99,7 +100,7 @@ export async function getApplicationsState(): Promise<ApplicationsState> {
     const numbers = new Map(
       (stuRes.error ? [] : ((stuRes.data ?? []) as { student_id: string; student_number: string }[])).map((s) => [
         s.student_id,
-        s.student_number,
+        formatStudentId(s.student_number),
       ])
     )
     const people = new Map(

@@ -16,6 +16,7 @@ const BASE_NAV: Record<RoleName, NavItem[]> = {
     { label: 'Grades', href: '/student/grades', icon: 'grades' },
     { label: 'Clearance', href: '/student/clearance', icon: 'clearance' },
     { label: 'Document Requests', href: '/student/documents', icon: 'documents' },
+    { label: 'Queue', href: '/student/queue', icon: 'queue' },
   ],
   Registrar: [
     { label: 'Dashboard', href: ROLE_HOME.Registrar, icon: 'dashboard' },

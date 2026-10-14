@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for the queue (ticket numbers). Everything runs with the signed-in user's own session
 // and goes through the database functions of docs/database/queue_rules.sql: a student gets only their own
@@ -11,8 +12,8 @@ export const QUEUE_SERVICES: readonly QueueService[] = ['Enrollment', 'Documents
 export const isQueueService = (value: unknown): value is QueueService =>
   typeof value === 'string' && (QUEUE_SERVICES as readonly string[]).includes(value)
 
-export type TicketStatus = 'Waiting' | 'Serving' | 'Done' | 'No-show' | 'Cancelled'
-const TICKET_STATUSES: readonly TicketStatus[] = ['Waiting', 'Serving', 'Done', 'No-show', 'Cancelled']
+export type TicketStatus = 'Waiting' | 'Held' | 'Serving' | 'Done' | 'No-show' | 'Cancelled'
+const TICKET_STATUSES: readonly TicketStatus[] = ['Waiting', 'Held', 'Serving', 'Done', 'No-show', 'Cancelled']
 const toStatus = (s: unknown): TicketStatus | null => (TICKET_STATUSES as readonly unknown[]).includes(s) ? (s as TicketStatus) : null
 
 export type RpcResult<T> = PromiseLike<{ data: T | null; error: { code?: string; message?: string; details?: string | null } | null }>
@@ -37,6 +38,8 @@ export type MyQueueStatus = {
   avgServiceSeconds: number | null
   /** The window to go to, only while my ticket is being served. */
   windowLabel: string | null
+  /** When a hold runs out (an ISO time), only while my ticket is on hold. */
+  heldUntil: string | null
 }
 
 type MyStatusRow = {
@@ -49,6 +52,7 @@ type MyStatusRow = {
   waiting_total: number | null
   avg_service_seconds: number | null
   window_label: string | null
+  held_until?: string | null
 }
 
 // The signed-in student's place in a queue. Null when the call fails (the screen then shows a plain
@@ -69,6 +73,7 @@ export async function getMyQueueStatus(service: QueueService): Promise<MyQueueSt
       waitingTotal: r.waiting_total ?? 0,
       avgServiceSeconds: r.avg_service_seconds,
       windowLabel: r.window_label,
+      heldUntil: r.held_until ?? null,
     }
   } catch {
     return null
@@ -86,6 +91,7 @@ export type StaffTicket = {
   createdAt: string
   calledAt: string | null
   finishedAt: string | null
+  heldAt: string | null
 }
 
 type StaffRow = {
@@ -99,6 +105,7 @@ type StaffRow = {
   created_at: string
   called_at: string | null
   finished_at: string | null
+  held_at?: string | null
 }
 
 // Today's tickets of a service for the Registrar, in ticket order. Null when the call fails.
@@ -116,12 +123,13 @@ export async function getStaffQueue(service: QueueService): Promise<StaffTicket[
           label: r.ticket_label,
           number: r.ticket_number,
           status,
-          studentNumber: r.student_number ?? '',
+          studentNumber: formatStudentId(r.student_number),
           studentName: r.student_name ?? '',
           windowLabel: r.window_label,
           createdAt: r.created_at,
           calledAt: r.called_at,
           finishedAt: r.finished_at,
+          heldAt: r.held_at ?? null,
         },
       ]
     })
@@ -163,7 +171,7 @@ export async function getQueueStudentCard(
     return {
       card: {
         studentId: r.student_id,
-        studentNumber: r.student_number ?? '',
+        studentNumber: formatStudentId(r.student_number),
         studentName: r.student_name ?? '',
         programCode: r.program_code ?? '',
         programName: r.program_name ?? '',

@@ -8,13 +8,17 @@ import { callNextTicket, finishTicket, type CallState, type QueueActionState } f
 const CALL_INITIAL: CallState = { status: 'idle', message: '' }
 const FINISH_INITIAL: QueueActionState = { status: 'idle', message: '' }
 
-const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila' })
+// Each line has its own window; the Registrar can still type another one when calling.
+const DEFAULT_WINDOW: Record<QueueService, string> = { Enrollment: 'Window 1', Documents: 'Window 2' }
+
+const clock =(iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila' })
 
 // The Registrar's queue for today: who is being served (Done / No-show), who is waiting, a Call next
 // button, and today's totals. The page re-reads the data every few seconds.
 export default function TicketQueue({ service, tickets }: { service: QueueService; tickets: StaffTicket[] }) {
   const serving = tickets.filter((t) => t.status === 'Serving')
   const waiting = tickets.filter((t) => t.status === 'Waiting')
+  const held = tickets.filter((t) => t.status === 'Held')
   const done = tickets.filter((t) => t.status === 'Done').length
   const skipped = tickets.filter((t) => t.status === 'No-show').length
   const cancelled = tickets.filter((t) => t.status === 'Cancelled').length
@@ -43,7 +47,7 @@ export default function TicketQueue({ service, tickets }: { service: QueueServic
           <ol className="flex flex-col divide-y divide-border">
             {waiting.map((t, i) => (
               <li key={t.ticketId} className="flex items-center gap-3 py-2.5">
-                <span className="w-16 shrink-0 text-lg font-bold tabular-nums">{t.label}</span>
+                <span className="shrink-0 text-base font-bold tabular-nums">{t.label}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{t.studentName || 'Student'}</span>
                   <span className="block truncate text-[13px] text-muted">{t.studentNumber}</span>
@@ -55,6 +59,19 @@ export default function TicketQueue({ service, tickets }: { service: QueueServic
               </li>
             ))}
           </ol>
+        )}
+        {held.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <h3 className="text-sm font-semibold">On hold ({held.length})</h3>
+            <p className="text-[13px] text-muted">
+              Skipped by Call next. When the student taps I&apos;m back, their number is next again.
+            </p>
+            <ul className="flex flex-col divide-y divide-border">
+              {held.map((t) => (
+                <HeldRow key={t.ticketId} ticket={t} />
+              ))}
+            </ul>
+          </div>
         )}
         <p className="text-[13px] text-muted">
           Today: {done} done, {skipped} no-show, {cancelled} left the queue.
@@ -80,7 +97,8 @@ function CallNext({ service, waitingCount, holding }: { service: QueueService; w
             name="window"
             type="text"
             maxLength={40}
-            placeholder="Window 1"
+            defaultValue={DEFAULT_WINDOW[service]}
+            placeholder={DEFAULT_WINDOW[service]}
             className="glass h-10 w-40 rounded-full border border-field-border bg-card px-4 text-sm text-foreground placeholder:text-muted max-lg:h-11"
           />
         </div>
@@ -94,6 +112,30 @@ function CallNext({ service, waitingCount, holding }: { service: QueueService; w
         {state.status === 'empty' && <p className="text-sm text-muted">{state.message}</p>}
       </div>
     </form>
+  )
+}
+
+function HeldRow({ ticket }: { ticket: StaffTicket }) {
+  const [state, formAction, pending] = useActionState(finishTicket, FINISH_INITIAL)
+
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
+      <span className="shrink-0 text-base font-bold tabular-nums">{ticket.label}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold">{ticket.studentName || 'Student'}</span>
+        <span className="block truncate text-[13px] text-muted">
+          {ticket.studentNumber}
+          {ticket.heldAt ? ` · on hold since ${clock(ticket.heldAt)}` : ''}
+        </span>
+      </span>
+      <form action={formAction}>
+        <input type="hidden" name="ticketId" value={ticket.ticketId} />
+        <Button type="submit" name="outcome" value="No-show" variant="outline" disabled={pending}>
+          No-show
+        </Button>
+      </form>
+      {state.status === 'error' && <p role="alert" className="w-full rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{state.message}</p>}
+    </li>
   )
 }
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTerm, type CurrentTerm } from '@/lib/data/clearance'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for the Registrar's clearance screen. Every query runs with the signed-in user's
 // own session, so Row Level Security decides what is visible. Import from Server Components and
@@ -75,7 +76,7 @@ export async function getRegistrarClearanceState(): Promise<RegistrarClearanceSt
         : Promise.resolve({ data: [], error: null }),
     ])
     const names = new Map((profRes.data ?? []).map((p) => [p.profile_id, fullName(p)]))
-    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, s.student_number]))
+    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, formatStudentId(s.student_number)]))
 
     const itemsByClearance = new Map<number, RegistrarItem[]>()
     for (const i of itemsRes.data ?? []) {

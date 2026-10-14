@@ -17,6 +17,14 @@ describe('queue: database error to message (UT-61..64)', () => {
     expect(queueErrorMessage('P0001', 'queue busy: try again')).toContain('Please press Approve again')
     expect(queueErrorMessage('P0001', 'bad ticket change: Done -> Waiting')).toContain('Reload the page')
   })
+  it('UT-79 hold and unhold errors each have a plain message', () => {
+    expect(queueErrorMessage('P0001', 'hold expired: ticket #1000007 was on hold for more than 15 minutes')).toContain('hold ran out')
+    expect(queueErrorMessage('P0001', 'bad ticket change: ticket #1000007 is already on hold')).toBe('Your place is already on hold.')
+    expect(queueErrorMessage('P0001', 'bad ticket change: ticket #1000007 is being served and cannot be put on hold')).toContain('your turn')
+    expect(queueErrorMessage('P0001', 'bad ticket change: no ticket on hold')).toBe('Your place is not on hold.')
+    expect(queueErrorMessage('P0001', 'bad ticket change: no waiting ticket')).toContain('do not have a ticket')
+    expect(queueErrorMessage('P0001', 'bad ticket change: ticket 5 is on hold; it can only be marked No-show')).toContain('only be marked No-show')
+  })
   it('UT-64 not an active student, a permission error and an unknown error', () => {
     expect(queueErrorMessage('22023', 'invalid ticket request: not a student')).toContain('not an active student')
     expect(queueErrorMessage('42501', 'not allowed: x')).toBe(NOT_ALLOWED)

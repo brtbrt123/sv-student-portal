@@ -1,10 +1,11 @@
 import DashboardShell from '@/components/layout/DashboardShell'
 import EnrollmentView from '@/components/student/EnrollmentView'
-import QueuePass from '@/components/student/QueuePass'
+import QueueNotice from '@/components/student/QueueNotice'
 import { EmptyState } from '@/components/ui'
 import { requireRole } from '@/lib/auth/session'
 import { getStudentEnrollmentState } from '@/lib/data/enrollment'
 import { getMyQueueStatus } from '@/lib/data/queue'
+import { isActiveTicketStatus } from '@/lib/queue/line'
 
 const NOTICES: Record<string, string> = {
   submitted: 'Enrollment submitted. It is Pending until the Registrar reviews it. Add your subject sections below.',
@@ -23,9 +24,9 @@ export default async function StudentEnrollmentPage({
   const noticeText = typeof notice === 'string' ? NOTICES[notice] : undefined
   // The queue pass is for the physical step at the Registrar: shown until the enrollment is Approved, and
   // for as long as the student has a ticket in the line.
-  const approved = state.kind === 'ready' && state.enrollment?.status === 'Approved'
-  const inLine = queue?.hasTicket === true && (queue.ticketStatus === 'Waiting' || queue.ticketStatus === 'Serving')
-  const showQueue = state.kind !== 'error' && (inLine || !approved)
+  const pending = state.kind === 'ready' && state.enrollment?.status === 'Pending'
+  const inLine = queue?.hasTicket === true && isActiveTicketStatus(queue.ticketStatus)
+  const showQueue = state.kind !== 'error' && (inLine || pending)
   const termLabel = state.kind === 'ready' ? `${state.term.semester} ${state.term.schoolYear}` : ''
 
   return (
@@ -41,12 +42,7 @@ export default async function StudentEnrollmentPage({
       )}
       {showQueue && (
         <div className="mb-6">
-          <QueuePass
-            service="Enrollment"
-            status={queue}
-            title="Physical enrollment at the Registrar"
-            intro="Please go to the school to finish your enrollment in person. Show this code at the Registrar's scanner to get your queue number, then follow the line from your phone."
-          />
+          <QueueNotice status={queue} text="Finish your enrollment in person at the school. Get your queue number from your phone." />
         </div>
       )}
       {state.kind === 'error' ? (
