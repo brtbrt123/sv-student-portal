@@ -35,6 +35,8 @@ export type ApplicationItem = {
   provisionedAt: string | null
   /** The student number, when provisioned and readable. */
   studentNumber: string | null
+  /** 'New' gets the first-year subjects automatically; 'Transferee' picks their own. */
+  applicantType: 'New' | 'Transferee'
 }
 
 export type ApplicationsState = { kind: 'ready'; applications: ApplicationItem[] } | { kind: 'error' }
@@ -53,10 +55,11 @@ type ApplicationRow = {
   remarks: string | null
   student_id: string | null
   provisioned_at: string | null
+  applicant_type: string | null
 }
 
 export const APPLICATION_COLUMNS =
-  'application_id, first_name, last_name, email, mobile, program_id, status, submitted_at, reviewed_by, reviewed_at, remarks, student_id, provisioned_at'
+  'application_id, first_name, last_name, email, mobile, program_id, status, submitted_at, reviewed_by, reviewed_at, remarks, student_id, provisioned_at, applicant_type'
 
 const toStatus = (s: string): ApplicationStatus =>
   (APPLICATION_STATUSES as readonly string[]).includes(s) ? (s as ApplicationStatus) : 'Pending'
@@ -130,6 +133,7 @@ export async function getApplicationsState(): Promise<ApplicationsState> {
         provisioned: r.student_id !== null,
         provisionedAt: r.provisioned_at,
         studentNumber: r.student_id ? (numbers.get(r.student_id) ?? null) : null,
+        applicantType: r.applicant_type === 'Transferee' ? 'Transferee' : 'New',
       }
     })
     return { kind: 'ready', applications }

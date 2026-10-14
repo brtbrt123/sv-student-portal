@@ -6,6 +6,7 @@ import { Icon } from '@/components/layout/Icon'
 import { cn } from '@/lib/utils'
 import { formatShortDate } from '@/components/student/format'
 import { decideEnrollment, type DecideEnrollmentState } from '@/lib/data/enrollments-review-actions'
+import { DropSectionButton } from './DropSectionButton'
 import type { EnrollmentReviewItem, EnrollmentStatus } from '@/lib/data/enrollments-review'
 import RowRadio from './RowRadio'
 import { QueueSheet, QueueTable, StatusLine, StudentCell } from './QueueParts'
@@ -45,11 +46,12 @@ function SectionsList({ enrollment }: { enrollment: EnrollmentReviewItem }) {
               <TableHead>Section</TableHead>
               <TableHead>Units</TableHead>
               {showSeats && <TableHead>Seats taken</TableHead>}
+              {showSeats && <TableHead>Drop</TableHead>}
             </tr>
           </TableHeader>
           <TableBody>
             {enrollment.sections.length === 0 && (
-              <EmptyRow colSpan={showSeats ? 4 : 3}>No sections were added to this enrollment.</EmptyRow>
+              <EmptyRow colSpan={showSeats ? 5 : 3}>No sections were added to this enrollment.</EmptyRow>
             )}
             {enrollment.sections.map((s) => {
               const full = s.taken >= s.capacity
@@ -70,6 +72,11 @@ function SectionsList({ enrollment }: { enrollment: EnrollmentReviewItem }) {
                       {full && ' (full)'}
                     </TableCell>
                   )}
+                  {showSeats && (
+                    <TableCell>
+                      <DropSectionButton enrollmentId={enrollment.id} itemId={s.itemId} label={`${s.subjectCode} for ${enrollment.studentName}`} />
+                    </TableCell>
+                  )}
                 </TableRow>
               )
             })}
@@ -87,9 +94,9 @@ function ReviewPanel({ enrollment }: { enrollment: EnrollmentReviewItem }) {
   const isPending = enrollment.status === 'Pending'
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 rounded-lg border border-edge bg-card p-4 lg:p-5">
-      <input type="hidden" name="enrollmentId" value={enrollment.id} />
-      <input type="hidden" name="from" value={enrollment.status} />
+    // The decision form wraps ONLY the remarks and the buttons: the sections list has its own Drop forms, and forms
+    // cannot be nested (a Drop inside this form never ran).
+    <div className="flex flex-col gap-4 rounded-lg border border-edge bg-card p-4 lg:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold">
@@ -119,7 +126,9 @@ function ReviewPanel({ enrollment }: { enrollment: EnrollmentReviewItem }) {
       )}
 
       {isPending && (
-        <>
+        <form action={formAction} className="flex flex-col gap-4">
+          <input type="hidden" name="enrollmentId" value={enrollment.id} />
+          <input type="hidden" name="from" value={enrollment.status} />
           <Textarea
             id={`remarks-${enrollment.id}`}
             name="remarks"
@@ -152,17 +161,16 @@ function ReviewPanel({ enrollment }: { enrollment: EnrollmentReviewItem }) {
               Reject
             </Button>
           </div>
-        </>
+          <p
+            role="status"
+            aria-live="polite"
+            className={state.status === 'error' ? 'text-sm font-medium text-danger' : 'text-sm text-muted'}
+          >
+            {state.message}
+          </p>
+        </form>
       )}
-
-      <p
-        role="status"
-        aria-live="polite"
-        className={state.status === 'error' ? 'text-sm font-medium text-danger' : 'text-sm text-muted'}
-      >
-        {state.message}
-      </p>
-    </form>
+    </div>
   )
 }
 

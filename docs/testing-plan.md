@@ -195,6 +195,10 @@ TC-01 to TC-70: `docs/issue-12-testing-guide.md`. Files: `docs/database/` (table
 | Notifications (in-app inbox for every role) | TC-167 to TC-198 (32 cases) | `docs/database/notifications_rules_test.sql` | 2026-10-13, PM ran, Claude read. Rehearsed first (`notifications_rules_rehearsal.sql`): 32 of 32 OK, rolled back. Then the live change, then this file again against the live tables | 32 of 32 Pass live, first time |
 | Regression after each Sprint 4 change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-12, re-run after the lockout, after grades and documents, and after enrollment | Unchanged each time: 15 cells OK plus one known CHECK cell on TC-24 (the seed data was changed by the 2026-10-11 browser walk, D-1) |
 | Regression after the notifications change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-13, re-run after the notifications went live | Unchanged: 15 cells OK plus the one known data-dependent CHECK cell (TC-23); every TC-27 permission flag as expected |
+| Auto first-year enrollment (curriculum table, applicant type, enrollment function) | TC-234 to TC-247 (14 cases) | `docs/database/first_year_curriculum_test.sql` | 2026-10-14, PM ran, Claude read. Rehearsed first (`first_year_curriculum_rehearsal.sql`): `all_ok` true, 14 of 14 OK, rolled back. Then the live change (`first_year_curriculum.sql`, its own checks all OK), then this file again against the live tables. Not written with a local PostgreSQL: the rehearsal was its first run | 14 of 14 Pass live |
+| Regression after the first-year change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-14, re-run after the change went live | Unchanged: the same cells OK plus the one known data-dependent CHECK cell (TC-23) |
+| Hold v2: 30-minute hold, No-show only after it, automatic expiry, notification, Registrar drop policy | TC-248 to TC-259 (12 cases) | `docs/database/queue_hold_v2_test.sql` | 2026-10-14, PM ran, Claude read. Rehearsed first (`queue_hold_v2_rehearsal.sql`): `all_ok` true, 12 of 12 OK, rolled back. Then the live change (`queue_hold_v2.sql`, its five checks true), then this file again against the live tables | 12 of 12 Pass live |
+| Regression after the hold v2 change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-14, re-run after the change went live | Unchanged: the same cells OK plus the one known data-dependent CHECK cell (TC-23) |
 
 Notes:
 - TC-94 does not appear in any test file. It is not recorded as a case. Not run, not claimed.
@@ -383,6 +387,38 @@ Findings from this run (not fixed; each is a candidate for a later issue, none w
 
 Not verified in this run: Reject on the live site and the rejection email; the queue banner button at 44 px with an active ticket; the
 Registrar's Documents line on a phone beyond the scan; dark mode and phone width on the deployed site; PER-01 was not re-measured.
+
+### 7.7 Automatic first-year enrollment on localhost against the live database (2026-10-14)
+
+Run by: the Project Manager (Registrar and student screens) and Claude (read-only SELECTs of the live tables), on a production build of the new code served on `localhost:3000`, against the live project. For the change in branch `feature/auto-first-year`. Not yet deployed to `cabuyaouni.vercel.app` at the time of this run. The curriculum is SAMPLE data (BSCS: CS111, CS112, MATH101, CS113, CS114; BSIT: IT101 to IT104 and GE101; BSBA: BA101 to BA104 and GE101).
+
+| ID | Steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| A-01 | Apply with the PM's Gmail as a New student (BSBA), the Registrar accepts | Student account created, a Pending Year 1 enrollment with the program's five subjects, no picking | Application 227 (New) Accepted, student 2026-0010; enrollment 66, Year 1, Pending, items BA101, BA102, BA103, BA104, GE101 | Pass |
+| A-02 | The new student opens Enrollment | The five subjects, no section picker, no Remove buttons, a note to ask the Registrar to drop a subject | Reported by the PM: the fixed subjects are shown; the picker and Remove were not described | Pass (reported by the PM) |
+| A-03 | The Registrar drops one subject of the Pending enrollment | The subject is removed from that enrollment | First recorded as "Pass (reported by the PM)", but when the PM pressed Drop again nothing happened: the Drop buttons sat INSIDE the Approve/Reject form (nested forms, React error "A React form was unexpectedly submitted"). Fixed (commit e2ea176) and tried again by Claude on a production build: the subject BA104 was removed from enrollment 66 (database: BA101, BA102, BA103, GE101 left) | Fail, then fixed and Pass (see B-04) |
+| A-04 | The acceptance email | Branded email with the student ID and a set-password link | Reported by the PM: working. The details were not written down | Pass (reported by the PM) |
+| A-05 | Another application (203, Arvien Espedillon) in the live table | Stays Pending, untouched | Still Pending, no student | Pass |
+
+Known limits of this change (recorded, not fixed): the Registrar's drop is not audited with the Registrar as actor; a student can still remove or add their own Pending items by calling the database API directly (the screen hides it; the database policies are unchanged); the function always uses year 1 and the 1st semester; a section has capacity 40 and the Registrar's approval fails with "section full" beyond that; the older test files that call the old five-argument `submit_application` (`applications_rules_test.sql` setup and TC-123, `login_lockout_test.sql` TC-81, the anon function lists in other tests) are not updated; the sample subjects, schedules and capacities are invented; a transferee is not auto-enrolled and picks sections as before (not exercised in A-01 to A-05).
+
+Not verified in this run: the same flow on the deployed site, a transferee end to end, BSCS and BSIT through the screens (covered at database level by TC-240), the Registrar drop on a phone, and PER-01 after the change.
+
+### 7.8 Hold v2, several documents, the QR rule and the Registrar drop on localhost against the live database (2026-10-14)
+
+Run by: the Project Manager (student 20260008 on `127.0.0.1:3000`) and Claude (Registrar tab, read-only SELECTs), on a production build of the new code. Not yet deployed to `cabuyaouni.vercel.app` at the time of this run. A real 30-minute hold could not be waited out, so the expiry itself is proven by the database tests TC-249 to TC-253 (a held time moved back inside a rolled-back transaction), not by clicking.
+
+| ID | Steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| B-01 | Student 20260008, served today in the Documents line, opens the queue page | No Documents code, a "You were served" note | Reported by the PM: passes (UT-80 and UT-81 cover the rule) | Pass (reported by the PM) |
+| B-02 | The student checks two documents on the request form and submits | Two requests listed as Pending, one submit | Reported by the PM: passes | Pass (reported by the PM) |
+| B-03 | The student opens the queue page after the new requests | The Documents code is back (the requests are newer than the last Done ticket) | Reported by the PM: passes | Pass (reported by the PM) |
+| B-04 | The Registrar drops BA104 from the Pending enrollment 66 of student 2026-0010 (after the nested-form fix) | The subject is removed and the audit row names the Registrar | Database: BA101, BA102, BA103, GE101 left; the audit row for the delete has the Registrar Rey Cruz as actor. The screen showed the change a moment late while the tab was in the background | Pass |
+| B-05 | The Registrar's No-show on a held ticket before the hold runs out (button disabled, "No-show allowed after ...") and the automatic expiry | Disabled until 30 minutes pass; the database refuses an early No-show; an expired hold becomes a No-show and the student is told | Not clicked: no ticket could be made on localhost (the QR scan needs a phone camera, which needs https). Covered at database level by TC-249 to TC-253 (hold active, expiry, notification) | Not tested on screen |
+
+Known limits of this change (recorded, not fixed): expiry is run when the Registrar's or the student's queue page loads or refreshes, not by a scheduler, so an expired hold stays Held until one of those pages is open (an optional `pg_cron` block is in the file header); the older `queue_hold_test.sql` (and its rehearsal) now fail where they expect 15 minutes or an immediate No-show, and `enrollment_rules_test.sql` TC-119 (Registrar cannot delete) and `first_year_curriculum_test.sql` TC-247's information line show the new Registrar delete; none of them is updated; do not re-run `queue_hold.sql`, `enrollment_rules.sql` or `notifications_rules.sql` as they stand; a Registrar's drop screen shows the change only after the page refreshes.
+
+Not verified in this run: B-05 on screen, the several-documents form and the queue rule on the deployed site and on a phone, a transferee end to end, and PER-01 after these changes.
 
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 

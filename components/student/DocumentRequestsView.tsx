@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { Button, Input, Section, Select, StatusBadge } from '@/components/ui'
+import { Button, Input, Section, StatusBadge } from '@/components/ui'
 import { requestDocument, type RequestDocumentState } from '@/lib/data/documents-actions'
 import type { DocumentRequest, DocumentTypeOption } from '@/lib/data/documents'
 import { formatShortDate } from './format'
@@ -22,14 +22,28 @@ function NewRequestForm({ types }: { types: DocumentTypeOption[] }) {
       action={formAction}
       className="flex scroll-mt-4 flex-col gap-4 rounded-lg border border-edge bg-card p-4 lg:p-5"
     >
-      <div className="grid gap-4 sm:grid-cols-[2fr_3fr_1fr]">
-        <Select id="doc-type" name="documentTypeId" label="Document type" required error={errors.type}>
+      <fieldset className="flex flex-col gap-2" aria-describedby={errors.type ? 'doc-type-error' : 'doc-type-hint'}>
+        <legend className="text-sm font-semibold text-foreground">
+          Documents you need<span aria-hidden="true" className="ml-0.5 text-danger">*</span>
+        </legend>
+        <p id="doc-type-hint" className="text-[13px] text-muted">
+          Pick one or more (up to 5). You get one queue number for all of them.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
           {types.map((t) => (
-            <option key={t.id} value={t.id}>
+            <label key={t.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-edge px-3 text-sm">
+              <input type="checkbox" name="documentTypeId" value={t.id} className="size-4 accent-primary" />
               {t.name}
-            </option>
+            </label>
           ))}
-        </Select>
+        </div>
+        {errors.type && (
+          <p id="doc-type-error" role="alert" className="text-[13px] font-medium text-danger">
+            {errors.type}
+          </p>
+        )}
+      </fieldset>
+      <div className="grid gap-4 sm:grid-cols-[3fr_1fr]">
         <Input
           id="doc-purpose"
           name="purpose"

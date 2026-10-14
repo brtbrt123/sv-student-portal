@@ -6,7 +6,7 @@ import QueueScanner from '@/components/registrar/QueueScanner'
 import TicketQueue from '@/components/registrar/TicketQueue'
 import { EmptyState } from '@/components/ui'
 import { requireRole } from '@/lib/auth/session'
-import { getStaffQueue, isQueueService, type QueueService, type StaffTicket } from '@/lib/data/queue'
+import { expireHolds, getStaffQueue, isQueueService, type QueueService, type StaffTicket } from '@/lib/data/queue'
 import { cn } from '@/lib/utils'
 
 const LINES: { service: QueueService; label: string; subtitle: string }[] = [
@@ -29,6 +29,7 @@ export default async function RegistrarQueuePage({
   const profile = await requireRole('Registrar')
   const { service: serviceParam } = await searchParams
   const service: QueueService = isQueueService(serviceParam) ? serviceParam : 'Enrollment'
+  await expireHolds() // holds that ran out become No-shows (and the student is told) before the list is read
   const [enrollment, documents] = await Promise.all([getStaffQueue('Enrollment'), getStaffQueue('Documents')])
   const tickets = service === 'Documents' ? documents : enrollment
   const counts: Record<QueueService, number> = { Enrollment: active(enrollment), Documents: active(documents) }

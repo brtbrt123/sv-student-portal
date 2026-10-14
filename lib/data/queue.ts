@@ -1,5 +1,7 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { formatStudentId } from '@/lib/auth/student-id'
+import { HOLD_MINUTES } from '@/lib/queue/line'
 
 // Server-side reads for the queue (ticket numbers). Everything runs with the signed-in user's own session
 // and goes through the database functions of docs/database/queue_rules.sql: a student gets only their own
@@ -92,6 +94,10 @@ export type StaffTicket = {
   calledAt: string | null
   finishedAt: string | null
   heldAt: string | null
+  /** When the hold runs out (ISO), only for a held ticket. */
+  heldUntil: string | null
+  /** True once the hold has run out: only then may the Registrar mark it No-show. */
+  holdExpired: boolean
 }
 
 type StaffRow = {
@@ -106,6 +112,24 @@ type StaffRow = {
   called_at: string | null
   finished_at: string | null
   held_at?: string | null
+}
+
+// When a held ticket's hold runs out and whether it already has (the server clock; the page re-reads every 10 seconds).
+function holdTimes(status: TicketStatus, heldAt: string | null): { heldUntil: string | null; holdExpired: boolean } {
+  if (status !== 'Held' || !heldAt || Number.isNaN(Date.parse(heldAt))) return { heldUntil: null, holdExpired: false }
+  const until = Date.parse(heldAt) + HOLD_MINUTES * 60_000
+  return { heldUntil: new Date(until).toISOString(), holdExpired: Date.now() > until }
+}
+
+// Closes every hold that ran out (the database turns it into a No-show and tells the student). Safe for any signed-in
+// user to call and safe to repeat; called whenever a queue page loads. Never throws and never blocks the page.
+export async function expireHolds(): Promise<void> {
+  try {
+    const rpc = await queueRpc()
+    await rpc('queue_expire_holds')
+  } catch {
+    // the next refresh tries again
+  }
 }
 
 // Today's tickets of a service for the Registrar, in ticket order. Null when the call fails.
@@ -130,6 +154,7 @@ export async function getStaffQueue(service: QueueService): Promise<StaffTicket[
           calledAt: r.called_at,
           finishedAt: r.finished_at,
           heldAt: r.held_at ?? null,
+          ...holdTimes(status, r.held_at ?? null),
         },
       ]
     })
@@ -180,5 +205,30 @@ export async function getQueueStudentCard(
     }
   } catch {
     return { error: {} }
+  }
+}
+
+// When the signed-in student was last served (a Done ticket) in a line, or null if never. The student reads only
+// their own tickets (RLS), so this needs no extra right. Never throws: null on any failure means "never served",
+// which keeps the old behaviour (the code is offered while there is a reason to queue).
+export async function getLastServedAt(service: QueueService): Promise<string | null> {
+  try {
+    // The queue tables are not in the generated types, so the untyped client is used (as in lib/data/applications.ts).
+    const db = (await createClient()) as unknown as SupabaseClient
+    const svc = await db.from('queue_services').select('service_id').eq('service_code', service).maybeSingle()
+    const serviceId = (svc.data as { service_id: number } | null)?.service_id
+    if (svc.error || typeof serviceId !== 'number') return null
+
+    const { data, error } = await db
+      .from('queue_tickets')
+      .select('finished_at')
+      .eq('service_id', serviceId)
+      .eq('status', 'Done')
+      .order('finished_at', { ascending: false })
+      .limit(1)
+    if (error) return null
+    return ((data ?? []) as { finished_at: string | null }[])[0]?.finished_at ?? null
+  } catch {
+    return null
   }
 }

@@ -10,7 +10,7 @@ export type EnrollmentStatus = 'Pending' | 'Approved' | 'Rejected'
 
 export const ENROLLMENT_STATUSES: readonly EnrollmentStatus[] = ['Pending', 'Approved', 'Rejected']
 
-export type EnrollmentReviewSection = {
+type SectionInfo = {
   sectionId: number
   sectionCode: string
   subjectCode: string
@@ -21,6 +21,9 @@ export type EnrollmentReviewSection = {
   /** Seats taken now: items in this section that belong to Approved enrollments. */
   taken: number
 }
+
+/** A section of one enrollment; itemId is the enrollment_items row (what dropping it needs). */
+export type EnrollmentReviewSection = SectionInfo & { itemId: number }
 
 export type EnrollmentReviewItem = {
   id: number
@@ -58,7 +61,7 @@ export async function getEnrollmentsReviewState(): Promise<EnrollmentsReviewStat
         .select('enrollment_id, student_id, term_id, year_level, status, submitted_at, reviewed_by, reviewed_at, remarks')
         .order('submitted_at', { ascending: true })
         .order('enrollment_id', { ascending: true }),
-      supabase.from('enrollment_items').select('enrollment_id, section_id'),
+      supabase.from('enrollment_items').select('enrollment_item_id, enrollment_id, section_id'),
     ])
     if (enrRes.error || itemRes.error) return { kind: 'error' }
 
@@ -106,7 +109,7 @@ export async function getEnrollmentsReviewState(): Promise<EnrollmentsReviewStat
     const sectionById = new Map(
       sections.map((s) => {
         const subject = subjects.get(s.subject_id)
-        const row: EnrollmentReviewSection = {
+        const row: SectionInfo = {
           sectionId: s.section_id,
           sectionCode: s.section_code,
           subjectCode: subject?.code ?? '-',
@@ -124,7 +127,7 @@ export async function getEnrollmentsReviewState(): Promise<EnrollmentsReviewStat
       const section = sectionById.get(i.section_id)
       if (!section) continue
       const list = itemsByEnrollment.get(i.enrollment_id) ?? []
-      list.push(section)
+      list.push({ ...section, itemId: i.enrollment_item_id })
       itemsByEnrollment.set(i.enrollment_id, list)
     }
 

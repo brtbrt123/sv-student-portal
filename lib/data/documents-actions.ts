@@ -25,9 +25,12 @@ const GENERIC_UPDATE = 'We could not update this request. Please try again in a 
 const MAX_PURPOSE = 200
 const MAX_REMARKS = 300
 const MAX_COPIES = 10
+const MAX_TYPES = 5
 
-// Files a document request for the signed-in student. Sends only student_id, document_type_id, purpose
-// and copies. On success the student goes back to the page with a notice (the page re-renders, so a
+// Files document requests for the signed-in student: one request row per document type picked (up to MAX_TYPES),
+// all with the same purpose and copies, in ONE insert so they all succeed or none does. The student still gets one
+// queue number at the window for all of them (the queue ticket belongs to the student, not to a request). Sends only
+// student_id, document_type_id, purpose and copies. On success the student goes back to the page with a notice (the page re-renders, so a
 // message kept in the form would disappear).
 export async function requestDocument(_prev: RequestDocumentState, formData: FormData): Promise<RequestDocumentState> {
   void _prev
@@ -37,13 +40,14 @@ export async function requestDocument(_prev: RequestDocumentState, formData: For
     fieldErrors,
   })
 
-  const typeRaw = String(formData.get('documentTypeId') ?? '')
+  const typeRaws = formData.getAll('documentTypeId').map((v) => String(v))
   const purpose = String(formData.get('purpose') ?? '').trim()
   const copiesRaw = String(formData.get('copies') ?? '').trim()
 
   const fieldErrors: NonNullable<RequestDocumentState['fieldErrors']> = {}
-  const typeId = /^\d+$/.test(typeRaw) ? Number(typeRaw) : NaN
-  if (!Number.isSafeInteger(typeId)) fieldErrors.type = 'Choose the document you need.'
+  const typeIds = [...new Set(typeRaws.map((raw) => (/^\d+$/.test(raw) ? Number(raw) : NaN)))]
+  if (typeIds.length === 0 || typeIds.some((id) => !Number.isSafeInteger(id))) fieldErrors.type = 'Choose the document you need.'
+  else if (typeIds.length > MAX_TYPES) fieldErrors.type = `Choose up to ${MAX_TYPES} documents at a time.`
   if (!purpose) fieldErrors.purpose = 'Enter the purpose of the request.'
   else if (purpose.length > MAX_PURPOSE) fieldErrors.purpose = `The purpose is too long (${MAX_PURPOSE} characters at most).`
   const copies = /^\d+$/.test(copiesRaw) ? Number(copiesRaw) : NaN
@@ -56,12 +60,14 @@ export async function requestDocument(_prev: RequestDocumentState, formData: For
     const user = userData.user
     if (!user) return err(SESSION_ENDED)
 
-    const { error } = await supabase.from('document_requests').insert({
-      student_id: user.id,
-      document_type_id: typeId,
-      purpose,
-      copies,
-    })
+    const { error } = await supabase.from('document_requests').insert(
+      typeIds.map((typeId) => ({
+        student_id: user.id,
+        document_type_id: typeId,
+        purpose,
+        copies,
+      }))
+    )
     if (error) {
       const mapped = documentRequestErrorMessage(error.code, GENERIC_REQUEST)
       return err(mapped.message, mapped.fieldErrors)
