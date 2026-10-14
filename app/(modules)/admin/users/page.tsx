@@ -1,18 +1,27 @@
 import DashboardShell from '@/components/layout/DashboardShell'
-import { SampleDataNote } from '@/components/ui/SampleDataNote'
+import { EmptyState } from '@/components/ui'
 import UsersTable from '@/components/admin/UsersTable'
 import { requireRole } from '@/lib/auth/session'
-import { ROLE_NAMES, getAdminUsers } from '@/lib/mock/admin-data'
+import { getAdminUsersState } from '@/lib/data/admin-users'
 
 export default async function AdminUsersPage() {
   const profile = await requireRole('Admin')
+  const state = await getAdminUsersState()
 
   return (
     <DashboardShell profile={profile} title="Users" subtitle="Accounts and roles: users are deactivated, never deleted">
-      <div className="flex flex-col gap-6">
-        <SampleDataNote>The user list is sample data and is not connected to live accounts yet.</SampleDataNote>
-        <UsersTable initialUsers={getAdminUsers()} roleNames={ROLE_NAMES} />
-      </div>
+      {state.kind === 'error' ? (
+        <EmptyState title="The accounts could not be loaded">
+          Something went wrong while reading the accounts. Reload the page in a few minutes.
+        </EmptyState>
+      ) : (
+        <UsersTable
+          users={state.users}
+          roleNames={state.roleNames}
+          departments={state.departments}
+          currentUserId={profile.id}
+        />
+      )}
     </DashboardShell>
   )
 }
