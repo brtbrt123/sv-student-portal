@@ -1,5 +1,5 @@
 -- ==========================================
--- SCHEMA (PostgreSQL / Supabase) - 23 tables, 3NF
+-- SCHEMA (PostgreSQL / Supabase) - the first 23 tables, 3NF (6 more come from the rule files, see README.md)
 -- ==========================================
 -- Tables are listed in dependency order, so this file can be run as is in the
 -- Supabase SQL Editor. profiles.profile_id references auth.users(id), which
