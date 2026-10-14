@@ -204,11 +204,12 @@ function HeldRow({ ticket }: { ticket: StaffTicket }) {
         <span className="block truncate text-[13px] text-muted tabular-nums">
           {ticket.label} · {ticket.studentNumber}
           {ticket.heldAt ? ` · since ${clock(ticket.heldAt)}` : ''}
+          {ticket.heldUntil && !ticket.holdExpired ? ` · No-show allowed after ${clock(ticket.heldUntil)}` : ''}
         </span>
       </span>
       <form action={formAction}>
         <input type="hidden" name="ticketId" value={ticket.ticketId} />
-        <Button type="submit" name="outcome" value="No-show" variant="outline" disabled={pending}>
+        <Button type="submit" name="outcome" value="No-show" variant="outline" disabled={pending || !ticket.holdExpired}>
           No-show
         </Button>
       </form>

@@ -4,7 +4,7 @@ import { EmptyState } from '@/components/ui'
 import { requireRole } from '@/lib/auth/session'
 import { getStudentDocumentsState } from '@/lib/data/documents'
 import { getStudentEnrollmentState } from '@/lib/data/enrollment'
-import { getLastServedAt, getMyQueueStatus, type MyQueueStatus } from '@/lib/data/queue'
+import { expireHolds, getLastServedAt, getMyQueueStatus, type MyQueueStatus } from '@/lib/data/queue'
 import { isActiveTicketStatus, needsNewNumber } from '@/lib/queue/line'
 
 const inLine = (q: MyQueueStatus | null) => q?.hasTicket === true && isActiveTicketStatus(q.ticketStatus)
@@ -14,6 +14,7 @@ const inLine = (q: MyQueueStatus | null) => q?.hasTicket === true && isActiveTic
 // student already has a ticket in that line.
 export default async function StudentQueuePage() {
   const profile = await requireRole('Student')
+  await expireHolds() // a hold that ran out is closed (and the student told) before the status is read
   const [enrollment, documents, enrollmentQueue, documentsQueue, enrollmentServedAt, documentsServedAt] = await Promise.all([
     getStudentEnrollmentState(),
     getStudentDocumentsState(),

@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
-import { getAdminClientFor } from '@/lib/supabase/admin'
 import { enrollmentDecisionErrorMessage } from '@/lib/data/db-errors'
 
 // Server Action for the Registrar's enrollment decision. It runs with the signed-in user's own session:
@@ -66,11 +65,10 @@ export async function decideEnrollment(_prev: DecideEnrollmentState, formData: F
   return { status: 'success', message: `Enrollment ${target.toLowerCase()}.` }
 }
 
-// A student whose subjects are set by their program cannot drop one; the Registrar does it on request.
-// The Registrar has no DELETE right on enrollment_items of their own, so this runs with the admin client,
-// handed out only after the caller's own session proves an active Registrar. The enrollment must be
-// Pending and the item must belong to it (the database trigger refuses a change to a decided enrollment
-// for every role as well).
+// A student whose subjects are set by their program cannot drop one; the Registrar does it on request, with their
+// OWN session: the database policy enrollment_items_registrar_delete lets an active Registrar delete an item, the
+// trigger refuses a change to an enrollment that is not Pending (for every role), and the audit log records the
+// Registrar as the actor. No server key is used.
 export async function dropEnrollmentSection(_prev: DecideEnrollmentState, formData: FormData): Promise<DecideEnrollmentState> {
   void _prev
   const enrollmentRaw = String(formData.get('enrollmentId') ?? '')
@@ -82,29 +80,25 @@ export async function dropEnrollmentSection(_prev: DecideEnrollmentState, formDa
   }
 
   try {
-    const ctx = await getAdminClientFor('Registrar').catch(() => undefined)
-    if (ctx === undefined) return { status: 'error', message: 'Dropping a subject is not configured on the server yet. Ask the Admin.' }
-    if (ctx === null) return { status: 'error', message: SESSION_ENDED }
+    const profile = await getCurrentProfile()
+    if (!profile || profile.role !== 'Registrar') return { status: 'error', message: SESSION_ENDED }
+    const supabase = await createClient()
 
-    const { data: enrollment, error: readError } = await ctx.admin
-      .from('enrollments')
-      .select('status')
-      .eq('enrollment_id', enrollmentId)
-      .maybeSingle()
-    if (readError || !enrollment) return { status: 'error', message: GENERIC_DROP }
-    if (enrollment.status !== 'Pending') {
-      return { status: 'error', message: 'Only a Pending enrollment can change. This one was already decided. Reload the page.' }
-    }
-
-    const { data: removed, error } = await ctx.admin
+    // .select() returns the deleted rows, so a delete that RLS skipped shows up as no rows.
+    const { data: removed, error } = await supabase
       .from('enrollment_items')
       .delete()
       .eq('enrollment_item_id', itemId)
       .eq('enrollment_id', enrollmentId)
       .select('enrollment_item_id')
-    if (error) return { status: 'error', message: GENERIC_DROP }
+    if (error) {
+      if (error.code === 'P0001' && error.message?.startsWith('enrollment locked:')) {
+        return { status: 'error', message: 'Only a Pending enrollment can change. This one was already decided. Reload the page.' }
+      }
+      return { status: 'error', message: GENERIC_DROP }
+    }
     if (!removed || removed.length === 0) {
-      return { status: 'error', message: 'That subject was not found. It may be dropped already. Reload the page.' }
+      return { status: 'error', message: 'That subject was not found or cannot be dropped. It may be dropped already. Reload the page.' }
     }
   } catch {
     return { status: 'error', message: GENERIC_DROP }

@@ -3,6 +3,10 @@
 // The Registrar's rough time per applicant at the window (PM decision 2026-10-13: 3 to 5 minutes each).
 export const MINUTES_PER_PERSON = { min: 3, max: 5 } as const
 
+// How long a student may keep a place on hold. The database decides (private.queue_hold_limit); this copy is for the
+// screen. After it the hold is closed as a No-show by the database and the student is told.
+export const HOLD_MINUTES = 30
+
 export type WaitRange = { min: number; max: number }
 
 // The wait before it is your turn: people ahead times 3 to 5 minutes. Null when nobody is ahead.
