@@ -40,7 +40,7 @@ export function LoginShowcase({
           />
           <div className={cn('absolute inset-x-0 bottom-0 pb-[16%] text-white', onLeft ? 'pl-[17%] pr-[23%]' : 'pl-[16%] pr-[26%]')}>
             <p className="text-balance text-3xl font-semibold leading-tight tracking-[-0.01em] [text-shadow:0_1px_14px_rgb(0_0_0/0.35)]">
-              {staff ? 'Review, approve and record in one place.' : 'Enrollment, grades and clearance in one place.'}
+              {staff ? 'Review, approve and record in one place.' : 'Welcome! Manage your enrollment, grades, and clearance all in one place.'}
             </p>
             <p className="mt-3 max-w-[38ch] text-sm leading-6 text-white/90 [text-shadow:0_1px_10px_rgb(0_0_0/0.35)]">
               {staff
