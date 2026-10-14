@@ -1,135 +1,55 @@
-import { SampleDataNote } from '@/components/ui/SampleDataNote'
 import DashboardShell from '@/components/layout/DashboardShell'
-import TableCard from '@/components/admin/TableCard'
+import { CatalogTerms } from '@/components/admin/CatalogTerms'
+import { CatalogDepartments } from '@/components/admin/CatalogDepartments'
+import { CatalogPrograms } from '@/components/admin/CatalogPrograms'
+import { CatalogSubjects } from '@/components/admin/CatalogSubjects'
+import { CatalogSections } from '@/components/admin/CatalogSections'
 import { requireRole } from '@/lib/auth/session'
-import {
-  Button,
-  SummaryStrip,
-  StatusBadge,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui'
-import { getAcademicSetup } from '@/lib/mock/admin-data'
-
-const MUTED = 'font-normal text-muted'
-
-function Head({ cols }: { cols: string[] }) {
-  return (
-    <TableHeader>
-      <TableRow className="hover:bg-transparent">
-        {cols.map((c) => (
-          <TableHead key={c} scope="col">
-            {c}
-          </TableHead>
-        ))}
-      </TableRow>
-    </TableHeader>
-  )
-}
+import { EmptyState, SummaryStrip } from '@/components/ui'
+import { getCatalogState } from '@/lib/data/catalog'
 
 export default async function AdminAcademicSetupPage() {
   const profile = await requireRole('Admin')
-  const setup = getAcademicSetup()
+  const state = await getCatalogState()
 
-  // Adding records needs the database; until then the buttons are off and the reason is on screen.
-  const addButton = (label: string) => (
-    <Button variant="outline" disabled aria-describedby="setup-reason">
-      {label}
-    </Button>
-  )
+  if (state.kind === 'error') {
+    return (
+      <DashboardShell profile={profile} title="Academic Setup" subtitle="Terms, programs, departments, subjects and sections">
+        <EmptyState title="The academic setup could not be loaded">
+          Something went wrong on our side. Reload the page in a few minutes.
+        </EmptyState>
+      </DashboardShell>
+    )
+  }
+
+  const { terms, programs, subjects, sections, departments, currentTermId } = state
+  const current = terms.find((t) => t.id === currentTermId) ?? null
+  const currentSections = sections.filter((s) => s.termId === currentTermId).length
 
   return (
     <DashboardShell profile={profile} title="Academic Setup" subtitle="Terms, programs, departments, subjects and sections">
       <div className="flex flex-col gap-6">
-        <SampleDataNote>Terms, programs, subjects and sections here are not connected to live records yet.</SampleDataNote>
         <SummaryStrip
           items={[
-            { label: 'Terms', value: setup.termCount, hint: `current: ${setup.currentLabel}` },
-            { label: 'Programs', value: setup.programCount, hint: setup.programRows.map((p) => p.code).join(', ') },
-            { label: 'Subjects', value: setup.subjectCount, hint: 'this term' },
-            { label: 'Sections', value: setup.sectionCount, hint: 'open' },
+            { label: 'Current term', value: current ? current.label : 'None', hint: current ? `${current.startDate} to ${current.endDate}` : 'Choose one below', hue: current ? undefined : 'rose' },
+            { label: 'Programs', value: programs.length },
+            { label: 'Subjects', value: subjects.length },
+            { label: 'Sections', value: currentSections, hint: 'in the current term' },
           ]}
         />
 
-        <p id="setup-reason" className="text-sm text-muted">
-          Adding terms and programs is turned off until the database is connected.
-        </p>
+        {!current && (
+          <p role="alert" className="rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+            No term is current. Students cannot enrol until you choose a current term.
+          </p>
+        )}
 
-        <TableCard title="Terms" action={addButton('Add term')} minWidth="min-w-[560px]">
-          <Head cols={['School year', 'Semester', 'Start', 'End', 'Status']} />
-          <TableBody>
-            {setup.termRows.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell>{t.schoolYear}</TableCell>
-                <TableCell className={MUTED}>{t.semester}</TableCell>
-                <TableCell className={`whitespace-nowrap ${MUTED}`}>{t.start}</TableCell>
-                <TableCell className={`whitespace-nowrap ${MUTED}`}>{t.end}</TableCell>
-                <TableCell>
-                  <StatusBadge status={t.status} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </TableCard>
+        <CatalogTerms terms={terms} />
+        <CatalogPrograms programs={programs} departments={departments} />
+        <CatalogSubjects subjects={subjects} departments={departments} />
+        <CatalogSections sections={sections} subjects={subjects} terms={terms} currentTermId={currentTermId} />
 
-        <TableCard title="Programs" action={addButton('Add program')} minWidth="min-w-[600px]">
-          <Head cols={['Code', 'Program', 'Department', 'Students']} />
-          <TableBody>
-            {setup.programRows.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.code}</TableCell>
-                <TableCell className={MUTED}>{p.name}</TableCell>
-                <TableCell className={MUTED}>{p.department}</TableCell>
-                <TableCell className={MUTED}>{p.students}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </TableCard>
-
-        <TableCard title="Departments" minWidth="min-w-[480px]">
-          <Head cols={['Code', 'Name', 'Type']} />
-          <TableBody>
-            {setup.departmentRows.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>{d.code}</TableCell>
-                <TableCell className={MUTED}>{d.name}</TableCell>
-                <TableCell className={MUTED}>{d.type}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </TableCard>
-
-        <TableCard title="Subjects" minWidth="min-w-[600px]">
-          <Head cols={['Code', 'Title', 'Units', 'Department']} />
-          <TableBody>
-            {setup.subjectRows.map((s) => (
-              <TableRow key={s.id}>
-                <TableCell>{s.code}</TableCell>
-                <TableCell className={MUTED}>{s.title}</TableCell>
-                <TableCell className={MUTED}>{s.units}</TableCell>
-                <TableCell className={MUTED}>{s.department}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </TableCard>
-
-        <TableCard title="Sections" minWidth="min-w-[760px]">
-          <Head cols={['Section', 'Subject', 'Term', 'Schedule', 'Capacity']} />
-          <TableBody>
-            {setup.sectionRows.map((s) => (
-              <TableRow key={s.id}>
-                <TableCell>{s.code}</TableCell>
-                <TableCell className={MUTED}>{s.subject}</TableCell>
-                <TableCell className={MUTED}>{s.term}</TableCell>
-                <TableCell className={`whitespace-nowrap ${MUTED}`}>{s.schedule}</TableCell>
-                <TableCell className={MUTED}>{s.capacity}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </TableCard>
+        <CatalogDepartments departments={departments} />
       </div>
     </DashboardShell>
   )
