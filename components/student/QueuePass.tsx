@@ -6,13 +6,13 @@ import { QRCodeSVG } from 'qrcode.react'
 import { AutoRefresh } from '@/components/queue/AutoRefresh'
 import { Button, Card } from '@/components/ui'
 import type { MyQueueStatus, QueueService } from '@/lib/data/queue'
-import { cancelMyTicket, getMyQueueQr } from '@/lib/data/queue-actions'
+import { cancelMyTicket, getMyQueueQr, holdMyTicket, unholdMyTicket, type QueueActionState } from '@/lib/data/queue-actions'
 import { Icon } from '@/components/layout/Icon'
-import { estimateWait, formatWait, lineSlots, MINUTES_PER_PERSON } from '@/lib/queue/line'
+import { estimateWait, formatWait, isActiveTicketStatus, lineSlots, MINUTES_PER_PERSON } from '@/lib/queue/line'
 import { ordinal } from '@/lib/queue/ordinal'
 import { cn } from '@/lib/utils'
 
-const WINDOW_SECONDS = 15 // the same as QR_WINDOW_SECONDS in lib/queue/qr-token.ts (that file is server-only)
+const WINDOW_SECONDS = 30 // the same as QR_WINDOW_SECONDS in lib/queue/qr-token.ts (that file is server-only)
 
 // The student's queue pass for a service: a rotating QR code to show at the Registrar, and once the
 // Registrar has scanned it, the ticket number, the people ahead and the number being served. The page
@@ -28,7 +28,7 @@ export default function QueuePass({
   title: string
   intro: string
 }) {
-  const active = status?.hasTicket && (status.ticketStatus === 'Waiting' || status.ticketStatus === 'Serving')
+  const active = status?.hasTicket && isActiveTicketStatus(status.ticketStatus)
   const served = status?.hasTicket && status.ticketStatus === 'Done'
 
   return (
@@ -98,7 +98,7 @@ function QrView({ closedNote }: { closedNote: string | null }) {
       <div className="flex flex-col items-center gap-2">
         <div className="rounded-2xl bg-white p-3 shadow-elev-sm">
           {token ? (
-            <QRCodeSVG value={token} size={208} level="M" marginSize={1} bgColor="#ffffff" fgColor="#18181b" title="Your queue code, it changes every 15 seconds" />
+            <QRCodeSVG value={token} size={208} level="M" marginSize={1} bgColor="#ffffff" fgColor="#18181b" title="Your queue code, it changes every 30 seconds" />
           ) : (
             <div className="grid size-[208px] place-items-center text-sm text-[#52525b]" aria-busy={!error}>
               {error ? 'No code yet' : 'Making your code...'}
@@ -124,7 +124,7 @@ function QrView({ closedNote }: { closedNote: string | null }) {
           number right away.
         </p>
         <p className="text-muted">
-          The code changes every 15 seconds, so a screenshot of it will not work. Keep this page open on your phone.
+          The code changes every 30 seconds, so a screenshot of it will not work. Keep this page open on your phone.
         </p>
       </div>
     </div>
@@ -135,15 +135,18 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState('')
+  const [confirming, setConfirming] = useState(false)
   const serving = status.ticketStatus === 'Serving'
+  const held = status.ticketStatus === 'Held'
   const place = status.peopleAhead + 1
   const wait = estimateWait(status.peopleAhead)
 
-  function leave() {
+  function run(action: () => Promise<QueueActionState>) {
     setMessage('')
     startTransition(async () => {
-      const res = await cancelMyTicket(service)
+      const res = await action()
       if (res.status === 'error') setMessage(res.message)
+      setConfirming(false)
       router.refresh()
     })
   }
@@ -155,7 +158,7 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
           <p className="text-[13px] font-medium text-muted">Your ticket</p>
           <p className="text-4xl leading-none font-extrabold tracking-tight tabular-nums sm:text-5xl">{status.ticketLabel}</p>
         </div>
-        {!serving && (
+        {!serving && !held && (
           <p className="rounded-full bg-gold px-4 py-1.5 text-sm font-bold text-[#18181b]">
             {status.peopleAhead === 0 ? 'You are next' : `${ordinal(place)} in line`}
           </p>
@@ -169,6 +172,23 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
             {status.windowLabel ? `Go to ${status.windowLabel} now.` : 'Go to the Registrar window now.'}
           </p>
           <p className="mt-1 text-sm">Bring your valid ID and your requirements.</p>
+        </div>
+      ) : held ? (
+        <div className="flex flex-col gap-4 rounded-2xl border border-warm-edge bg-warm-glass px-5 py-5">
+          <div>
+            <p className="text-xl font-extrabold">Your place is on hold</p>
+            <p className="mt-1 text-sm leading-6">
+              The Registrar skips your number and calls the people behind you. Tap <strong>I&apos;m back</strong> when you are at the
+              school again and you will be next.
+            </p>
+          </div>
+          {status.heldUntil && <HoldCountdown until={status.heldUntil} />}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={() => run(() => unholdMyTicket(service))} disabled={pending} aria-busy={pending}>
+              {pending ? 'Please wait...' : "I'm back"}
+            </Button>
+            <CancelControl confirming={confirming} setConfirming={setConfirming} pending={pending} onConfirm={() => run(() => cancelMyTicket(service))} />
+          </div>
         </div>
       ) : (
         <>
@@ -191,11 +211,15 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" onClick={leave} disabled={pending} aria-busy={pending}>
-              {pending ? 'Leaving...' : 'Leave the queue'}
+            <Button variant="outline" onClick={() => run(() => holdMyTicket(service))} disabled={pending} aria-busy={pending}>
+              Hold my place
             </Button>
-            <p className="min-w-0 flex-1 text-sm text-muted">Stay close to the Registrar: if you are not at the window when your number is called, it is skipped.</p>
+            <CancelControl confirming={confirming} setConfirming={setConfirming} pending={pending} onConfirm={() => run(() => cancelMyTicket(service))} />
           </div>
+          <p className="text-sm text-muted">
+            Need a short break (bathroom, an emergency)? Hold your place: the line moves on without you and when you are back you are next.
+            Stay close to the Registrar: if you are not at the window when your number is called, it is skipped.
+          </p>
         </>
       )}
 
@@ -205,6 +229,53 @@ function TicketView({ service, status }: { service: QueueService; status: MyQueu
         </p>
       )}
     </div>
+  )
+}
+
+function CancelControl({
+  confirming,
+  setConfirming,
+  pending,
+  onConfirm,
+}: {
+  confirming: boolean
+  setConfirming: (v: boolean) => void
+  pending: boolean
+  onConfirm: () => void
+}) {
+  return confirming ? (
+    <span className="flex flex-wrap items-center gap-2">
+      <span className="text-sm font-medium">Cancel your ticket? You lose your place.</span>
+      <Button variant="danger" onClick={onConfirm} disabled={pending} aria-busy={pending}>
+        {pending ? 'Cancelling...' : 'Yes, cancel'}
+      </Button>
+      <Button variant="ghost" onClick={() => setConfirming(false)} disabled={pending}>
+        Keep my place
+      </Button>
+    </span>
+  ) : (
+    <Button variant="ghost" onClick={() => setConfirming(true)} disabled={pending}>
+      Cancel ticket
+    </Button>
+  )
+}
+
+// Time left on a hold, counted down on the student's phone.
+function HoldCountdown({ until }: { until: string }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  const left = Math.max(0, Math.ceil((new Date(until).getTime() - now) / 1000))
+  const mm = String(Math.floor(left / 60)).padStart(1, '0')
+  const ss = String(left % 60).padStart(2, '0')
+  return left > 0 ? (
+    <p className="text-sm">
+      Time left on hold: <span className="font-bold tabular-nums">{mm}:{ss}</span>. After that your ticket can be marked as a no-show.
+    </p>
+  ) : (
+    <p className="text-sm font-medium text-danger">Your hold has run out. The Registrar can mark your ticket as a no-show.</p>
   )
 }
 

@@ -6,6 +6,7 @@ import { NOT_ALLOWED, queueErrorMessage } from '@/lib/data/db-errors'
 import { getQueueStudentCard, isQueueService, queueRpc, type QueueService } from '@/lib/data/queue'
 import { createQueueToken, verifyQueueToken } from '@/lib/queue/qr-token'
 import { getQueueSecret } from '@/lib/queue/qr-secret'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server Actions for the queue. They run with the signed-in user's own session: the database functions
 // (docs/database/queue_rules.sql) check the role again and are the final gate; the checks here only give
@@ -52,6 +53,33 @@ export async function cancelMyTicket(service: QueueService): Promise<QueueAction
   return { status: 'success', message: 'You left the queue.' }
 }
 
+// ---- Student: hold my place (bathroom, emergency) and come back
+
+// Hold keeps the ticket's original order but Call next skips it, so the people behind get served. When
+// the student is back, the ticket is next. A hold lasts a limited time (the database decides, 15 minutes).
+async function changeMyHold(service: QueueService, fn: 'queue_hold_my_ticket' | 'queue_unhold_my_ticket', ok: string): Promise<QueueActionState> {
+  try {
+    if (!isQueueService(service)) return { status: 'error', message: 'Unknown queue.' }
+    const profile = await getCurrentProfile()
+    if (!profile) return { status: 'error', message: SESSION_ENDED }
+    const rpc = await queueRpc()
+    const { error } = await rpc(fn, { p_service: service })
+    if (error) return { status: 'error', message: queueErrorMessage(error.code, error.message) }
+  } catch {
+    return { status: 'error', message: queueErrorMessage(undefined, undefined) }
+  }
+  revalidatePath('/student', 'layout')
+  return { status: 'success', message: ok }
+}
+
+export async function holdMyTicket(service: QueueService): Promise<QueueActionState> {
+  return changeMyHold(service, 'queue_hold_my_ticket', 'Your place is on hold.')
+}
+
+export async function unholdMyTicket(service: QueueService): Promise<QueueActionState> {
+  return changeMyHold(service, 'queue_unhold_my_ticket', 'Welcome back. You are next.')
+}
+
 // ---- Registrar: the queue desk (scan, check the card, approve)
 
 // Two steps on one action. "lookup": the scanned (or typed) rotating QR code is checked and the student's
@@ -81,7 +109,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const TOKEN_MESSAGES = {
   malformed: 'This is not a portal queue code.',
   'bad-signature': 'This is not a valid portal queue code.',
-  expired: 'This code has expired. Ask the student to hold the phone up again; the code refreshes every 15 seconds.',
+  expired: 'This code has expired. Ask the student to hold the phone up again; the code refreshes every 30 seconds.',
 } as const
 
 const deskError = (message: string): DeskState => ({ status: 'error', message, stamp: Date.now() })
@@ -181,7 +209,7 @@ export async function callNextTicket(_prev: CallState, formData: FormData): Prom
       message: `Now serving ${row.ticket_label}.`,
       label: row.ticket_label,
       studentName: row.student_name ?? '',
-      studentNumber: row.student_number ?? '',
+      studentNumber: formatStudentId(row.student_number),
       stamp: Date.now(),
     }
   } catch {

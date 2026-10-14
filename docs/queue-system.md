@@ -26,8 +26,18 @@ Q-01 to Q-09, V-6 and V-7).
 6. **At the window.** The Registrar sees the name again, then marks the ticket **Done** or **No-show**. A student can leave the
    queue before being called.
 
-The same tables serve a second service, `Documents` (claiming a finished document). It is in the database; only Enrollment is
-wired to the student pages so far.
+**Hold (2026-10-14, `docs/database/queue_hold.sql`, live; rehearsal TC-199..217 passed 19 of 19).** A student can press **Hold my place**
+while Waiting (bathroom, emergency). The ticket becomes `Held`: Call next skips it, so the people behind are served. **I'm back**
+puts it back to Waiting with the same number, so the student is next. Holding and unholding at once changes nothing (the order is
+the ticket number), so a hold cannot be used to jump the line. A hold lasts 15 minutes (`private.queue_hold_limit()`); after
+that unhold is refused and the Registrar can mark the ticket No-show (or the student cancels). **Cancel ticket** has a confirm step.
+Expired holds do not end by themselves and keep blocking a new ticket for that student and service that day until No-show or cancel.
+
+The same tables serve a second service, `Documents` (claiming a document). It is wired too: a student with an open document
+request (Pending, Processing or Ready) sees the same rotating QR on **Document requests** and gets a ticket from the Registrar
+the same way. The Registrar's Queue page has a switch between the **Enrollment** and **Documents** lines (`?service=Documents`),
+each with its own numbers and its own Call next. No database change was needed. Note: the scan card's "already queued" note
+looks at Enrollment only; a second Documents ticket is still refused by the database ("already queued").
 
 ## How it is built
 

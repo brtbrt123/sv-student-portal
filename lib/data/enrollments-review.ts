@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { formatStudentId } from '@/lib/auth/student-id'
 
 // Server-side reads for the Registrar's enrollment review. Every query runs with the signed-in user's
 // own session (anon key + auth cookies), so Row Level Security does the isolation: the Registrar can
@@ -128,7 +129,7 @@ export async function getEnrollmentsReviewState(): Promise<EnrollmentsReviewStat
     }
 
     const terms = new Map((termRes.data ?? []).map((t) => [t.term_id, `${t.semester} ${t.school_year}`]))
-    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, s.student_number]))
+    const numbers = new Map((stuRes.data ?? []).map((s) => [s.student_id, formatStudentId(s.student_number)]))
     const names = new Map((profRes.data ?? []).map((p) => [p.profile_id, `${p.last_name}, ${p.first_name}`]))
 
     const result: EnrollmentReviewItem[] = enrollments.map((e) => {

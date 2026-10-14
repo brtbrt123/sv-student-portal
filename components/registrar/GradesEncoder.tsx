@@ -86,7 +86,7 @@ export default function GradesEncoder({ items, scale }: { items: EncodableItem[]
     (i) =>
       (sectionId === 'all' || String(i.sectionId) === sectionId) &&
       (!onlyMissing || i.gradeCode === null) &&
-      (!q || i.studentName.toLowerCase().includes(q) || i.studentNo.toLowerCase().includes(q))
+      (!q || i.studentName.toLowerCase().includes(q) || i.studentNo.toLowerCase().includes(q.replace(/-/g, '')))
   )
   const encoded = items.filter((i) => i.gradeCode !== null).length
 

@@ -206,6 +206,14 @@ export function queueErrorMessage(code: string | undefined, message: string | un
     }
     if (message.startsWith('queue closed:')) return 'This queue is closed right now.'
     if (message.startsWith('queue busy:')) return 'The queue is busy for a moment. Please press Approve again.'
+    if (message.startsWith('hold expired:')) {
+      return 'Your hold ran out. Cancel this ticket and ask the Registrar for a new number.'
+    }
+    if (message.startsWith('bad ticket change: no waiting ticket')) return 'You do not have a ticket in the line right now.'
+    if (message.startsWith('bad ticket change: no ticket on hold')) return 'Your place is not on hold.'
+    if (message.includes('is already on hold')) return 'Your place is already on hold.'
+    if (message.includes('cannot be put on hold')) return 'It is your turn now, so your place cannot be put on hold.'
+    if (message.includes('can only be marked No-show')) return 'A ticket on hold can only be marked No-show.'
     if (message.startsWith('bad ticket change:')) return 'This ticket was already changed by someone else. Reload the page.'
   }
   if (code === '22023') return 'That is not an active student account, so no ticket was issued.'
