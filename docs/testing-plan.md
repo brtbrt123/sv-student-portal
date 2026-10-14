@@ -70,7 +70,7 @@ clearance items can only be cleared by SQL as the database owner (recorded as te
 | 2. Integration | SQL suites TC-01 to TC-71 (clearance slice, hardening) and TC-72 to TC-122 (lockout, grades, documents, enrollment), all run on the live database | Pass (some rehearsal failures found real defects, section 6) | App-to-database calls are only covered through the browser checks of level 3. TC-94 has no recorded file |
 | 3. System | Browser walk E2E-01 to E2E-13 (clearance, 2026-10-11) and browser checks S-01 to S-12 (2026-10-12, grades, documents, enrollment, lockout in the app) | Pass, with the gaps on the right | Student enrollment submit/add/remove forms, Reject button, friendly error messages, audit rows of the new writes, phone width, dark mode, every role on the deployed site |
 | 4. Acceptance | None run | Not done | A script per SRS requirement with a sign-off by team members (section 9). Nobody is assigned yet |
-| 5. Performance | PER-02 measured 2026-10-14 (0.1 to 1.5 ms per query); PER-01 analysed, fixes in a pull request | Partly done | PER-02 pass; PER-01 not verified as met on signed-in pages, re-measure after deploy (issue #109) |
+| 5. Performance | PER-02 (0.1 to 1.5 ms per query) and PER-01 (student pages load in 0.9 to 1.3 s) measured 2026-10-14 | Done for the student pages | Staff pages and phone not timed (issue #109) |
 | 6. Security | Isolation, grants, audit and lockout tests (SQL and browser); vulnerabilities table in section 10 | Partly done: 3 of the candidate vulnerabilities have a fix and a recorded test (rls_auto_enable, brute force, rate limiting) | SQL injection has no direct test; rate limiting tested on the sign-in route only; lockout residual risks not tested; at least 3 vulnerabilities with solutions needed |
 
 ## 5. Level 1: Unit testing
@@ -358,8 +358,8 @@ Planned acceptance script (checks to run on the live site; each needs a name and
 
 ### 10.1 Level 5: Performance testing
 
-Status: **PER-02 measured and passed (2026-10-14). PER-01 not met on signed-in pages by analysis; fixes are in a pull request and
-must be re-measured on the live site after they are deployed.** Issue #109.
+Status: **PER-02 measured and passed; PER-01 measured on the live site after the fixes and passed for the student pages (both
+2026-10-14).** Registrar, Cashier, Department and Admin pages were not timed. Issue #109.
 
 **PERF-02 (PER-02: grade and clearance queries under 500 ms): Pass.** Run by Claude with a read-only, rolled-back script in the
 Supabase SQL editor on the live project (as a student with row-level security on: role `authenticated` and the JWT claim of
@@ -377,8 +377,8 @@ student1). Each query was run 30 times; the figures are the average per call, in
 
 These are database times on a small data set. They do not include the network between the app and the database.
 
-**PERF-01 (PER-01: UI loads in under 2.5 s): not verified as met.** Measured from the Project Manager's machine on the deployed site
-with `curl` on 2026-10-14: a static file from the edge takes 0.18 s to the first byte; `/login` (no database call) takes 0.43 to
+**PERF-01 (PER-01: UI loads in under 2.5 s): Pass for the student pages, measured after the fixes were deployed.** Before the fixes,
+measured from the Project Manager's machine on the deployed site with `curl` on 2026-10-14: a static file from the edge takes 0.18 s to the first byte; `/login` (no database call) takes 0.43 to
 0.46 s warm and 1.8 s on a cold start; `/apply` 0.47 s. Signed-in pages were not timed on the live site (a login is needed). Findings:
 - The Supabase project is in Sydney (`ap-southeast-2`) but Vercel runs the app's functions in Washington DC (`iad1`, the default;
   response header `X-Vercel-Id: sin1::iad1`). Every database call from a page crosses that distance (about 230 ms each).
@@ -390,9 +390,39 @@ Fixes (branch `feature/performance-fixes`): Vercel functions to Sydney (`vercel.
 `getUnreadCount` cached per request and the unread count started early so it runs while the page loads; the poll no longer repeats
 the profile check; queue auto-refresh 5 s to 10 s. Not done: the proxy still asks Supabase Auth and the profile table on every request.
 
+**After the fixes (live site `cabuyaouni.vercel.app`, `main` at e8fb5c4, 2026-10-14, signed in as student 2026-0008 in the Claude
+browser pane on the Project Manager's machine; the response header now reads `X-Vercel-Id: sin1::syd1`, so the functions run in
+Sydney).** No signed-in "before" figure was taken on the live site, so the size of the improvement is not measured; the figures below
+are what the requirement is checked against.
+
+Server response of the signed-in page (`fetch` with caching off, 3 runs per page; milliseconds; first byte / whole HTML):
+
+| Page | Run 1 | Run 2 | Run 3 |
+| --- | --- | --- | --- |
+| /student | 788 / 977 | 1406 / 1582 | 847 / 1024 |
+| /student/enrollment | 827 / 1018 | 878 / 1067 | 856 / 1004 |
+| /student/grades | 811 / 917 | 870 / 945 | 797 / 867 |
+| /student/clearance | 1503 / 1634 | 921 / 1025 | 862 / 985 |
+| /student/documents | 860 / 955 | 829 / 909 | 767 / 865 |
+| /student/queue | 738 / 954 | 682 / 834 | 806 / 957 |
+| /student/notifications | 1446 / 1516 | 979 / 1080 | 843 / 1019 |
+
+Typical whole-HTML time 0.83 to 1.08 s; the slowest was 1.63 s (the first request to a page, probably a cold function).
+
+Full page load in the browser (Navigation Timing and largest contentful paint, one run per page, milliseconds):
+
+| Page | DOM interactive | Load event | Largest contentful paint |
+| --- | --- | --- | --- |
+| /student | 1234 | 1277 | 1448 |
+| /student/enrollment | 1016 | 1173 | 1228 |
+| /student/grades | 880 | 926 | 1192 |
+
+All measured values are under 2.5 s. Limits of this test: one student account, 3 pages for the full load and one run each, one network
+(the Project Manager's), no phone, no throttling, no Registrar / Cashier / Department / Admin pages, cold start not isolated.
+
 | ID | Requirement | What to measure | Status |
 | --- | --- | --- | --- |
-| PERF-01 | PER-01 | Page load time of the main pages on the live site (public pages measured; signed-in pages to be re-measured after the fixes are deployed) | Not verified |
+| PERF-01 | PER-01 | Page load time of the main pages on the live site (student pages measured after the fixes: load 0.9 to 1.3 s, largest contentful paint 1.2 to 1.45 s) | Pass for student pages, 2026-10-14 |
 | PERF-02 | PER-02 | Query time for grades and clearance status (`v_grades`, `v_clearance_items`, `v_clearances` and others, as a student, 30 runs) | Pass, 2026-10-14 |
 
 ### 10.2 Level 6: Security testing
@@ -457,7 +487,7 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | --- | --- | --- | --- |
 | Unit tests | 1 | Done (78 of 78 pass) | Section 5. Not covered: React components and the Server Actions as a whole (levels 2 and 3) |
 | Acceptance script run and signed off by team members | 4 | Not done | Section 9. Before the freeze on 2026-10-15. Owner: to be named by the PM |
-| Performance: PER-01 (signed-in pages on the live site) | 5 | Not done | Re-measure after the region and caching fixes are deployed (issue #109); PER-02 is done |
+| Performance: PER-01 on the staff pages and on a phone | 5 | Not done | Student pages measured 2026-10-14 (pass); Registrar, Cashier, Department and Admin pages not timed (issue #109) |
 | Rate limiting (SEC-04) | 6 | Done (sign-in route) | Vercel firewall rule "Limit POST requests per IP" (POST, 60 s fixed window, 20 requests per IP, 429) tested 2026-10-12: 429 after about 24 POSTs in a minute from one IP; see `docs/rate-limiting.md` |
 | SQL injection direct test | 6 | Not done | Issue #108. Owner and date not set |
 | Lockout residual risks (DoS lockout, direct Auth endpoint, race) | 6 | Not tested | Documented as accepted risks; test or mitigate if time allows |
@@ -508,7 +538,7 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | SEC-04 rate limiting | `docs/rate-limiting.md` | Pass (sign-in route; server actions not tested one by one) |
 | SEC-05 SQL injection | none direct | Not done |
 | SEC-06 secret handling | pre-commit scrub command only | Not done as a recorded test |
-| PER-01 | PERF-01 | Not verified |
+| PER-01 | PERF-01 | Pass (student pages) |
 | PER-02 | PERF-02 | Pass |
 | PER-03 deploy on merge to main | Vercel deployment of main verified 2026-10-11 (signed in as student1; see HANDOFF.md) | Partly: not a written test case |
 | ETH-01 privacy between students | N-01, N-02, TC-12 to TC-14 | Pass |
