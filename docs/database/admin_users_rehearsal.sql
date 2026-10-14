@@ -1,11 +1,11 @@
 -- ==========================================
--- REHEARSAL OF issue_40_admin_users.sql (GitHub issue 40): change + TC-147 to TC-154
+-- REHEARSAL OF admin_users.sql (GitHub issue 40): change + TC-226 to TC-233
 -- ==========================================
--- The change (sections 1 to 5 of issue_40_admin_users.sql, WITHOUT its COMMIT) and the tests
+-- The change (sections 1 to 5 of admin_users.sql, WITHOUT its COMMIT) and the tests
 -- (the block at the bottom of that file) in ONE transaction that ends in ROLLBACK, with ONE
 -- result row (all_ok must be true). Nothing is committed. Run it BEFORE the live change:
 -- Supabase SQL editor, as postgres, a new tab, whole file, never a selection.
--- Generated from issue_40_admin_users.sql; if one changes, regenerate the other.
+-- Generated from admin_users.sql; if one changes, regenerate the other.
 
 BEGIN;
 
@@ -299,7 +299,7 @@ select set_config('app.reg_role', (select role_id::text from public.roles where 
 select set_config('app.dept1', (select min(department_id)::text from public.departments), true);
 select set_config('app.dept2', (select max(department_id)::text from public.departments), true);
 
--- TC-147
+-- TC-226
 select set_config('app.r147', format('function_ok %s, trigger_ok %s, profiles_table_privs_beyond_select %s, anon_any %s, exec_authenticated %s -> %s',
   (select count(*) from pg_proc p where p.oid = 'private.trg_prevent_last_admin_deactivation()'::regprocedure and p.prosecdef),
   (select count(*) from pg_trigger t where t.tgrelid = 'public.profiles'::regclass and t.tgname = 'prevent_last_admin_deactivation' and t.tgtype = 19 and t.tgenabled = 'O'),
@@ -317,7 +317,7 @@ select set_config('app.r147', format('function_ok %s, trigger_ok %s, profiles_ta
         and has_function_privilege('authenticated', 'private.trg_prevent_last_admin_deactivation()', 'EXECUTE')
        then 'OK' else 'FAIL' end), true);
 
--- TC-148 + TC-149 (Admin session)
+-- TC-227 + TC-228 (Admin session)
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.adm'), 'role', 'authenticated')::text, true);
 do $$
@@ -361,7 +361,7 @@ select set_config('app.r149', format('insert %s, delete %s -> %s',
   case when current_setting('app.t149_ins') like 'denied: %' and current_setting('app.t149_del') like 'denied: %'
         and exists (select 1 from public.profiles where profile_id::text = current_setting('app.s2')) then 'OK' else 'FAIL' end), true);
 
--- TC-150 (Student 1, then Registrar; neither is Admin at this point)
+-- TC-229 (Student 1, then Registrar; neither is Admin at this point)
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.s1'), 'role', 'authenticated')::text, true);
 do $$
@@ -418,7 +418,7 @@ select set_config('app.r150', format('student: self %s, other %s, ins %s, del %s
         and (select is_active from public.profiles where profile_id::text = current_setting('app.adm'))
        then 'OK' else 'FAIL' end), true);
 
--- TC-151 anon
+-- TC-230 anon
 set local role anon;
 do $$
 declare r record; n bigint;
@@ -445,7 +445,7 @@ select set_config('app.r151', format('%s of 4 denied -> %s',
   case when (select count(*) from unnest(array['sel_prof', 'sel_ds', 'upd_prof', 'ins_ds']) x where current_setting('app.t151_' || x) like 'denied: %') = 4
        then 'OK' else 'FAIL' end), true);
 
--- TC-152 last-admin guard. Session 1: the Admin.
+-- TC-231 last-admin guard. Session 1: the Admin.
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.adm'), 'role', 'authenticated')::text, true);
 do $$
@@ -517,7 +517,7 @@ select set_config('app.r152', format('a %s, b %s, c %s, d %s, e %s, f %s, g %s, 
         and (select count(*) from public.profiles p where p.role_id = current_setting('app.admin_role')::smallint and p.is_active) = 1
        then 'OK' else 'FAIL' end), true);
 
--- TC-153 department_staff (Admin session: the original Admin is inactive now, so use the second Admin)
+-- TC-232 department_staff (Admin session: the original Admin is inactive now, so use the second Admin)
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.reg'), 'role', 'authenticated')::text, true);
 do $$
@@ -548,7 +548,7 @@ select set_config('app.r153', format('ins %s, upd %s, upd_pk %s, del %s -> %s',
         and not exists (select 1 from public.department_staff where profile_id::text = current_setting('app.s2'))
        then 'OK' else 'FAIL' end), true);
 
--- TC-154 audit
+-- TC-233 audit
 select set_config('app.r154', (select format('profiles updates by Admins %s, other-actor rows %s, dept_staff i%s u%s d%s, refused changes logged %s -> %s',
   a.p_upd, a.other, a.d_ins, a.d_upd, a.d_del, a.refused,
   case when a.p_upd >= 5 and a.other = 0 and a.d_ins = 1 and a.d_upd = 1 and a.d_del = 1 and a.refused = 0 then 'OK' else 'FAIL' end)
@@ -565,8 +565,8 @@ select (current_setting('app.r147') like '%-> OK' and current_setting('app.r148'
         and current_setting('app.r149') like '%-> OK' and current_setting('app.r150') like '%-> OK'
         and current_setting('app.r151') like '%-> OK' and current_setting('app.r152') like '%-> OK'
         and current_setting('app.r153') like '%-> OK' and current_setting('app.r154') like '%-> OK') as all_ok,
-  current_setting('app.r147') as tc147, current_setting('app.r148') as tc148, current_setting('app.r149') as tc149,
-  current_setting('app.r150') as tc150, current_setting('app.r151') as tc151, current_setting('app.r152') as tc152,
-  current_setting('app.r153') as tc153, current_setting('app.r154') as tc154;
+  current_setting('app.r147') as tc226, current_setting('app.r148') as tc227, current_setting('app.r149') as tc228,
+  current_setting('app.r150') as tc229, current_setting('app.r151') as tc230, current_setting('app.r152') as tc231,
+  current_setting('app.r153') as tc232, current_setting('app.r154') as tc233;
 
 rollback;

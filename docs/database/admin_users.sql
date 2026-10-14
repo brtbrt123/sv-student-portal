@@ -6,7 +6,7 @@
 -- (least privilege), SEC-06 (the admin key stays on the server, see
 -- docs/decisions/sprint4-admin-users.md). Pattern: grades_rules.sql.
 -- Runs AFTER hardening.sql, hardening2.sql (A, B, C) and applications_server_grants.sql
--- (all live). Independent of issue_39_catalog_grants.sql.
+-- (all live). Independent of catalog_grants.sql.
 --
 -- WHAT IT DOES
 --   1. Trigger prevent_last_admin_deactivation (BEFORE UPDATE OF role_id, is_active, FOR
@@ -79,19 +79,19 @@
 -- into a new tab and run that tab as a whole (never a selection). One transaction: any
 -- error, including a failed check, rolls back everything. Re-runnable.
 --   - Before running: run diagnostics (a) and (b) at the bottom and SAVE the output.
---   - Rehearse first: docs/database/issue_40_admin_users_rehearsal.sql runs this change and
+--   - Rehearse first: docs/database/admin_users_rehearsal.sql runs this change and
 --     the tests below in ONE rolled-back transaction.
 --   - Deploy the app change that calls the account actions only AFTER this file is live.
--- Test AFTER: the rehearsal block at the bottom of this file (TC-147 to TC-154).
+-- Test AFTER: the rehearsal block at the bottom of this file (TC-226 to TC-233).
 -- Undo: the ROLLBACK block after COMMIT.
 --
 -- Status: NOT RUN LIVE YET. Tested 2026-10-13 on a local PostgreSQL 16 rebuilt from schema.sql,
 -- views.sql, seed.sql, private_functions.sql, rls.sql, hardening.sql and hardening2.sql (with
 -- a stand-in for auth.users / auth.uid() and Supabase-style default grants): the change ran
--- clean, a second run was clean too, TC-147 to TC-154 pass (all_ok true), the rehearsal file
+-- clean, a second run was clean too, TC-226 to TC-233 pass (all_ok true), the rehearsal file
 -- leaves the database unchanged, a database with no active Admin stops the run in section 1,
 -- the ROLLBACK block restored the old grants, and this file together with
--- issue_39_catalog_grants.sql also passes. The race between two simultaneous Admin changes
+-- catalog_grants.sql also passes. The race between two simultaneous Admin changes
 -- (advisory lock) is by design and was NOT exercised (needs two connections). NOT yet
 -- rehearsed on the live project (PostgreSQL 17); do that first.
 
@@ -414,25 +414,25 @@ COMMIT;
 
 
 -- ==========================================
--- REHEARSAL / TESTS TC-147 to TC-154 (run AFTER the change is live; ends in ROLLBACK)
+-- REHEARSAL / TESTS TC-226 to TC-233 (run AFTER the change is live; ends in ROLLBACK)
 -- ==========================================
 -- One script, one transaction that ends in ROLLBACK, ONE result row. Nothing is committed.
--- docs/database/issue_40_admin_users_rehearsal.sql is this file's change (sections 1 to 5,
+-- docs/database/admin_users_rehearsal.sql is this file's change (sections 1 to 5,
 -- without COMMIT) plus this block, for a run BEFORE the live change.
 -- How to run: Supabase SQL editor, as postgres, a new tab, from "begin;" to "rollback;",
 -- whole tab, never a selection. If it stops with an error, run "rollback;" on its own.
 -- Rules as in the earlier test files: seed accounts impersonated by e-mail, no temporary
 -- GRANT, everything undone by the rollback. Cells end in "-> OK" or "-> FAIL"; all_ok must
--- be true. The seed has ONE Admin (admin@pnc.test); TC-152 makes the Registrar a second one.
+-- be true. The seed has ONE Admin (admin@pnc.test); TC-231 makes the Registrar a second one.
 --
---   TC-147 installed as intended (function, trigger, grants, anon nothing)
---   TC-148 the Admin edits a profile (name, role, active); locked columns are refused
---   TC-149 the Admin cannot INSERT or DELETE a profile through the API
---   TC-150 Student and Registrar cannot change profiles or department_staff (RLS)
---   TC-151 anon is denied everything
---   TC-152 last-admin guard (Admin session, second Admin session, and postgres)
---   TC-153 the Admin inserts, updates and deletes a department_staff row
---   TC-154 the Admin's writes are in the audit log; refused ones are not
+--   TC-226 installed as intended (function, trigger, grants, anon nothing)
+--   TC-227 the Admin edits a profile (name, role, active); locked columns are refused
+--   TC-228 the Admin cannot INSERT or DELETE a profile through the API
+--   TC-229 Student and Registrar cannot change profiles or department_staff (RLS)
+--   TC-230 anon is denied everything
+--   TC-231 last-admin guard (Admin session, second Admin session, and postgres)
+--   TC-232 the Admin inserts, updates and deletes a department_staff row
+--   TC-233 the Admin's writes are in the audit log; refused ones are not
 
 begin;
 
@@ -458,7 +458,7 @@ select set_config('app.reg_role', (select role_id::text from public.roles where 
 select set_config('app.dept1', (select min(department_id)::text from public.departments), true);
 select set_config('app.dept2', (select max(department_id)::text from public.departments), true);
 
--- TC-147
+-- TC-226
 select set_config('app.r147', format('function_ok %s, trigger_ok %s, profiles_table_privs_beyond_select %s, anon_any %s, exec_authenticated %s -> %s',
   (select count(*) from pg_proc p where p.oid = 'private.trg_prevent_last_admin_deactivation()'::regprocedure and p.prosecdef),
   (select count(*) from pg_trigger t where t.tgrelid = 'public.profiles'::regclass and t.tgname = 'prevent_last_admin_deactivation' and t.tgtype = 19 and t.tgenabled = 'O'),
@@ -476,7 +476,7 @@ select set_config('app.r147', format('function_ok %s, trigger_ok %s, profiles_ta
         and has_function_privilege('authenticated', 'private.trg_prevent_last_admin_deactivation()', 'EXECUTE')
        then 'OK' else 'FAIL' end), true);
 
--- TC-148 + TC-149 (Admin session)
+-- TC-227 + TC-228 (Admin session)
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.adm'), 'role', 'authenticated')::text, true);
 do $$
@@ -520,7 +520,7 @@ select set_config('app.r149', format('insert %s, delete %s -> %s',
   case when current_setting('app.t149_ins') like 'denied: %' and current_setting('app.t149_del') like 'denied: %'
         and exists (select 1 from public.profiles where profile_id::text = current_setting('app.s2')) then 'OK' else 'FAIL' end), true);
 
--- TC-150 (Student 1, then Registrar; neither is Admin at this point)
+-- TC-229 (Student 1, then Registrar; neither is Admin at this point)
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.s1'), 'role', 'authenticated')::text, true);
 do $$
@@ -577,7 +577,7 @@ select set_config('app.r150', format('student: self %s, other %s, ins %s, del %s
         and (select is_active from public.profiles where profile_id::text = current_setting('app.adm'))
        then 'OK' else 'FAIL' end), true);
 
--- TC-151 anon
+-- TC-230 anon
 set local role anon;
 do $$
 declare r record; n bigint;
@@ -604,7 +604,7 @@ select set_config('app.r151', format('%s of 4 denied -> %s',
   case when (select count(*) from unnest(array['sel_prof', 'sel_ds', 'upd_prof', 'ins_ds']) x where current_setting('app.t151_' || x) like 'denied: %') = 4
        then 'OK' else 'FAIL' end), true);
 
--- TC-152 last-admin guard. Session 1: the Admin.
+-- TC-231 last-admin guard. Session 1: the Admin.
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.adm'), 'role', 'authenticated')::text, true);
 do $$
@@ -676,7 +676,7 @@ select set_config('app.r152', format('a %s, b %s, c %s, d %s, e %s, f %s, g %s, 
         and (select count(*) from public.profiles p where p.role_id = current_setting('app.admin_role')::smallint and p.is_active) = 1
        then 'OK' else 'FAIL' end), true);
 
--- TC-153 department_staff (Admin session: the original Admin is inactive now, so use the second Admin)
+-- TC-232 department_staff (Admin session: the original Admin is inactive now, so use the second Admin)
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('app.reg'), 'role', 'authenticated')::text, true);
 do $$
@@ -707,7 +707,7 @@ select set_config('app.r153', format('ins %s, upd %s, upd_pk %s, del %s -> %s',
         and not exists (select 1 from public.department_staff where profile_id::text = current_setting('app.s2'))
        then 'OK' else 'FAIL' end), true);
 
--- TC-154 audit
+-- TC-233 audit
 select set_config('app.r154', (select format('profiles updates by Admins %s, other-actor rows %s, dept_staff i%s u%s d%s, refused changes logged %s -> %s',
   a.p_upd, a.other, a.d_ins, a.d_upd, a.d_del, a.refused,
   case when a.p_upd >= 5 and a.other = 0 and a.d_ins = 1 and a.d_upd = 1 and a.d_del = 1 and a.refused = 0 then 'OK' else 'FAIL' end)
@@ -724,8 +724,8 @@ select (current_setting('app.r147') like '%-> OK' and current_setting('app.r148'
         and current_setting('app.r149') like '%-> OK' and current_setting('app.r150') like '%-> OK'
         and current_setting('app.r151') like '%-> OK' and current_setting('app.r152') like '%-> OK'
         and current_setting('app.r153') like '%-> OK' and current_setting('app.r154') like '%-> OK') as all_ok,
-  current_setting('app.r147') as tc147, current_setting('app.r148') as tc148, current_setting('app.r149') as tc149,
-  current_setting('app.r150') as tc150, current_setting('app.r151') as tc151, current_setting('app.r152') as tc152,
-  current_setting('app.r153') as tc153, current_setting('app.r154') as tc154;
+  current_setting('app.r147') as tc226, current_setting('app.r148') as tc227, current_setting('app.r149') as tc228,
+  current_setting('app.r150') as tc229, current_setting('app.r151') as tc230, current_setting('app.r152') as tc231,
+  current_setting('app.r153') as tc232, current_setting('app.r154') as tc233;
 
 rollback;

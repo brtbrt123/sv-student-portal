@@ -4,7 +4,7 @@
 - **Requirements:** REQ-ADM-01 (create, update, deactivate accounts), REQ-ADM-02 (RBAC),
   SEC-02 (RLS on every table), SEC-06 (secret handling)
 - **Code:** `lib/data/admin-users-actions.ts`, `lib/supabase/admin.ts`, `lib/mail.ts`
-- **Database:** `docs/database/issue_40_admin_users.sql`
+- **Database:** `docs/database/admin_users.sql`
 
 ## Problem
 

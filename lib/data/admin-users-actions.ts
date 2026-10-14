@@ -10,7 +10,7 @@ import { isRoleName, type RoleName } from '@/lib/auth/roles'
 import { sendMail, staffWelcomeEmail } from '@/lib/mail'
 
 // Server Actions for the Admin's Users screen (REQ-ADM-01). Decision record:
-// docs/decisions/sprint4-admin-users.md. Database side: docs/database/issue_40_admin_users.sql.
+// docs/decisions/sprint4-admin-users.md. Database side: docs/database/admin_users.sql.
 //
 // Every action starts with getAdminClientFor('Admin'): it proves, from the caller's own session, a
 // signed-in, ACTIVE Admin before anything else happens, and only then hands out the admin client
@@ -96,7 +96,7 @@ async function siteUrl(): Promise<string | null> {
   return `${local ? 'http' : 'https'}://${host}`
 }
 
-// The department a role needs (design decision 2 of issue_40_admin_users.sql): Department = one
+// The department a role needs (design decision 2 of admin_users.sql): Department = one
 // Academic department, Cashier = the Financial department, every other role = none.
 const DEPARTMENT_TYPE: Partial<Record<RoleName, 'Academic' | 'Financial'>> = {
   Department: 'Academic',
