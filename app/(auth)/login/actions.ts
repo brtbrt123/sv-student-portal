@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
 import { ROLE_HOME } from '@/lib/auth/roles'
 import { looksLikeStudentId, studentIdToEmail } from '@/lib/auth/student-id'
+import { loginInputIsAcceptable } from '@/lib/auth/login-input'
 
 export type LoginState = { error: string | null }
 
@@ -14,6 +15,10 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const password = String(formData.get('password') ?? '')
 
   if (!typed || !password) return { error: 'Enter your student ID or email, and your password.' }
+
+  // Issue #108: oversized or control-character input is a failed sign-in, answered generically and before any
+  // database call (the database would reject it anyway; see lib/auth/login-input.ts).
+  if (!loginInputIsAcceptable(typed, password)) return { error: 'Invalid email or password.' }
 
   const supabase = await createClient()
 

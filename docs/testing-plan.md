@@ -608,8 +608,152 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | Rate limiting | `docs/rate-limiting.md` | 2026-10-12 | Pass (approximate count; sign-in route only) |
 | Queue QR codes cannot be forged, replayed after 30 s or malformed | UT-50 to UT-60, Q-07 to Q-09 | 2026-10-13 | Pass |
 | Queue: only a Registrar issues, calls and finishes tickets; students see only their own ticket and aggregate numbers; no direct writes | TC-139 to TC-166 | 2026-10-13 | Pass |
-| SQL injection test | none | | Not done |
-| Secret handling (no `service_role` key in the repo or browser) | `docs/database/README.md` gives a pre-commit scrub command. No recorded run as a test case | | Not done as a recorded test |
+| SQL injection test | ST-SQL-1, ST-SQL-2 (10.2.1) | 2026-10-14 | Source review only (no concatenated SQL found); the typed-payload tests are **Not Run** |
+| Secret handling (no server key in the repo or browser) | ST-SEC-1, local checks S-1 to S-6, Git history scan (10.2.1) | 2026-10-14 | Pass (269 commits, 0 matches) |
+| Security response headers (clickjacking, referrer, sniffing) | ST-HDR-1, LH-1 to LH-7 (10.2.1) | 2026-10-14 | Pass on a local production build; deployed site Not Run |
+
+### 10.2.1 Issue #108: security tests and vulnerability patching (2026-10-14)
+
+**Read this first.** The first version of this record (a teammate's pull request, #148) was written from a source-only copy of the
+repository, so almost nothing could be run. This version is rebuilt on the current `dev` and keeps their code and write-up. It was
+then run by Claude on 2026-10-14 in the development checkout (local production build, no test project); what needs credentials or a
+test project is listed as Not Run. **Status key:** Pass = observed and as expected. Fail = observed and not as expected. Blocked = could
+not run. Not Run = written but not executed. Nothing below marks an unrun test as Pass.
+
+| Item | Result (2026-10-14) |
+| --- | --- |
+| Local checks (`node scripts/security/local-checks.mjs`) | 24 of 24 pass. On the first run on current `dev` check A-1 failed on a new admin-client use (`lib/data/applicant-type.ts`, Student): reviewed, added to the explicit allowed list and recorded as SF-6 |
+| `npm test`, `npx tsc --noEmit`, `npx eslint`, `npm run build` | Pass: 87 of 87 unit tests (6 new: UT-82 to UT-87), no type errors, no lint findings, build finished |
+| `npm audit --omit=dev` and `npm audit` | Production packages: **0 vulnerabilities**. All packages: 8 (1 moderate, 5 high, 2 critical), all in development tools (lint chain, vitest); the only fix offered is `npm audit fix --force`, a breaking change, so it was **not** applied. Recorded as SF-7 |
+| Response headers on a real server (`live-tests.mjs headers` against `http://localhost:3000`, a production build) | 7 of 7 pass (LH-1 to LH-7); `curl -I` shows the same headers. The deployed site was **not** re-checked yet |
+| Anonymous access to the 10 protected pages | 10 of 10 answer 307 to `/login` without a session (`/student`, `/registrar`, `/cashier`, `/department`, `/admin` and five sub-pages), on the local build |
+| Anonymous access to the Data API (`live-tests.mjs anon`, 17 tables and views) | **Not Run in this record** (needs the project's anon key). A manual run earlier on 2026-10-14 found the tables refused, but it was not recorded as a case |
+| Secrets in the Git history | Pass: 269 commits scanned, 0 lines adding a JWT or `sb_secret_` pattern, 0 `.env` files committed, 0 values assigned to `SUPABASE_ADMIN_KEY` (counts only; no value was printed) |
+| Live tests that need test accounts (`idor`, `sqli`, `lockout`, `rate`) | **Not Run**. They need a TEST project; the script says it must not be pointed at production data |
+
+**Changes made for this issue**
+
+| File | Change |
+| --- | --- |
+| `next.config.ts` | Adds response headers on every path: `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy` (camera for the same origin only, because the Registrar scan desk needs it; microphone, location, payment off), switches off `X-Powered-By`. `Strict-Transport-Security` is **not** set by the app (Vercel already sends it, and a second copy could conflict) |
+| `lib/auth/login-input.ts` (new) | Pure shape check for the sign-in form: name 1 to 254 characters, no control characters, password 1 to 1024 characters |
+| `app/(auth)/login/actions.ts` | Calls the shape check before any database call and answers bad input with the generic "Invalid email or password." Before: such input reached `check_login_lockout`, the database raised 22023, and the user saw "Sign-in is temporarily unavailable" (safe, but misleading, and one wasted call) |
+| `tests/unit/login-input.test.ts` (new) | UT-82 to UT-87 |
+| `scripts/security/local-checks.mjs`, `scripts/security/live-tests.mjs` (new) | The two test scripts described above |
+
+No SQL file was changed, so there is nothing for the Project Manager to run live and no rehearsal file was needed.
+
+**ST-HDR: missing security headers (clickjacking, referrer leakage, MIME sniffing)**
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | Pages could be framed by another site (clickjacking); the full URL of a portal page could go to other sites in `Referer`; the browser could sniff content types |
+| Affected component | Response headers of the Next.js app (`next.config.ts`; `proxy.ts` sets none) |
+| Test case | ST-HDR-1: `GET /login` and an anonymous `GET /student` (redirect). Expected: `Content-Type: text/html; charset=utf-8`; `X-Frame-Options` or CSP `frame-ancestors`; `Referrer-Policy`; `nosniff`; no `X-Powered-By`; the same headers on the redirect |
+| Actual result | By reading the source before the patch: `next.config.ts` had no `headers()`, and nothing else in `app`, `lib` or `proxy.ts` sets them. This is a source finding; the live response was not captured |
+| Status | Before the patch: **Fail (by source inspection)**. After: **Pass on a local production build** (7 of 7); **deployed site Not Run** |
+| Solution | Headers added in `next.config.ts` (table above). `Content-Type` is set by Next.js and was not duplicated. A full CSP was not added (see SF-3) |
+| Verification | Local checks H-1 to H-8: Pass. `live-tests.mjs headers` against `http://localhost:3000` (production build): LH-1 to LH-7 Pass; `curl -I` shows `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()`, no `X-Powered-By`. **Not Run:** the same on `cabuyaouni.vercel.app` after the release, and the Registrar scan desk still opening the camera under `camera=(self)` (a phone is needed) |
+| Execution record | 2026-10-14, Claude (local production build). Deployed site: date ______ name ______ |
+
+**ST-SQL: SQL injection (SEC-05)** (payloads `' OR 1=1 --`, `'; DROP TABLE x; --`)
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | User text reaching a SQL statement unescaped |
+| Affected component | Login (`app/(auth)/login/actions.ts`, RPC `check_login_lockout`, `record_login_attempt`, `login_email_for_student_id`); hold reason (`lib/data/department-actions.ts`, 300 characters); remarks (`documents-actions.ts`, `applications-actions.ts`, `enrollments-review-actions.ts`, `department-actions.ts`); receipt number (`cashier-actions.ts`, 40 characters); document purpose (`documents-actions.ts`, `MAX_PURPOSE`) |
+| Test case | ST-SQL-1 (script, as student A through the Data API): insert a document request with each payload as `purpose`; expected: stored as the same literal text, or refused without query details; `document_types` and `profiles` row counts unchanged. ST-SQL-2 (by hand in the browser, because these are Server Actions): put each payload in the login name, the hold reason, a remark, the receipt number and the purpose; expected: the same |
+| Actual result | **Source inspection only.** No SQL driver, `.raw()` or `sql` template in `app`, `components` or `lib`; no table or function name built from a variable; every data call uses supabase-js (`.from()`, `.rpc()` with an argument object). No stored function body in `docs/database` builds SQL with `EXECUTE` (the `EXECUTE` lines are in one-off DO blocks and diagnostics). Local checks Q-1, Q-2, Q-5: Pass. No payload was sent anywhere |
+| Status | **Not Run** (static review: no confirmed vulnerability) |
+| Solution | No patch needed for SQL construction. Added the login shape check (above) as input hygiene, not as the injection defence |
+| Verification | UT-87 documents that the payloads are not filtered. **Live ST-SQL-1 and ST-SQL-2 Not Run**; commands in "How to finish" below |
+| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+
+**ST-LOCK: brute-force protection (SEC-03)**
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | Unlimited password guessing |
+| Affected component | Login action, then `check_login_lockout` and `record_login_attempt` (`docs/database/login_lockout.sql`): 5 failures, 60 s doubling, 900 s cap, 24 h window (read from the SQL file; not observed live) |
+| Test case | ST-LOCK-1 (browser): 5 wrong passwords for a test account, then the right password; expected: "Too many failed sign-in attempts. Try again in 1 minute." and no password check; after the wait the right password works. ST-LOCK-2 (script): 8 wrong passwords straight to the Supabase Auth endpoint, then the right one; expected by the SRS: refused. ST-LOCK-3: a student ID and the matching email share one lock |
+| Actual result | Source: the lockout runs only inside the login Server Action, before `signInWithPassword` (local check A-4: Pass). The anon key is public by design, so the Auth endpoint can be called without the app. The header of `login_lockout.sql` already lists this as a residual risk. **Not observed**: nothing was run |
+| Status | ST-LOCK-1 and ST-LOCK-3: **Not Run**. ST-LOCK-2: **Not Run**; expected to **Fail** (open finding SF-1) |
+| Solution | No code patch. A correct fix is outside the app code: Supabase Auth rate limits and CAPTCHA in the dashboard, or a password-verification hook that applies the same lock inside the database. Both need a test project; see SF-1. The existing app lockout was not changed |
+| Verification | Not Run. `node scripts/security/live-tests.mjs lockout` with a dedicated test account |
+| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+
+**ST-RATE: rate limiting (SEC-04)**
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | Request flooding |
+| Affected component | Vercel Firewall rule "Limit POST requests per IP" (20 per 60 s, 429); not in the repository |
+| Test case | ST-RATE-1: below the limit, all requests pass; ST-RATE-2: above the limit, 429; ST-RATE-3: other POST paths (Server Actions of each module); ST-RATE-4: a direct call to the Supabase Auth endpoint. Run only against localhost or an approved preview deployment |
+| Actual result | The 2026-10-12 run in `docs/rate-limiting.md` (60 POSTs to `/login`, 429 from about the 25th) is the only observed result and is unchanged. In this session nothing was flooded. Note for testers: the rule is a Vercel setting, so a flood against `localhost` cannot show a 429 |
+| Status | Re-run **Not Run**. The earlier result stands for `/login` only; ST-RATE-3 and ST-RATE-4 **Not Run** |
+| Solution | No code patch. The control is a dashboard rule (no code, no secret). Follow-ups in SF-2 |
+| Verification | `FLOOD_COUNT=40 BASE_URL=<preview> ALLOW_REMOTE_FLOOD=1 node scripts/security/live-tests.mjs rate` |
+| Execution record | Earlier run: 2026-10-12 (see `docs/rate-limiting.md`). This issue: Not Run |
+
+**ST-IDOR: broken access control and IDOR (SEC-02, ETH-01; TC-12 to TC-39, TC-71)**
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | A user reads or changes another user's record by changing an id in a request or URL; a role does something outside its scope; anonymous access |
+| Affected component | RLS policies (`docs/database/rls.sql`, `hardening*.sql`), grants (`grants_clearance.sql`), the proxy (`lib/supabase/proxy.ts`), `getAdminClientFor` (`lib/supabase/admin.ts`) |
+| Test case | ST-IDOR-1 (script): student A asks for student B's rows in `students`, `enrollments`, `document_requests`, `academic_holds`, `clearances`, `v_grades`; expected 0 rows; A updates and deletes B's document request by id: 0 rows changed; a student cannot read `audit_logs`. ST-IDOR-2: anonymous read of 17 tables and views: no rows. ST-IDOR-3 (browser): signed in as a student, open `/registrar`, `/cashier`, `/department`, `/admin` and another role's sub-pages directly: redirected to `/student`. ST-IDOR-4: the SQL suites TC-12 to TC-39 and TC-71 |
+| Actual result | Source: every `getAdminClientFor` call passes the matching role (`Admin` in `admin-users-actions.ts`, `Registrar` in `applications-actions.ts`; local check A-1: Pass); the proxy validates with `getUser()` (A-3: Pass); public paths are only `/apply` and `/auth/confirm` (A-2: Pass); other actions run with the caller's own session so RLS decides. The proxy only guides navigation; the database is the gatekeeper. On the local production build the 10 protected pages all answer 307 to `/login` without a session (observed, 2026-10-14). **No Data API request was sent** and the SQL suites were not re-run. Their last recorded live results are in section 6 (2026-10-11 to 2026-10-13: Pass) |
+| Status | Anonymous page access: **Pass** (10 of 10, local build). ST-IDOR-1, ST-IDOR-2 (`anon`, `idor`) and ST-IDOR-3 (signed in as the wrong role): **Not Run**. No defect found by source review |
+| Solution | No patch needed on the evidence available |
+| Verification | `node scripts/security/live-tests.mjs anon`, then `idor`; re-run `regression_after_grants.sql` and `e2e_negative_tests.sql` (no database change was made, so this is confirmation, not a required regression) |
+| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+
+**ST-XSS: cross-site scripting**
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | Stored text executing as script when shown |
+| Affected component | Every screen that shows free text (hold reasons, remarks, purposes, receipt numbers, names) |
+| Test case | ST-XSS-1: enter `<script>alert('XSS')</script>` in each free-text field, open the screens that show it as the student and as the staff role; expected: the text is shown as text, no alert, no tag in the DOM. The `live-tests.mjs sqli` group also stores this string as a document purpose to display |
+| Actual result | Source: one `dangerouslySetInnerHTML` in the whole app (`app/layout.tsx`); it injects a constant string with no interpolation (local checks Q-3 and Q-4: Pass). Everything else is rendered by React, which escapes text. No screen was opened |
+| Status | **Not Run** (no defect found by source review) |
+| Solution | No patch needed. A full CSP would add a second layer (SF-3) |
+| Verification | Not Run. Browser steps above |
+| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+
+**ST-DEP and ST-SEC: dependency audit and secret handling (SEC-06)**
+
+| Field | Value |
+| --- | --- |
+| Vulnerability | A known-vulnerable dependency; a secret in the repository, the browser bundle or a `NEXT_PUBLIC_` name |
+| Affected component | `package.json` and `package-lock.json`; `lib/supabase/admin.ts`; `.gitignore`; environment variable names |
+| Test case | ST-DEP-1: `npm audit` and `npm audit --omit=dev`; expected: no high or critical finding that applies. ST-SEC-1: only the Supabase URL and anon key are public; the admin key is read in one server-only file; no secret in files or history |
+| Actual result | ST-DEP-1 (2026-10-14): `npm audit --omit=dev` found 0 vulnerabilities; `npm audit` found 8 (1 moderate, 5 high, 2 critical), all in development-only packages (the lint chain and vitest), not shipped to users; the only fix offered is `npm audit fix --force` (breaking), so it was not applied (SF-7). ST-SEC-1 on the working tree: the only `NEXT_PUBLIC_` names are `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (S-1: Pass); `SUPABASE_ADMIN_KEY` appears only in `lib/supabase/admin.ts`, which imports `server-only` (S-2, S-3: Pass); no Client Component imports it or `QUEUE_QR_SECRET` (S-4: Pass); `.env*` is ignored (S-5: Pass); no JWT, `sb_secret_`, private-key or AWS-key pattern in source, docs or tests (S-6: Pass). **Git history checked** (269 commits): no JWT or `sb_secret_` pattern added, no `.env` file ever committed, no value assigned to `SUPABASE_ADMIN_KEY` (counts only) |
+| Status | ST-DEP-1: **Pass for production packages (0)**; development-only findings recorded (SF-7). ST-SEC-1: working tree **Pass**; history **Pass** |
+| Solution | None needed for the working tree. Any `npm audit` fix is to be chosen after the report is read (no `npm audit fix --force`) |
+| Verification | ST-DEP-1 Not Run. For history: `git log --all -p -S"SUPABASE_ADMIN_KEY" -- . ':!docs'` and `git log --all --full-history -- '.env*'`; do not paste any value into a report |
+| Execution record | 2026-10-14, Claude |
+
+**Open findings (to be filed as issues; none is hidden)**
+
+| ID | Finding | Status |
+| --- | --- | --- |
+| SF-1 | The login lockout does not cover direct calls to the Supabase Auth endpoint (known residual risk of V-2; expected to be confirmed by ST-LOCK-2). Options to decide with the Project Manager: Supabase Auth rate limits and CAPTCHA, or a database-side password-verification hook. Any SQL goes in one file in `docs/database/` with a rollback block, rehearsed in a rolled-back transaction, run live by the Project Manager | Open, not patched |
+| SF-2 | Rate limiting is a dashboard rule outside the repository and was observed only for `/login`; no stricter rule for sign-in; Server Actions and the Auth endpoint not tested | Open |
+| SF-3 | No full Content-Security-Policy. The inline theme script in `app/layout.tsx` means a strict `script-src` needs per-request nonces; test it in a browser before shipping | Open, recommendation |
+| SF-4 | The set-password link falls back to the request host when `SITE_URL` is not set (`siteUrl()` in `admin-users-actions.ts` and `applications-actions.ts`). Only an Admin or Registrar can trigger it and the host is pattern-checked, so the risk is low. Recommendation: make sure `SITE_URL` is set in Vercel production | Open, recommendation, not tested |
+| SF-5 | `npx tsc --noEmit`, `npx eslint`, `npm run build`, `npm test` and `npm audit` on the changes of this issue | **Closed**: all run on 2026-10-14 (see the table at the top) |
+| SF-6 | `lib/data/applicant-type.ts` reads ONE row, the signed-in student's own application, with the admin client, because the applications table is private (only the Registrar can read it). The role is proven first (`getAdminClientFor('Student')`) and the query is filtered by the student's own id. Cleaner: a database policy that lets a student read only their own `applicant_type`, so no admin key is used on a student page | Open, accepted for now; the local check lists this call explicitly |
+| SF-7 | `npm audit` reports 8 findings (1 moderate, 5 high, 2 critical) in development-only packages; none is in the production dependencies (`npm audit --omit=dev`: 0). The only fix offered, `npm audit fix --force`, is a breaking change | Open, accepted and recorded (not shipped to users) |
+
+**How to finish (what is still Not Run)**
+
+1. **Anonymous Data API** (read-only, safe on the live project; needs only the public anon key from the Supabase dashboard, Project Settings, API): in PowerShell, from the repository root, set `$env:SUPABASE_URL` and `$env:SUPABASE_ANON_KEY`, then `node scripts/security/live-tests.mjs anon`. Expect PASS for all 17.
+2. **Deployed site headers:** after the release, `$env:BASE_URL='https://cabuyaouni.vercel.app'; node scripts/security/live-tests.mjs headers` (7 checks), and open the Registrar queue on a phone to confirm the scan camera still starts.
+3. **Needs a TEST Supabase project and test accounts** (the script is not meant for production data): `live-tests.mjs idor`, `sqli`, `lockout`, `rate` with the variables listed at the top of that file.
+4. **By hand in the browser** (hostile text typed into forms; it writes rows, so use test data): ST-SQL-2, ST-LOCK-1, ST-LOCK-3, ST-IDOR-3, ST-XSS-1.
+5. Fill the date and the name in each Execution record and change each Status to what was observed; file SF-1, SF-2, SF-3, SF-4, SF-6 and SF-7 as issues if they stay open.
+6. Review by a teammate (issue #108 requires it) before the merge into `dev`; the Project Manager merges `dev` into `main`.
 
 ## 11. Findings and deviations
 
