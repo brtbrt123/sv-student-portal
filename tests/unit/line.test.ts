@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MINUTES_PER_PERSON, estimateWait, formatWait, lineSlots } from '@/lib/queue/line'
+import { MINUTES_PER_PERSON, estimateWait, formatWait, lineSlots, needsNewNumber } from '@/lib/queue/line'
 
 const kinds = (position: number, total: number, max?: number) => lineSlots(position, total, max).map((s) => (s.kind === 'gap' ? '...' : `${s.position}${s.kind[0]}`))
 
@@ -33,5 +33,20 @@ describe('line positions to draw (UT-69..72)', () => {
     for (const [pos, total] of [[1, 1], [1, 0], [4, 2], [9, 9], [30, 12]] as const) {
       expect(lineSlots(pos, total).filter((s) => s.kind === 'you')).toHaveLength(1)
     }
+  })
+})
+
+describe('needsNewNumber (UT-80..81)', () => {
+  const served = '2026-10-14T05:00:00Z'
+  it('UT-80 the code returns only for something newer than the last Done ticket; never served means any open item counts', () => {
+    expect(needsNewNumber([], null)).toBe(false)
+    expect(needsNewNumber(['2026-10-14T01:00:00Z'], null)).toBe(true)
+    expect(needsNewNumber(['2026-10-14T01:00:00Z', '2026-10-14T04:59:59Z'], served)).toBe(false)
+    expect(needsNewNumber(['2026-10-14T01:00:00Z', '2026-10-14T05:00:01Z'], served)).toBe(true)
+    expect(needsNewNumber(['2026-10-14T05:00:00Z'], served)).toBe(false)
+  })
+  it('UT-81 an unreadable time never creates a reason to queue; an unreadable served time acts as never served', () => {
+    expect(needsNewNumber([null, 'not a date'], served)).toBe(false)
+    expect(needsNewNumber(['2026-10-14T01:00:00Z'], 'not a date')).toBe(true)
   })
 })

@@ -4,8 +4,8 @@ import { EmptyState } from '@/components/ui'
 import { requireRole } from '@/lib/auth/session'
 import { getStudentDocumentsState } from '@/lib/data/documents'
 import { getStudentEnrollmentState } from '@/lib/data/enrollment'
-import { getMyQueueStatus, type MyQueueStatus } from '@/lib/data/queue'
-import { isActiveTicketStatus } from '@/lib/queue/line'
+import { getLastServedAt, getMyQueueStatus, type MyQueueStatus } from '@/lib/data/queue'
+import { isActiveTicketStatus, needsNewNumber } from '@/lib/queue/line'
 
 const inLine = (q: MyQueueStatus | null) => q?.hasTicket === true && isActiveTicketStatus(q.ticketStatus)
 
@@ -14,17 +14,30 @@ const inLine = (q: MyQueueStatus | null) => q?.hasTicket === true && isActiveTic
 // student already has a ticket in that line.
 export default async function StudentQueuePage() {
   const profile = await requireRole('Student')
-  const [enrollment, documents, enrollmentQueue, documentsQueue] = await Promise.all([
+  const [enrollment, documents, enrollmentQueue, documentsQueue, enrollmentServedAt, documentsServedAt] = await Promise.all([
     getStudentEnrollmentState(),
     getStudentDocumentsState(),
     getMyQueueStatus('Enrollment'),
     getMyQueueStatus('Documents'),
+    getLastServedAt('Enrollment'),
+    getLastServedAt('Documents'),
   ])
 
-  const showEnrollment = inLine(enrollmentQueue) || (enrollment.kind === 'ready' && enrollment.enrollment?.status === 'Pending')
+  // The code comes back only for something newer than the last time the student was served in that line (a
+  // Cancelled or No-show ticket is not a service, so the same item still counts).
+  const showEnrollment =
+    inLine(enrollmentQueue) ||
+    (enrollment.kind === 'ready' &&
+      enrollment.enrollment?.status === 'Pending' &&
+      needsNewNumber([enrollment.enrollment.submittedAt], enrollmentServedAt))
   const showDocuments =
     inLine(documentsQueue) ||
-    (documents.kind === 'ready' && documents.requests.some((r) => ['Pending', 'Processing', 'Ready'].includes(r.status)))
+    (documents.kind === 'ready' &&
+      needsNewNumber(
+        documents.requests.filter((r) => ['Pending', 'Processing', 'Ready'].includes(r.status)).map((r) => r.processedAt ?? r.requestedAt),
+        documentsServedAt
+      ))
+  const servedToday = enrollmentQueue?.ticketStatus === 'Done' || documentsQueue?.ticketStatus === 'Done'
 
   return (
     <DashboardShell profile={profile} title="Queue" subtitle="Your number for the Registrar window">
@@ -46,8 +59,10 @@ export default async function StudentQueuePage() {
           />
         )}
         {!showEnrollment && !showDocuments && (
-          <EmptyState title="Nothing to queue for">
-            Your queue code appears here after you submit your enrollment or request a document.
+          <EmptyState title={servedToday ? 'You were served' : 'Nothing to queue for'}>
+            {servedToday
+              ? 'Your queue code appears here again when you submit a new request or enrollment.'
+              : 'Your queue code appears here after you submit your enrollment or request a document.'}
           </EmptyState>
         )}
       </div>

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { formatStudentId } from '@/lib/auth/student-id'
 
@@ -180,5 +181,30 @@ export async function getQueueStudentCard(
     }
   } catch {
     return { error: {} }
+  }
+}
+
+// When the signed-in student was last served (a Done ticket) in a line, or null if never. The student reads only
+// their own tickets (RLS), so this needs no extra right. Never throws: null on any failure means "never served",
+// which keeps the old behaviour (the code is offered while there is a reason to queue).
+export async function getLastServedAt(service: QueueService): Promise<string | null> {
+  try {
+    // The queue tables are not in the generated types, so the untyped client is used (as in lib/data/applications.ts).
+    const db = (await createClient()) as unknown as SupabaseClient
+    const svc = await db.from('queue_services').select('service_id').eq('service_code', service).maybeSingle()
+    const serviceId = (svc.data as { service_id: number } | null)?.service_id
+    if (svc.error || typeof serviceId !== 'number') return null
+
+    const { data, error } = await db
+      .from('queue_tickets')
+      .select('finished_at')
+      .eq('service_id', serviceId)
+      .eq('status', 'Done')
+      .order('finished_at', { ascending: false })
+      .limit(1)
+    if (error) return null
+    return ((data ?? []) as { finished_at: string | null }[])[0]?.finished_at ?? null
+  } catch {
+    return null
   }
 }

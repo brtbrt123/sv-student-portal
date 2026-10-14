@@ -38,3 +38,16 @@ export function lineSlots(position: number, waitingTotal: number, maxShown = 7):
 /** A ticket still in the line: waiting, on hold, or being served. */
 export const isActiveTicketStatus = (status: string | null | undefined): boolean =>
   status === 'Waiting' || status === 'Held' || status === 'Serving'
+
+// A student needs a NEW queue number only for something that happened after their last finished (Done) ticket in
+// that line: a request filed or moved on (Processing, Ready), an enrollment submitted. What was already there when
+// they were served is handled. `eventTimes` are ISO times of the open items; `lastServedAt` is the finish time of
+// their last Done ticket in the line, null when they were never served. A closed (Cancelled) or missed (No-show)
+// ticket is not a service, so it does not count here and the code comes back for the same item.
+export function needsNewNumber(eventTimes: readonly (string | null)[], lastServedAt: string | null): boolean {
+  const open = eventTimes.filter((t): t is string => typeof t === 'string' && !Number.isNaN(Date.parse(t)))
+  if (open.length === 0) return false
+  if (lastServedAt === null || Number.isNaN(Date.parse(lastServedAt))) return true
+  const served = Date.parse(lastServedAt)
+  return open.some((t) => Date.parse(t) > served)
+}
