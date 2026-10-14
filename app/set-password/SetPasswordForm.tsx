@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { FIELD, FIELD_LABEL } from '@/components/ui/Input'
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordRules } from '@/lib/auth/password-policy'
 import { setPassword, type SetPasswordState } from './actions'
 
 const INITIAL_STATE: SetPasswordState = { error: null }
@@ -10,6 +11,8 @@ const INITIAL_STATE: SetPasswordState = { error: null }
 export function SetPasswordForm() {
   const [state, formAction, isPending] = useActionState(setPassword, INITIAL_STATE)
   const [visible, setVisible] = useState(false)
+  const [typed, setTyped] = useState('')
+  const rules = passwordRules(typed)
   const type = visible ? 'text' : 'password'
 
   return (
@@ -24,15 +27,26 @@ export function SetPasswordForm() {
           type={type}
           autoComplete="new-password"
           required
-          minLength={10}
-          maxLength={72}
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
           aria-describedby="password-hint"
           aria-invalid={state.error ? true : undefined}
           className={FIELD}
         />
-        <p id="password-hint" className="text-xs text-muted">
-          At least 10 characters. It cannot be your student ID.
-        </p>
+        <div id="password-hint" className="text-xs text-muted">
+          <p>Your password needs:</p>
+          <ul className="mt-1 flex flex-col gap-0.5">
+            {rules.map((r) => (
+              <li key={r.id} className={r.ok ? 'font-medium text-foreground' : undefined}>
+                <span aria-hidden="true">{r.ok ? '✓' : '○'}</span> {r.label}
+                <span className="sr-only">{r.ok ? ' (done)' : ' (not yet)'}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1">It cannot be your student ID.</p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -45,8 +59,8 @@ export function SetPasswordForm() {
           type={type}
           autoComplete="new-password"
           required
-          minLength={10}
-          maxLength={72}
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
           aria-invalid={state.error ? true : undefined}
           className={FIELD}
         />
