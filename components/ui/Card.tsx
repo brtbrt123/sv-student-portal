@@ -14,7 +14,7 @@ const ELEVATION = {
 // `interactive`: only for a card that is itself one link or button. The hairline darkens on hover and
 // the focus ring shows when anything inside has keyboard focus. No movement.
 const INTERACTIVE =
-  "transition-colors hover:border-field-border " +
+  "transition-colors hover:border-field-border hover:bg-card-raised " +
   "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring";
 
 // tone: "glass" = the standard frosted surface, "warm" = soft marigold-tinted glass for one highlighted card,
@@ -140,7 +140,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-1 rounded-lg border border-dashed border-border px-4 py-6",
+        "flex flex-col items-start gap-1 rounded-lg border border-dashed border-field-border/40 px-5 py-8",
         className
       )}
     >

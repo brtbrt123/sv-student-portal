@@ -322,7 +322,7 @@ function LineView({ position, waitingTotal }: { position: number; waitingTotal: 
 
   return (
     <div aria-hidden="true" className="flex flex-col gap-2">
-      <div className="flex items-center justify-between text-[11px] font-semibold tracking-wide text-muted uppercase">
+      <div className="flex items-center justify-between text-xs font-semibold tracking-wide text-muted uppercase">
         <span>Window</span>
         <span>Back of the line</span>
       </div>

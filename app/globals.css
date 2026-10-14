@@ -425,6 +425,15 @@ table {
   font-variant-numeric: tabular-nums;
 }
 
+/* Fallback keyboard focus for links and controls that carry no focus classes of their own (inline text
+   links, plain buttons). In the base layer, so any focus-visible:outline-* utility still wins. */
+@layer base {
+  :where(a[href], button, summary, select, [role='button']):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
 /* Staff sign-in and the staff shell keep their own class so the two sides can still diverge; in this theme
    they share one palette, so it only marks the wrapper. */
 .theme-staff {
