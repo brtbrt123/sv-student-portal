@@ -354,6 +354,36 @@ screens in their empty and error states and with many rows (the data set is smal
 redirects to the login without one), and `/apply/enroll` in dark mode. The live site was not re-checked after the fix (the fix is not
 deployed). Findings are fixed or listed here; none was filed as a separate GitHub issue.
 
+### 7.6 Live check on the deployed site after the release (browser and phone, 2026-10-14)
+
+Run by: the Project Manager on `https://cabuyaouni.vercel.app` (PC as student 2026-0008, phone as the Registrar); Claude read the student pages
+in the browser pane. For issue #116. The release was PR #146 (`dev` into `main`, commit `8d17b98`; the production deployment for that commit
+had status success and the function ran in Sydney, `syd1`). It carries PRs #143, #144 and #145.
+
+| ID | Steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| L-01 | Student shows the Enrollment QR; Registrar scans it | One scan issues the ticket, no Approve button | Ticket #1821941 appeared right away | Pass |
+| L-02 | Scan the same student again | Refused, no second ticket | "Already have a ticket" (the QR was still on screen before the page refreshed). The student page then showed the ticket and no QR | Pass |
+| L-03 | Student holds the ticket; Registrar marks it No-show | Held ticket listed under On hold; No-show closes it | The ticket disappeared from the student page after No-show. The student got **no notification** (see below) | Pass, with a gap |
+| L-04 | Documents line: scan, then the student taps the red Cancel ticket | Confirm step, ticket closed, QR offered again | Ticket #8017077 closed; the page said "Your last ticket (#8017077) was closed. Show the code again" and showed the QR. Whether the confirm step was shown and the button was red was not reported | Pass |
+| L-05 | Documents line: new ticket, Call next, Done | Student told they were served; QR offered again | Ticket #5467942 called at Window 2 and finished; the page said "You were served today (#5467942)" and showed the QR | Pass |
+| L-06 | The student's notification bell | One entry per ticket event | "You are in line" for #1821941, #8017077 and #5467942, and "It is your turn, go to Window 2" for the called ticket. Nothing for the held-then-No-show ticket or the cancelled ticket | Pass, with a gap |
+| L-07 | `/apply/enroll`: press Submit with every field empty | Per-field messages, nothing saved | "Enter your first name.", "Enter your last name.", "Enter your email address.", "Choose the program you are applying for." and "Please fix the highlighted fields." Nothing was saved | Pass |
+| L-08 | Student dashboard at 375 px: every link and button at least 44 px | No tap target under 44 px | Everything measured 44 px or more except the hidden "Skip to main content" link. The queue banner itself was not on screen (no active ticket), so the F-1 fix was not seen live | Partly recorded |
+| L-09 | Reset the PM's Gmail, apply on the live form, the Registrar accepts, check the inbox | Branded acceptance email, 8-digit student ID, link to `cabuyaouni.vercel.app`, password set, sign-in | Reported "all pass" by the PM. The details (look, ID, link host) were not written down in this record | Pass (reported by the PM) |
+
+Findings from this run (not fixed; each is a candidate for a later issue, none was filed):
+- A held ticket marked No-show by the Registrar sends no notification, and a cancelled ticket sends none either (the trigger reacts only to
+  a new ticket, a call and a called ticket marked No-show; `queue_hold.sql` H8 recorded this as a known gap).
+- The Registrar can mark a held ticket No-show at any time, including seconds after the hold started, and a hold that runs out does not close
+  itself. The PM asked for: hold limit 30 minutes, No-show allowed only after it runs out, automatic No-show after it, and a notification.
+- The Documents QR is offered while any request is Pending, Processing or Ready, so a student who was just served can get the QR back for a
+  request already handled.
+- A document request files one document type; the student cannot pick several documents in one request (one ticket already serves them all).
+
+Not verified in this run: Reject on the live site and the rejection email; the queue banner button at 44 px with an active ticket; the
+Registrar's Documents line on a phone beyond the scan; dark mode and phone width on the deployed site; PER-01 was not re-measured.
+
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 
 | ID | Case | Expected | Actual | Result |
