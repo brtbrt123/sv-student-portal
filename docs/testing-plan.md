@@ -629,7 +629,9 @@ not run. Not Run = written but not executed. Nothing below marks an unrun test a
 | Anonymous access to the 10 protected pages | 10 of 10 answer 307 to `/login` without a session (`/student`, `/registrar`, `/cashier`, `/department`, `/admin` and five sub-pages), on the local build |
 | Anonymous access to the Data API (`live-tests.mjs anon`, 17 tables and views) | **Pass, 17 of 17** (HTTP 401 for each), run by Claude against the live project on 2026-10-14 with the project's publishable key (documented as safe to share; it maps to the `anon` role; the secret key was not used or shown). Also checked by hand with `curl`: `applications`, `queue_tickets`, `queue_services`, `notifications`, `program_curriculum` and the functions `create_first_year_enrollment` and `queue_expire_holds` all answer 401 to anon |
 | Secrets in the Git history | Pass: 269 commits scanned, 0 lines adding a JWT or `sb_secret_` pattern, 0 `.env` files committed, 0 values assigned to `SUPABASE_ADMIN_KEY` (counts only; no value was printed) |
-| Live tests that need test accounts (`idor`, `sqli`, `lockout`, `rate`) | **Not Run**. They need a TEST project; the script says it must not be pointed at production data |
+| Typed hostile text in the app (2026-10-14, browser, local production build against the live database) | SQL injection payloads in the login fields and in the document purpose: **Pass** (generic error; stored as literal text; no table damaged). XSS payloads in the document purpose: **Pass** (shown as text for the student and the Registrar; nothing ran). Brute-force lockout end to end: **Pass** (5 wrong passwords, the 6th refused). Brute-force through the Supabase Auth endpoint: **Observed, not covered** (8 wrong passwords, never throttled; SF-1). Details below |
+| Rate limiting re-run | **Not Run** in this record: the flood command (40 POSTs to the live site) was refused by the safety check of the tool Claude runs in, so it is left to the Project Manager (command in "How to finish") |
+| Live tests that need a test project (`idor`, `sqli` through the Data API, `lockout` with a right password) | **Not Run**. They need test accounts with known passwords; the script says it must not be pointed at production data |
 
 **Changes made for this issue**
 
@@ -663,11 +665,11 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 | Vulnerability | User text reaching a SQL statement unescaped |
 | Affected component | Login (`app/(auth)/login/actions.ts`, RPC `check_login_lockout`, `record_login_attempt`, `login_email_for_student_id`); hold reason (`lib/data/department-actions.ts`, 300 characters); remarks (`documents-actions.ts`, `applications-actions.ts`, `enrollments-review-actions.ts`, `department-actions.ts`); receipt number (`cashier-actions.ts`, 40 characters); document purpose (`documents-actions.ts`, `MAX_PURPOSE`) |
 | Test case | ST-SQL-1 (script, as student A through the Data API): insert a document request with each payload as `purpose`; expected: stored as the same literal text, or refused without query details; `document_types` and `profiles` row counts unchanged. ST-SQL-2 (by hand in the browser, because these are Server Actions): put each payload in the login name, the hold reason, a remark, the receipt number and the purpose; expected: the same |
-| Actual result | **Source inspection only.** No SQL driver, `.raw()` or `sql` template in `app`, `components` or `lib`; no table or function name built from a variable; every data call uses supabase-js (`.from()`, `.rpc()` with an argument object). No stored function body in `docs/database` builds SQL with `EXECUTE` (the `EXECUTE` lines are in one-off DO blocks and diagnostics). Local checks Q-1, Q-2, Q-5: Pass. No payload was sent anywhere |
-| Status | **Not Run** (static review: no confirmed vulnerability) |
+| Actual result | Source review (static): no SQL driver, `.raw()` or `sql` template in `app`, `components` or `lib`; no name built from a variable; every call uses supabase-js; no stored function body builds SQL with `EXECUTE`. **Typed payloads, run 2026-10-14 in the browser against the live database (local production build):** (1) login, student ID field `' OR 1=1 --` with password `'; DROP TABLE x; --`, then ID `'; DROP TABLE x; --` with password `' OR '1'='1`: both answered with the generic "Invalid email or password."; no database error text; no `login_attempts` row for the payload text. (2) Document purpose as student 20260008, one request each: `' OR 1=1 --` (DR-2026-000066), `'; DROP TABLE x; --` (DR-2026-000067), `<script>alert('XSS')</script>` (000068), `<img src=x onerror=document.title='XSS-RAN'>` (000069): all four stored as the exact literal text (read back from the table). Before and after counts unchanged: `document_types` 5, `profiles` 10, `students` 6, tables in `public` 33, no table named `x`; `document_requests` 9 to 13 (the four test rows) |
+| Status | Login field and document purpose through the app: **Pass**. Hold reason, remarks and receipt number: **Not Run** (same parameterized path, source review only). Through the Data API as a signed-in student (`live-tests.mjs sqli`): **Not Run** (needs a test account with a known password) |
 | Solution | No patch needed for SQL construction. Added the login shape check (above) as input hygiene, not as the injection defence |
 | Verification | UT-87 documents that the payloads are not filtered. **Live ST-SQL-1 and ST-SQL-2 Not Run**; commands in "How to finish" below |
-| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+| Execution record | Source review and browser run 2026-10-14, Claude, student session already signed in by the Project Manager. Test data left in the live table: DR-2026-000066 to 000069 (Pending), not deleted |
 
 **ST-LOCK: brute-force protection (SEC-03)**
 
@@ -676,11 +678,11 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 | Vulnerability | Unlimited password guessing |
 | Affected component | Login action, then `check_login_lockout` and `record_login_attempt` (`docs/database/login_lockout.sql`): 5 failures, 60 s doubling, 900 s cap, 24 h window (read from the SQL file; not observed live) |
 | Test case | ST-LOCK-1 (browser): 5 wrong passwords for a test account, then the right password; expected: "Too many failed sign-in attempts. Try again in 1 minute." and no password check; after the wait the right password works. ST-LOCK-2 (script): 8 wrong passwords straight to the Supabase Auth endpoint, then the right one; expected by the SRS: refused. ST-LOCK-3: a student ID and the matching email share one lock |
-| Actual result | Source: the lockout runs only inside the login Server Action, before `signInWithPassword` (local check A-4: Pass). The anon key is public by design, so the Auth endpoint can be called without the app. The header of `login_lockout.sql` already lists this as a residual risk. **Not observed**: nothing was run |
-| Status | ST-LOCK-1 and ST-LOCK-3: **Not Run**. ST-LOCK-2: **Not Run**; expected to **Fail** (open finding SF-1) |
+| Actual result | **ST-LOCK-1 (browser, 2026-10-14, seed student 20260003, wrong passwords only):** attempts 1 to 5 answered "Invalid email or password."; attempt 6 answered "Too many failed sign-in attempts. Try again in 1 minute." The database holds exactly 5 failed attempts for that account (the 6th was refused and not counted). A first try recorded only 1 failure: the sign-in form empties the ID field after a failed attempt, so later submissions with an empty ID were blocked by the browser (tester note, not a defect). **ST-LOCK-2 (direct to the Supabase Auth endpoint, same account, while the app lock was active):** 8 wrong passwords, all answered HTTP 400 `invalid_credentials`; none throttled or locked. So the app lockout does not cover that path (finding SF-1 observed). A right password was not tried (no known password), so "the right password signs in" is expected, not observed |
+| Status | ST-LOCK-1: **Pass**. ST-LOCK-2: **Fail as expected** for the unthrottled wrong attempts (SF-1 open); the right-password step **Not Run**. ST-LOCK-3 (a student ID and its email share one lock): **Not Run** |
 | Solution | No code patch. A correct fix is outside the app code: Supabase Auth rate limits and CAPTCHA in the dashboard, or a password-verification hook that applies the same lock inside the database. Both need a test project; see SF-1. The existing app lockout was not changed |
 | Verification | Not Run. `node scripts/security/live-tests.mjs lockout` with a dedicated test account |
-| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+| Execution record | 2026-10-14, Claude (browser on the server's network address, no session; curl to the Auth endpoint with the project's publishable key). The seed account 20260003 was locked for about a minute |
 
 **ST-RATE: rate limiting (SEC-04)**
 
@@ -690,10 +692,10 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 | Affected component | Vercel Firewall rule "Limit POST requests per IP" (20 per 60 s, 429); not in the repository |
 | Test case | ST-RATE-1: below the limit, all requests pass; ST-RATE-2: above the limit, 429; ST-RATE-3: other POST paths (Server Actions of each module); ST-RATE-4: a direct call to the Supabase Auth endpoint. Run only against localhost or an approved preview deployment |
 | Actual result | The 2026-10-12 run in `docs/rate-limiting.md` (60 POSTs to `/login`, 429 from about the 25th) is the only observed result and is unchanged. In this session nothing was flooded. Note for testers: the rule is a Vercel setting, so a flood against `localhost` cannot show a 429 |
-| Status | Re-run **Not Run**. The earlier result stands for `/login` only; ST-RATE-3 and ST-RATE-4 **Not Run** |
+| Status | Re-run **Not Run** in this record: Claude tried `FLOOD_COUNT=40 ALLOW_REMOTE_FLOOD=1 BASE_URL=https://cabuyaouni.vercel.app node scripts/security/live-tests.mjs rate` and the safety check of its tool refused to send a burst of requests to a public site, so nothing was sent. The 2026-10-12 result stands for `/login` only; ST-RATE-3 and ST-RATE-4 **Not Run** |
 | Solution | No code patch. The control is a dashboard rule (no code, no secret). Follow-ups in SF-2 |
 | Verification | `FLOOD_COUNT=40 BASE_URL=<preview> ALLOW_REMOTE_FLOOD=1 node scripts/security/live-tests.mjs rate` |
-| Execution record | Earlier run: 2026-10-12 (see `docs/rate-limiting.md`). This issue: Not Run |
+| Execution record | Earlier run: 2026-10-12 (see `docs/rate-limiting.md`). This issue: Not Run. To run it: the Project Manager runs the command above in PowerShell from the repository root and writes the date and the status counts here |
 
 **ST-IDOR: broken access control and IDOR (SEC-02, ETH-01; TC-12 to TC-39, TC-71)**
 
@@ -715,11 +717,11 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 | Vulnerability | Stored text executing as script when shown |
 | Affected component | Every screen that shows free text (hold reasons, remarks, purposes, receipt numbers, names) |
 | Test case | ST-XSS-1: enter `<script>alert('XSS')</script>` in each free-text field, open the screens that show it as the student and as the staff role; expected: the text is shown as text, no alert, no tag in the DOM. The `live-tests.mjs sqli` group also stores this string as a document purpose to display |
-| Actual result | Source: one `dangerouslySetInnerHTML` in the whole app (`app/layout.tsx`); it injects a constant string with no interpolation (local checks Q-3 and Q-4: Pass). Everything else is rendered by React, which escapes text. No screen was opened |
-| Status | **Not Run** (no defect found by source review) |
+| Actual result | Source: one `dangerouslySetInnerHTML` in the whole app (`app/layout.tsx`), a constant string (Q-3, Q-4). **Browser run 2026-10-14:** the payloads `<script>alert('XSS')</script>` (DR-2026-000068) and `<img src=x onerror=document.title='XSS-RAN'>` (DR-2026-000069), stored as the document purpose, were shown as visible text on the student's Documents page and in the Registrar's detail panel. In both: no `script` element, no injected `img`, no `onerror` attribute, page title unchanged ("Student Portal", never "XSS-RAN") |
+| Status | Document purpose, student and Registrar views: **Pass**. Other free-text fields (hold reason, remarks, receipt number, names): **Not Run** (same React rendering; source review only) |
 | Solution | No patch needed. A full CSP would add a second layer (SF-3) |
 | Verification | Not Run. Browser steps above |
-| Execution record | Static review 2026-10-14, Claude. Live run: date ______ name ______ |
+| Execution record | 2026-10-14, Claude (browser, local production build against the live database). Test rows DR-2026-000068 and 000069 left in place |
 
 **ST-DEP and ST-SEC: dependency audit and secret handling (SEC-06)**
 
@@ -738,7 +740,7 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 
 | ID | Finding | Status |
 | --- | --- | --- |
-| SF-1 | The login lockout does not cover direct calls to the Supabase Auth endpoint (known residual risk of V-2; expected to be confirmed by ST-LOCK-2). Options to decide with the Project Manager: Supabase Auth rate limits and CAPTCHA, or a database-side password-verification hook. Any SQL goes in one file in `docs/database/` with a rollback block, rehearsed in a rolled-back transaction, run live by the Project Manager | Open, not patched |
+| SF-1 | The login lockout does not cover direct calls to the Supabase Auth endpoint (known residual risk of V-2; **observed 2026-10-14**: 8 wrong passwords sent straight to the Auth endpoint while the app lock was active were all answered normally, none throttled). Options to decide with the Project Manager: Supabase Auth rate limits and CAPTCHA, or a database-side password-verification hook. Any SQL goes in one file in `docs/database/` with a rollback block, rehearsed in a rolled-back transaction, run live by the Project Manager | Open, not patched |
 | SF-2 | Rate limiting is a dashboard rule outside the repository and was observed only for `/login`; no stricter rule for sign-in; Server Actions and the Auth endpoint not tested | Open |
 | SF-3 | No full Content-Security-Policy. The inline theme script in `app/layout.tsx` means a strict `script-src` needs per-request nonces; test it in a browser before shipping | Open, recommendation |
 | SF-4 | The set-password link falls back to the request host when `SITE_URL` is not set (`siteUrl()` in `admin-users-actions.ts` and `applications-actions.ts`). Only an Admin or Registrar can trigger it and the host is pattern-checked, so the risk is low. Recommendation: make sure `SITE_URL` is set in Vercel production | Open, recommendation, not tested |
@@ -750,8 +752,9 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 
 1. **Anonymous Data API:** done on 2026-10-14 (17 of 17 refused). To repeat it: set `$env:SUPABASE_URL` and `$env:SUPABASE_ANON_KEY` (the publishable key, Supabase dashboard, Project Settings, API Keys), then `node scripts/security/live-tests.mjs anon`.
 2. **Deployed site headers:** after the release, `$env:BASE_URL='https://cabuyaouni.vercel.app'; node scripts/security/live-tests.mjs headers` (7 checks), and open the Registrar queue on a phone to confirm the scan camera still starts.
-3. **Needs a TEST Supabase project and test accounts** (the script is not meant for production data): `live-tests.mjs idor`, `sqli`, `lockout`, `rate` with the variables listed at the top of that file.
-4. **By hand in the browser** (hostile text typed into forms; it writes rows, so use test data): ST-SQL-2, ST-LOCK-1, ST-LOCK-3, ST-IDOR-3, ST-XSS-1.
+3. **Rate limiting re-run (the Project Manager, PowerShell, from the repository root):** `$env:FLOOD_COUNT='40'; $env:ALLOW_REMOTE_FLOOD='1'; $env:BASE_URL='https://cabuyaouni.vercel.app'; node scripts/security/live-tests.mjs rate`. Expect `{"405":about 20,"429":about 20}` (the rule is 20 POSTs per 60 s per IP). Write the date and the counts under ST-RATE. Note: it will block your own IP for about a minute.
+3b. **Needs a TEST Supabase project and test accounts with known passwords** (the script is not meant for production data): `live-tests.mjs idor`, `sqli` (Data API), `lockout` (right password afterwards).
+4. **By hand in the browser, still Not Run:** SQL injection in the hold reason, remarks and receipt number; ST-LOCK-3; ST-IDOR-3 (signed in as the wrong role). Done 2026-10-14: login and document purpose payloads, XSS in the document purpose, ST-LOCK-1.
 5. Fill the date and the name in each Execution record and change each Status to what was observed; file SF-1, SF-2, SF-3, SF-4, SF-6 and SF-7 as issues if they stay open.
 6. Review by a teammate (issue #108 requires it) before the merge into `dev`; the Project Manager merges `dev` into `main`.
 
