@@ -85,15 +85,20 @@
 -- Test AFTER: the rehearsal block at the bottom of this file (TC-226 to TC-233).
 -- Undo: the ROLLBACK block after COMMIT.
 --
--- Status: NOT RUN LIVE YET. Tested 2026-10-13 on a local PostgreSQL 16 rebuilt from schema.sql,
+-- Status: RUN LIVE 2026-10-14 (by the Project Manager). Before that, the rehearsal file passed on the
+-- live project (all_ok true, TC-226 to TC-233 all OK, rolled back), and after the run
+-- regression_after_grants.sql gave the same result as before (14 cells OK, the known TC-23 cell
+-- unchanged). Read-only check after: trigger prevent_last_admin_deactivation and its function
+-- exist, no anon grants on profiles / department_staff, 4 updatable profile columns, no INSERT or
+-- DELETE grant on profiles; one active Admin exists, so the guard now protects that account.
+-- Earlier, tested 2026-10-13 on a local PostgreSQL 16 rebuilt from schema.sql,
 -- views.sql, seed.sql, private_functions.sql, rls.sql, hardening.sql and hardening2.sql (with
 -- a stand-in for auth.users / auth.uid() and Supabase-style default grants): the change ran
 -- clean, a second run was clean too, TC-226 to TC-233 pass (all_ok true), the rehearsal file
 -- leaves the database unchanged, a database with no active Admin stops the run in section 1,
 -- the ROLLBACK block restored the old grants, and this file together with
 -- catalog_grants.sql also passes. The race between two simultaneous Admin changes
--- (advisory lock) is by design and was NOT exercised (needs two connections). NOT yet
--- rehearsed on the live project (PostgreSQL 17); do that first.
+-- (advisory lock) is by design and was NOT exercised (needs two connections).
 
 
 BEGIN;
