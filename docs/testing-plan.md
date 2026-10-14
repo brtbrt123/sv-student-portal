@@ -195,6 +195,8 @@ TC-01 to TC-70: `docs/issue-12-testing-guide.md`. Files: `docs/database/` (table
 | Notifications (in-app inbox for every role) | TC-167 to TC-198 (32 cases) | `docs/database/notifications_rules_test.sql` | 2026-10-13, PM ran, Claude read. Rehearsed first (`notifications_rules_rehearsal.sql`): 32 of 32 OK, rolled back. Then the live change, then this file again against the live tables | 32 of 32 Pass live, first time |
 | Regression after each Sprint 4 change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-12, re-run after the lockout, after grades and documents, and after enrollment | Unchanged each time: 15 cells OK plus one known CHECK cell on TC-24 (the seed data was changed by the 2026-10-11 browser walk, D-1) |
 | Regression after the notifications change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-13, re-run after the notifications went live | Unchanged: 15 cells OK plus the one known data-dependent CHECK cell (TC-23); every TC-27 permission flag as expected |
+| Auto first-year enrollment (curriculum table, applicant type, enrollment function) | TC-234 to TC-247 (14 cases) | `docs/database/first_year_curriculum_test.sql` | 2026-10-14, PM ran, Claude read. Rehearsed first (`first_year_curriculum_rehearsal.sql`): `all_ok` true, 14 of 14 OK, rolled back. Then the live change (`first_year_curriculum.sql`, its own checks all OK), then this file again against the live tables. Not written with a local PostgreSQL: the rehearsal was its first run | 14 of 14 Pass live |
+| Regression after the first-year change | TC-12 to TC-33 | `docs/database/regression_after_grants.sql` | 2026-10-14, re-run after the change went live | Unchanged: the same cells OK plus the one known data-dependent CHECK cell (TC-23) |
 
 Notes:
 - TC-94 does not appear in any test file. It is not recorded as a case. Not run, not claimed.
@@ -383,6 +385,22 @@ Findings from this run (not fixed; each is a candidate for a later issue, none w
 
 Not verified in this run: Reject on the live site and the rejection email; the queue banner button at 44 px with an active ticket; the
 Registrar's Documents line on a phone beyond the scan; dark mode and phone width on the deployed site; PER-01 was not re-measured.
+
+### 7.7 Automatic first-year enrollment on localhost against the live database (2026-10-14)
+
+Run by: the Project Manager (Registrar and student screens) and Claude (read-only SELECTs of the live tables), on a production build of the new code served on `localhost:3000`, against the live project. For the change in branch `feature/auto-first-year`. Not yet deployed to `cabuyaouni.vercel.app` at the time of this run. The curriculum is SAMPLE data (BSCS: CS111, CS112, MATH101, CS113, CS114; BSIT: IT101 to IT104 and GE101; BSBA: BA101 to BA104 and GE101).
+
+| ID | Steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| A-01 | Apply with the PM's Gmail as a New student (BSBA), the Registrar accepts | Student account created, a Pending Year 1 enrollment with the program's five subjects, no picking | Application 227 (New) Accepted, student 2026-0010; enrollment 66, Year 1, Pending, items BA101, BA102, BA103, BA104, GE101 | Pass |
+| A-02 | The new student opens Enrollment | The five subjects, no section picker, no Remove buttons, a note to ask the Registrar to drop a subject | Reported by the PM: the fixed subjects are shown; the picker and Remove were not described | Pass (reported by the PM) |
+| A-03 | The Registrar drops one subject of the Pending enrollment | The subject is removed from that enrollment | Reported by the PM: working. The audit row of this drop has no actor (the server key does the delete; the Registrar has no DELETE right of their own) | Pass (reported by the PM) |
+| A-04 | The acceptance email | Branded email with the student ID and a set-password link | Reported by the PM: working. The details were not written down | Pass (reported by the PM) |
+| A-05 | Another application (203, Arvien Espedillon) in the live table | Stays Pending, untouched | Still Pending, no student | Pass |
+
+Known limits of this change (recorded, not fixed): the Registrar's drop is not audited with the Registrar as actor; a student can still remove or add their own Pending items by calling the database API directly (the screen hides it; the database policies are unchanged); the function always uses year 1 and the 1st semester; a section has capacity 40 and the Registrar's approval fails with "section full" beyond that; the older test files that call the old five-argument `submit_application` (`applications_rules_test.sql` setup and TC-123, `login_lockout_test.sql` TC-81, the anon function lists in other tests) are not updated; the sample subjects, schedules and capacities are invented; a transferee is not auto-enrolled and picks sections as before (not exercised in A-01 to A-05).
+
+Not verified in this run: the same flow on the deployed site, a transferee end to end, BSCS and BSIT through the screens (covered at database level by TC-240), the Registrar drop on a phone, and PER-01 after the change.
 
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 

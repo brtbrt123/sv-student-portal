@@ -1,0 +1,19 @@
+Grants snapshot BEFORE first_year_curriculum.sql, taken 2026-10-14 on the live project (read-only SELECTs).
+"server role" stands for the Supabase server-side role (its real name is not written in this repo).
+
+(a) Table and column ACLs
+applications   table_acl : {postgres=arwdDxtm/postgres, server role=rDxtm/postgres, authenticated=r/postgres, supabase_read_only_user=r/postgres, supabase_etl_admin=r/postgres}
+               column ACLs: status={authenticated=w}; remarks={authenticated=w}; student_id={server role=w, supabase_read_only_user=w, supabase_etl_admin=w}; provisioned_at={server role=w, supabase_read_only_user=w, supabase_etl_admin=w}
+sections       table_acl : {postgres=arwdDxtm/postgres, server role=Dxtm/postgres, authenticated=r/postgres}
+               column ACLs: subject_id={authenticated=a}; term_id={authenticated=a}; section_code={authenticated=aw}; schedule={authenticated=aw}; capacity={authenticated=aw}
+subjects       table_acl : {postgres=arwdDxtm/postgres, server role=Dxtm/postgres, authenticated=r/postgres}
+               column ACLs: department_id={authenticated=a}; code={authenticated=aw}; title={authenticated=aw}; units={authenticated=aw}
+program_curriculum: does not exist yet.
+
+(b) Function signatures and ACLs
+submit_application(text,text,text,text,bigint) | SECURITY DEFINER | owner postgres | search_path "" | acl={postgres=X/postgres, anon=X/postgres, authenticated=X/postgres} (nothing for PUBLIC)
+create_first_year_enrollment: does not exist yet.
+
+(c) Sample subject codes that already exist
+GE101 | Understanding the Self | 3 | dept CAS | current-term section: A MWF 10:00-11:00 cap 40
+All other sample codes (CS111-CS114, MATH101, IT101-IT104, BA101-BA104) are absent, so the file creates them.
