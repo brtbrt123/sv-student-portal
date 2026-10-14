@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { NavItem } from '@/lib/nav'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { fetchUnreadCount } from '@/lib/data/notifications-actions'
+import { unreadLabel } from '@/lib/notifications/time'
 import { Icon } from './Icon'
 
 // Nav rows: 40px on desktop, 44px touch targets below lg; 6px corners; 20px icon column.
@@ -28,6 +30,7 @@ export default function ShellFrame({
   settingsHref,
   variant = 'student',
   title,
+  unreadCount = 0,
   children,
 }: {
   items: NavItem[]
@@ -44,6 +47,8 @@ export default function ShellFrame({
   variant?: 'student' | 'staff'
   /** Page title, shown in the mobile top bar (the logo name when absent). */
   title?: string
+  /** Unread notifications when the page was rendered; the shell keeps it fresh by itself. */
+  unreadCount?: number
   children: React.ReactNode
 }) {
   const staff = variant === 'staff'
@@ -53,6 +58,21 @@ export default function ShellFrame({
   const menuRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLElement>(null)
   const wasOpen = useRef(false)
+  const [unread, setUnread] = useState(unreadCount)
+  const [renderedCount, setRenderedCount] = useState(unreadCount)
+  const notificationsHref = items.find((i) => i.icon === 'notifications')?.href
+
+  // A new page render brings a fresh count; in between, ask again every 30 seconds while the tab is visible.
+  if (renderedCount !== unreadCount) {
+    setRenderedCount(unreadCount)
+    setUnread(unreadCount)
+  }
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchUnreadCount().then(setUnread)
+    }, 30_000)
+    return () => clearInterval(id)
+  }, [])
 
   // Mobile drawer: Escape closes it, focus moves in when it opens and back to the menu button when it closes.
   useEffect(() => {
@@ -133,6 +153,14 @@ export default function ShellFrame({
                   <Icon name={item.icon} />
                 </span>
                 {item.label}
+                {item.icon === 'notifications' && unread > 0 && (
+                  <span
+                    className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-xs font-bold text-ink tabular-nums"
+                    aria-label={`${unread} unread`}
+                  >
+                    {unreadLabel(unread)}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -183,6 +211,20 @@ export default function ShellFrame({
             {!title && <LogoMark small />}
             <p className="truncate text-base font-semibold text-rail-foreground">{title ?? 'Cabuyao University'}</p>
           </div>
+          {notificationsHref && (
+            <Link
+              href={notificationsHref}
+              aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+              className={cn(ICON_BUTTON, 'relative')}
+            >
+              <Icon name="bell" className="size-5" />
+              {unread > 0 && (
+                <span className="absolute top-1.5 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] leading-none font-bold text-ink tabular-nums">
+                  {unreadLabel(unread)}
+                </span>
+              )}
+            </Link>
+          )}
           <ThemeToggle className="text-rail-muted! hover:bg-rail-hover! hover:text-rail-foreground! focus-visible:outline-rail-ring!" />
         </header>
         <main

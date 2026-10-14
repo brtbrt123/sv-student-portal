@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
 import { DOCUMENT_STATUSES, NEXT_STATUSES, type DocumentStatus } from '@/lib/data/documents'
+import { documentStatusErrorMessage, documentRequestErrorMessage } from '@/lib/data/db-errors'
 
 // Server Actions for document requests. They run with the signed-in user's own session: the database
 // (RLS, column grants, status trigger) is the final gate; the checks here only give friendly messages.
@@ -19,7 +20,6 @@ export type RequestDocumentState = {
 export type UpdateDocumentState = { status: 'idle' | 'success' | 'error'; message: string }
 
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
-const NOT_ALLOWED = 'Your account is not allowed to do this.'
 const GENERIC_REQUEST = 'We could not send your request. Please try again in a few minutes.'
 const GENERIC_UPDATE = 'We could not update this request. Please try again in a few minutes.'
 const MAX_PURPOSE = 200
@@ -63,10 +63,8 @@ export async function requestDocument(_prev: RequestDocumentState, formData: For
       copies,
     })
     if (error) {
-      if (error.code === '42501') return err(NOT_ALLOWED)
-      if (error.code === '23503') return err('We could not find that document type.', { type: 'Choose the document you need.' })
-      if (error.code === '23514') return err('Please check the purpose and the number of copies.')
-      return err(GENERIC_REQUEST)
+      const mapped = documentRequestErrorMessage(error.code, GENERIC_REQUEST)
+      return err(mapped.message, mapped.fieldErrors)
     }
   } catch {
     return err(GENERIC_REQUEST)
@@ -74,14 +72,6 @@ export async function requestDocument(_prev: RequestDocumentState, formData: For
 
   revalidatePath('/student', 'layout')
   redirect('/student/documents?notice=requested')
-}
-
-function friendlyStatusError(code: string | undefined, message: string | undefined): string {
-  if (code === 'P0001' && message?.startsWith('bad status change:')) {
-    return 'That status change is not allowed. Requests move one step at a time, and Released or Rejected requests are final. Reload the page.'
-  }
-  if (code === '42501') return NOT_ALLOWED
-  return GENERIC_UPDATE
 }
 
 // Moves one request to its next legal status. Sends only status and, when typed, remarks (never
@@ -125,7 +115,7 @@ export async function updateDocumentStatus(_prev: UpdateDocumentState, formData:
       .eq('request_id', requestId)
       .eq('status', from)
       .select('request_id')
-    if (error) return { status: 'error', message: friendlyStatusError(error.code, error.message) }
+    if (error) return { status: 'error', message: documentStatusErrorMessage(error.code, error.message) }
     if (!updated || updated.length === 0) {
       return { status: 'error', message: 'This request was not changed. Someone may have updated it already. Reload the page.' }
     }

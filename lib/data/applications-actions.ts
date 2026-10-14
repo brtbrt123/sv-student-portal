@@ -10,6 +10,7 @@ import { getAdminClientFor } from '@/lib/supabase/admin'
 import { acceptanceEmail, rejectionEmail, sendMail } from '@/lib/mail'
 import { studentIdToEmail } from '@/lib/auth/student-id'
 import { APPLICATION_COLUMNS } from '@/lib/data/applications'
+import { applicationDecisionErrorMessage } from '@/lib/data/db-errors'
 
 // Server Actions for the Registrar's applications screen.
 //
@@ -40,7 +41,6 @@ type AppRow = {
 type Provisioned = { ok: true; studentId: string; studentNumber: string } | { ok: false; message: string }
 
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
-const NOT_ALLOWED = 'Your account is not allowed to do this.'
 const GENERIC = 'We could not save the decision. Please try again in a few minutes.'
 const NOT_CONFIGURED = 'Account setup is not configured on the server yet. Ask the Admin, then try again.'
 const NOT_FOUND = 'We could not find this application. Reload the page.'
@@ -66,15 +66,6 @@ const logStep = (step: string, error: { code?: string; status?: number; message?
 function readId(formData: FormData): string | null {
   const raw = String(formData.get('applicationId') ?? '').trim()
   return ID_RE.test(raw) ? raw : null
-}
-
-function friendlyDecisionError(code: string | undefined, message: string | undefined): string {
-  if (code === 'P0001' && message) {
-    if (message.startsWith('remarks required:')) return 'Add a remark that tells the applicant why the application is rejected.'
-    if (message.startsWith('bad decision:')) return 'This application was already decided and cannot be changed. Reload the page.'
-  }
-  if (code === '42501') return NOT_ALLOWED
-  return GENERIC
 }
 
 // A long random password nobody ever sees: it is not stored, shown or emailed. The student sets their
@@ -284,7 +275,7 @@ export async function acceptApplication(_prev: ApplicationActionState, formData:
       .eq('application_id', id)
       .eq('status', 'Pending')
       .select('application_id')
-    if (error) return fail(friendlyDecisionError(error.code, error.message))
+    if (error) return fail(applicationDecisionErrorMessage(error.code, error.message))
     if (!updated || updated.length === 0) {
       return fail('This application was not changed. Someone may have decided it already. Reload the page.')
     }
@@ -379,7 +370,7 @@ export async function rejectApplication(_prev: ApplicationActionState, formData:
       .eq('application_id', id)
       .eq('status', 'Pending')
       .select(APPLICATION_COLUMNS)
-    if (error) return fail(friendlyDecisionError(error.code, error.message))
+    if (error) return fail(applicationDecisionErrorMessage(error.code, error.message))
     if (!updated || updated.length === 0) {
       return fail('This application was not changed. Someone may have decided it already. Reload the page.')
     }

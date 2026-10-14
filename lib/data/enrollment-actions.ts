@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTerm } from '@/lib/data/clearance'
+import { enrollmentErrorMessage, enrollmentSubmitErrorMessage, enrollmentAddSectionErrorMessage } from '@/lib/data/db-errors'
 
 // Server Actions for the student enrollment screen. They run with the signed-in user's own session: the
 // database (RLS, column grants, enrollment triggers) is the final gate; the checks here only give
@@ -18,7 +19,6 @@ export type EnrollmentActionState = {
 }
 
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
-const NOT_ALLOWED = 'Your account is not allowed to do this.'
 const GENERIC_SUBMIT = 'We could not submit your enrollment. Please try again in a few minutes.'
 const GENERIC_ADD = 'We could not add this section. Please try again in a few minutes.'
 const GENERIC_REMOVE = 'We could not remove this section. Please try again in a few minutes.'
@@ -34,20 +34,6 @@ const err = (message: string, fieldErrors?: EnrollmentActionState['fieldErrors']
 const toId = (raw: FormDataEntryValue | null): number => {
   const s = String(raw ?? '').trim()
   return /^\d+$/.test(s) ? Number(s) : NaN
-}
-
-// Maps the database rules (SQLSTATE P0001 with a stable message prefix, 23505, 42501) to words.
-function friendly(code: string | undefined, message: string | undefined, generic: string): string {
-  if (code === '42501') return NOT_ALLOWED
-  if (code === 'P0001') {
-    if (message?.startsWith('enrollment exists:')) return 'You already have an enrollment for this term. Reload the page.'
-    if (message?.startsWith('enrollment locked:')) {
-      return 'This enrollment is no longer Pending, so its sections cannot be changed. Reload the page.'
-    }
-    if (message?.startsWith('wrong term:')) return 'That section is not part of the current term.'
-    if (message?.startsWith('duplicate section:')) return 'That section is already in your enrollment. Reload the page.'
-  }
-  return generic
 }
 
 // Creates the student's enrollment for the current term. Sends only student_id, term_id and year_level;
@@ -73,9 +59,8 @@ export async function submitEnrollment(_prev: EnrollmentActionState, formData: F
       .insert({ student_id: user.id, term_id: term.termId, year_level: yearLevel })
       .select('enrollment_id')
     if (error) {
-      if (error.code === '23505') return err('You already have an enrollment for this term. Reload the page.')
-      if (error.code === '23514') return err('Please check the year level.', { yearLevel: `Choose a year level from ${MIN_YEAR} to ${MAX_YEAR}.` })
-      return err(friendly(error.code, error.message, GENERIC_SUBMIT))
+      const mapped = enrollmentSubmitErrorMessage(error.code, error.message, GENERIC_SUBMIT, { min: MIN_YEAR, max: MAX_YEAR })
+      return err(mapped.message, mapped.fieldErrors)
     }
     if (!data || data.length === 0) return err(GENERIC_SUBMIT)
   } catch {
@@ -100,11 +85,7 @@ export async function addEnrollmentSection(_prev: EnrollmentActionState, formDat
     if (!userData.user) return err(SESSION_ENDED)
 
     const { error } = await supabase.from('enrollment_items').insert({ enrollment_id: enrollmentId, section_id: sectionId })
-    if (error) {
-      if (error.code === '23505') return err('That section is already in your enrollment. Reload the page.')
-      if (error.code === '23503') return err('We could not find that section. Reload the page.')
-      return err(friendly(error.code, error.message, GENERIC_ADD))
-    }
+    if (error) return err(enrollmentAddSectionErrorMessage(error.code, error.message, GENERIC_ADD))
   } catch {
     return err(GENERIC_ADD)
   }
@@ -135,7 +116,7 @@ export async function removeEnrollmentSection(_prev: EnrollmentActionState, form
       .eq('enrollment_item_id', itemId)
       .eq('enrollment_id', enrollmentId)
       .select('enrollment_item_id')
-    if (error) return err(friendly(error.code, error.message, GENERIC_REMOVE))
+    if (error) return err(enrollmentErrorMessage(error.code, error.message, GENERIC_REMOVE))
     if (!data || data.length === 0) {
       return err('This section was not removed. Your enrollment may no longer be Pending, or it was already removed. Reload the page.')
     }
