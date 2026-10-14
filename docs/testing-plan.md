@@ -289,6 +289,32 @@ Not verified in the browser (stays "Not done", section 12): the camera scan and 
 the QR on a real phone, "Leave the queue", the No-show button, several students in one line (order and "You are 25th"
 numbers), the audit rows of the ticket changes on the Admin screen, phone widths and light mode, and the deployed Vercel site.
 
+### 7.4 Enrollment submit, Reject and Approve in the app (browser, 2026-10-14)
+
+Run by: the Project Manager signed in and clicked (student 2026-0008 Justinbril Abarquez; Registrar Cruz, Rey) on localhost against the
+live database. Claude read the pages and checked every result with read-only SELECTs on the live project. For issues #101 and #102.
+One test enrollment (id 58) was used. A Rejected enrollment is final in the database, so after the Reject the owner ran a one-off
+script that put that single row back to Pending (the trigger `require_enrollment_rules` was switched off for that one change and
+switched on again, checked); the reset is itself in the audit log. Then the enrollment was approved.
+
+| ID | Role and steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| E-01 | Student (2026-0008, no enrollment yet): Enrollment page, choose Year 3, submit | One enrollment, status Pending, year level 3 | Page: Pending, Year 3, submitted Oct 14, 2026. Database: enrollment 58, Pending, year_level 3, not reviewed | Pass |
+| E-02 | Student: add two sections (CS101 A, GE101 A) | Both listed with units and schedule; items saved | Page: 2 subjects, 6 units. Database: 2 items (A/CS101, A/GE101) | Pass |
+| E-03 | Student: the "Add a section" picker after two sections were added | Only sections not yet chosen are offered (a duplicate cannot be picked) | Picker listed only CS102 (the one section left). The duplicate-section message itself is covered by UT-48 and TC-109 to TC-122, not by a click | Pass (by design) |
+| E-04 | Student: the page text while Pending | Items can be added or removed only while Pending | "Sections can be added or removed only while the enrollment is Pending. The Registrar checks for a free seat when approving." | Pass |
+| E-05 | Registrar: Enrollments page shows the pending enrollment | Student, program, year level, subjects and sections, free seats | The Registrar found the enrollment on this page and rejected and approved it from there (E-06, E-08); what the list showed (columns, seat figures) was not written down | Partly recorded |
+| E-06 | Registrar: Reject with remarks "Test: missing requirements" | Status Rejected, `reviewed_by` the Registrar, `reviewed_at` set, student notified | Database: Rejected, remarks saved, reviewer Cruz, Rey, reviewed_at set, 2 audit rows, student notification "Your enrollment was rejected" | Pass |
+| E-07 | Owner: reset enrollment 58 to Pending (one-off script) | Exactly one row changed, trigger enabled again | Pending, review fields cleared, trigger state enabled (`O`), 2 items kept | Pass |
+| E-08 | Registrar: Approve | Status Approved, reviewer named, `reviewed_at` set, audit rows, student notified | Database: Approved, reviewer Cruz, Rey, reviewed_at set, 4 audit rows (submit, reject, reset, approve), notifications "rejected" and "approved", 2 items | Pass |
+| E-09 | Registrar: Encode Grades lists the approved enrollment's subjects | CS101 and GE101 of 2026-0008 appear | PM confirmed both rows are there | Pass (reported by the PM) |
+| E-10 | Isolation: one student cannot see another student's enrollment | 0 rows of another student | Regression TC-14 on the live project, 2026-10-14, before and after the catalog and admin grants: "s2 ... enrollments 0 -> OK" (SQL level; not repeated by clicking as a second student) | Pass |
+
+Not verified in this run (stays in section 12): Reject pressed with EMPTY remarks (the refusal text was not reported); the student
+page after the Reject (the "not approved" box and the remarks were not looked at); the Remove button; a second enrollment for the
+same term from the screen; the Registrar list's free-seat figures; the same checks on the deployed Vercel site and on a phone.
+Gap against issue #101: the section picker shows "capacity 40", not the free places left.
+
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 
 | ID | Case | Expected | Actual | Result |
@@ -406,8 +432,8 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | Rate limiting (SEC-04) | 6 | Done (sign-in route) | Vercel firewall rule "Limit POST requests per IP" (POST, 60 s fixed window, 20 requests per IP, 429) tested 2026-10-12: 429 after about 24 POSTs in a minute from one IP; see `docs/rate-limiting.md` |
 | SQL injection direct test | 6 | Not done | Issue #108. Owner and date not set |
 | Lockout residual risks (DoS lockout, direct Auth endpoint, race) | 6 | Not tested | Documented as accepted risks; test or mitigate if time allows |
-| Student enrollment submit, add and remove forms | 3 | Not done | No seed student without an enrollment; needs a new test student or a throwaway term |
-| Reject button on the Registrar enrollments screen | 3 | Not done | Needs a second Pending enrollment |
+| Student enrollment submit, add and remove forms | 3 | Partly done | Submit and add done 2026-10-14 (E-01 to E-04); Remove button and a second enrollment from the screen not clicked |
+| Reject button on the Registrar enrollments screen | 3 | Done with gaps | Reject with remarks done 2026-10-14 (E-06); Reject with EMPTY remarks and the student's view of the rejection not recorded |
 | Friendly error messages of the new screens | 3 | Not done | Trigger each message in the browser |
 | Audit rows of the 2026-10-12 browser writes | 3, 6 | Not done | Admin audit log screen |
 | Admin user accounts and academic catalog (REQ-ADM-01, REQ-ADM-04) | 3 | Not done | Admin users is a stretch item; no test recorded for either |
