@@ -35,13 +35,13 @@ export default async function StudentDocumentsPage({
       actions={state.kind === 'ready' ? <JumpLink href="#new-request">New request</JumpLink> : undefined}
     >
       {noticeText && state.kind === 'ready' && (
-        <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-ink">
+        <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-foreground">
           {noticeText}
         </p>
       )}
       {showQueue && (
         <div className="mb-6">
-          <QueueNotice status={queue} text="Claiming a document at the school? Get your queue number from your phone." />
+          <QueueNotice status={queue} text="Show your code there to get a queue number, then follow the line from your phone." />
         </div>
       )}
       {state.kind === 'error' ? (

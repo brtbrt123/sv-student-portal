@@ -13,9 +13,12 @@ Q-01 to Q-09, V-6 and V-7).
 2. **The queue pass.** On the Enrollment page a student whose enrollment is not yet Approved sees "Physical enrollment at the
    Registrar" with a QR code that changes every 15 seconds.
 3. **At the school.** The Registrar's queue desk reads the QR with a USB barcode scanner (it types the code like a keyboard) or
-   with the camera of the device. The code is checked on the server, and the **student's card** appears (name, student number,
-   program). The Registrar compares the screen with the person and the ID and presses **Approve** (or "ID does not match").
-4. **Ticket.** Approving issues a ticket with a **random 7-digit code** such as `#8503599`. The line order is kept separately
+   with the camera of the device. The code is checked on the server and **the ticket is issued in the same step** (changed
+   2026-10-14: there is no Approve button any more). The result stays on screen for 7 seconds with the ticket number, the
+   student's name, number and program, and how many are ahead; the camera is locked for those seconds so one scan can never
+   become two. A student who already has a ticket in that line is told so and gets no second one. The Registrar checks the
+   student's ID against the name **at the window**, when the number is called (the name is shown again there).
+4. **Ticket.** A scan issues a ticket with a **random 7-digit code** such as `#8503599`. The line order is kept separately
    (`ticket_number`, never shown), so nobody can guess or count the line from the codes.
 5. **The student's tracker.** The page shows the ticket, "You are 25th in line" (or "You are next"), a drawn line from the window to the
    back (the people ahead, you, the people behind), the people ahead, the last number called, and an estimated wait of 3 to 5
@@ -50,14 +53,16 @@ looks at Enrollment only; a second Documents ticket is still refused by the data
   through a function that checks the caller's role. Illegal status changes are blocked by a trigger (Waiting to Serving or
   Cancelled; Serving to Done or No-show; the rest are final) and every ticket change is written to the audit log.
 - **Privacy:** a student sees only their own ticket and counts. Names are visible only to the Registrar. The scan only looks the
-  student up; nothing is issued until a person approves.
+  student up and issues the ticket; the person is checked against their ID at the window.
 - **No Realtime:** a student cannot see other tickets (privacy rules), so Realtime would only say "something changed" and the page
   would still have to re-count. Refreshing every 5 to 10 seconds gives the same result without extra production configuration.
 
 ## Residual risks (accepted, written in the paper)
 
-- **Proxy queuing.** Someone holding a student's phone and ID who looks similar can still be approved. The check is a person
-  comparing the screen, the ID and the face. A student **photo** on the card would help. It needs a source (an upload on the
+- **Proxy queuing.** Someone holding a student's phone can now get a ticket without anyone comparing a face first (the Approve
+  step was removed on 2026-10-14 so a scan is one step). The check moved to the window: the name is shown again when the number
+  is called, the Registrar compares it with the ID and the person, and marks No-show if it does not match. A Registrar cannot void
+  a Waiting ticket (only the student can cancel it), so a wrong ticket stays in the line until it is called. A student **photo** on the card would help. It needs a source (an upload on the
   application form), consent and private storage; a placeholder is in the SQL header and on the screen.
 - **Random codes do not stop trading by themselves.** The ID check at the desk and the name shown again at the window do.
 - **Hardware.** A USB barcode scanner must be a 2D imager that can read a phone screen; many cheap laser scanners cannot.

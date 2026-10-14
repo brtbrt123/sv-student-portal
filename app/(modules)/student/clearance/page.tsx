@@ -29,7 +29,7 @@ export default async function StudentClearancePage({
   return (
     <DashboardShell profile={profile} title="My clearance" subtitle={subtitle}>
       {noticeText && state.kind === 'ready' && state.clearance !== null && (
-        <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-ink">
+        <p role="status" className="mb-4 rounded-md border border-edge bg-card px-4 py-3 text-sm text-foreground">
           {noticeText}
         </p>
       )}
