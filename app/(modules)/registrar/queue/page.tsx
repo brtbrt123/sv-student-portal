@@ -36,7 +36,7 @@ export default async function RegistrarQueuePage({
 
   return (
     <DashboardShell profile={profile} title="Queue" subtitle={`Registrar Office · ${current.subtitle}`}>
-      <AutoRefresh everySeconds={5} />
+      <AutoRefresh everySeconds={10} />
       <nav aria-label="Choose the line" className="glass mb-4 grid grid-cols-2 gap-1 rounded-full border border-border bg-card p-1 sm:max-w-md">
         {LINES.map((l) => {
           const on = l.service === service

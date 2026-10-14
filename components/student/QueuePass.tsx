@@ -33,7 +33,7 @@ export default function QueuePass({
 
   return (
     <Card tone="warm" className="flex flex-col gap-5 p-5 sm:p-6">
-      <AutoRefresh everySeconds={active ? 10 : 5} />
+      <AutoRefresh everySeconds={10} />
       <div>
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="mt-1 max-w-[60ch] text-sm leading-6 text-muted">{intro}</p>
