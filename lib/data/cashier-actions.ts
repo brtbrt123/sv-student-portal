@@ -30,7 +30,8 @@ async function requireCashier() {
 }
 
 // Logs a payment against one charge. Sends only the granted columns: charge_id, amount_paid,
-// receipt_number, recorded_by (the signed-in user). paid_at is left out so the database stamps it.
+// recorded_by (the signed-in user). paid_at and receipt_number are left out: the database stamps the time
+// and numbers the receipt itself (clearance_college_flow.sql).
 export async function logPayment(_prev: LogPaymentState, formData: FormData): Promise<LogPaymentState> {
   void _prev
   const err = (message: string, fieldErrors?: LogPaymentState['fieldErrors']): LogPaymentState => ({
@@ -41,17 +42,15 @@ export async function logPayment(_prev: LogPaymentState, formData: FormData): Pr
 
   const chargeRaw = String(formData.get('chargeId') ?? '')
   const amountRaw = String(formData.get('amount') ?? '').trim().replace(/,/g, '')
-  const receipt = String(formData.get('receipt') ?? '').trim()
 
   const fieldErrors: NonNullable<LogPaymentState['fieldErrors']> = {}
   const chargeId = /^\d+$/.test(chargeRaw) ? Number(chargeRaw) : NaN
   if (!Number.isSafeInteger(chargeId)) fieldErrors.charge = 'Choose the charge this payment is for.'
   const amount = /^\d+(\.\d{1,2})?$/.test(amountRaw) ? Number(amountRaw) : NaN
   if (!Number.isFinite(amount) || amount <= 0) fieldErrors.amount = 'Enter an amount greater than 0, with at most 2 decimals.'
-  if (!receipt) fieldErrors.receipt = 'Enter the receipt number.'
-  else if (receipt.length > 40) fieldErrors.receipt = 'The receipt number is too long (40 characters at most).'
   if (Object.keys(fieldErrors).length > 0) return err('Please fix the highlighted fields.', fieldErrors)
 
+  let receipt = ''
   try {
     const profile = await requireCashier()
     if (!profile) return err(SESSION_ENDED)
@@ -82,22 +81,26 @@ export async function logPayment(_prev: LogPaymentState, formData: FormData): Pr
       })
     }
 
-    const { error } = await supabase.from('payments').insert({
-      charge_id: chargeId,
-      amount_paid: amount,
-      receipt_number: receipt,
-      recorded_by: profile.id,
-    })
+    // receipt_number is left out: the database numbers the payment (OR-<year>-<six digits>).
+    const { data: inserted, error } = await supabase
+      .from('payments')
+      .insert({ charge_id: chargeId, amount_paid: amount, recorded_by: profile.id })
+      .select('receipt_number')
+      .single()
     if (error) {
       const mapped = paymentErrorMessage(error.code, GENERIC_PAYMENT)
       return err(mapped.message, mapped.fieldErrors)
     }
+    receipt = inserted?.receipt_number ?? ''
   } catch {
     return err(GENERIC_PAYMENT)
   }
 
   revalidatePath('/cashier', 'layout')
-  return { status: 'success', message: `Logged ${formatPeso(amount)} as receipt ${receipt}.` }
+  return {
+    status: 'success',
+    message: receipt ? `Logged ${formatPeso(amount)} as receipt ${receipt}.` : `Logged ${formatPeso(amount)}.`,
+  }
 }
 
 // Tags one Unpaid charge as Cleared or Waived. Only charges.status is sent. A charge can be Cleared only
