@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useRef } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { submitApplication, type ApplyState } from '@/lib/data/apply-actions'
@@ -10,6 +10,47 @@ const INITIAL_STATE: ApplyState = { status: 'idle', message: '' }
 
 // 16 px text on a phone keeps iOS from zooming the page when a field is tapped; a taller field is easier to hit.
 const FIELD_SIZE = 'h-12 rounded-xl text-base max-lg:h-12'
+
+// "How we use your data": opens the same notice as the "Your data" section in a native modal dialog, so it shows
+// right where the applicant tapped. Buttons are type="button" so nothing here submits the form.
+function DataNotice() {
+  const ref = useRef<HTMLDialogElement>(null)
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => ref.current?.showModal()}
+        className="font-medium text-foreground underline underline-offset-4"
+      >
+        How we use your data
+      </button>
+      <dialog
+        ref={ref}
+        aria-labelledby="data-notice-title"
+        onClick={(e) => {
+          if (e.target === ref.current) ref.current?.close()
+        }}
+        className="glass m-auto w-[calc(100%-2rem)] max-w-md rounded-3xl border border-edge bg-card p-6 text-left text-foreground shadow-elev-sm backdrop:bg-black/50"
+      >
+        <h2 id="data-notice-title" className="text-lg font-semibold">
+          Your data
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          We collect only what we need: your name and email to review your application and contact you, your mobile number
+          (optional) in case the Registrar needs to reach you, and the program you choose. It is used for enrollment only, as the
+          Data Privacy Act requires.
+        </p>
+        <button
+          type="button"
+          onClick={() => ref.current?.close()}
+          className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-gold px-6 text-base font-bold text-[#18181b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Got it
+        </button>
+      </dialog>
+    </>
+  )
+}
 
 function Field({
   id,
@@ -203,12 +244,10 @@ export function ApplyForm({ programs }: { programs: ProgramOption[] }) {
         >
           {isPending ? 'Sending your application...' : 'Submit application'}
         </button>
-        <p className="text-center text-[13px] leading-5 text-muted">
+        <div className="text-center text-[13px] leading-5 text-muted">
           By submitting, you agree that we use these details for your enrollment only.{' '}
-          <a href="#your-data" className="font-medium text-foreground underline underline-offset-4">
-            How we use your data
-          </a>
-        </p>
+          <DataNotice />
+        </div>
       </div>
     </form>
   )
