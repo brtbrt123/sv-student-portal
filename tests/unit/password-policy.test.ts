@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordProblem, passwordRules } from '@/lib/auth/password-policy'
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  STRONG_LENGTH,
+  passwordProblem,
+  passwordRules,
+  passwordStrength,
+} from '@/lib/auth/password-policy'
 
 describe('password policy (UT-88..90)', () => {
   it('UT-88 accepts 8 characters with a capital letter, a number and a special character', () => {
@@ -25,5 +32,30 @@ describe('password policy (UT-88..90)', () => {
       ['special', true],
     ])
     expect(passwordRules('').every((r) => !r.ok)).toBe(true)
+  })
+})
+
+describe('password strength meter (UT-91..93)', () => {
+  it('UT-91 nothing typed shows no level; one to two rules is Weak, three is Fair, all four is Good, 12 or more is Strong', () => {
+    expect(passwordStrength('')).toEqual({ level: 0, label: '', note: null })
+    expect(passwordStrength('abc').level).toBe(1)
+    expect(passwordStrength('tomatoes1').level).toBe(1)
+    expect(passwordStrength('Tomatoes1').level).toBe(2)
+    expect(passwordStrength('Tomato#12').level).toBe(3)
+    expect(passwordStrength('Tomato#12').label).toBe('Good')
+    expect(STRONG_LENGTH).toBe(12)
+    expect(passwordStrength('Portal#2026x').level).toBe(4)
+    expect(passwordStrength('Portal#2026x').label).toBe('Strong')
+  })
+  it('UT-92 a Good password says how to make it strong; a Strong one has no note', () => {
+    expect(passwordStrength('Portal#26').note).toContain('12 or more')
+    expect(passwordStrength('Portal#2026x').note).toBeNull()
+  })
+  it('UT-93 a common word or run, or too few different characters, is Weak even when every rule is met', () => {
+    expect(passwordStrength('Password1!').level).toBe(1)
+    expect(passwordStrength('Password1!').note).toContain('common')
+    expect(passwordStrength('Qwerty#12345').level).toBe(1)
+    expect(passwordStrength('Aaaaaaa1!').level).toBe(1)
+    expect(passwordStrength('Aaaaaaa1!').note).toContain('few different')
   })
 })

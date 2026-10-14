@@ -38,3 +38,32 @@ export function passwordProblem(password: string): string | null {
   const broken = passwordRules(password).find((r) => !r.ok)
   return broken ? PROBLEM[broken.id] : null
 }
+
+// ---- Strength meter (shown only as a guide; the rules above are what decide) --------------------------------------
+// Level 0 = nothing typed, 1 = Weak, 2 = Fair, 3 = Good, 4 = Strong.
+//   - how many of the four rules are met: 0 or 1 or 2 -> Weak, 3 -> Fair, all four -> Good;
+//   - all four rules and 12 or more characters -> Strong;
+//   - a password with a very common word or run in it, or only a few different characters, never gets above Weak
+//     (it could meet every rule and still be easy to guess, for example "Password1!" or "Aaaaaaa1!").
+export type PasswordStrength = { level: 0 | 1 | 2 | 3 | 4; label: string; note: string | null }
+
+export const STRONG_LENGTH = 12
+const COMMON_PARTS = ['password', 'qwerty', '123456', 'abcdef', 'letmein', 'welcome', 'admin', 'cabuyao', 'pnc']
+const MIN_DIFFERENT_CHARACTERS = 5
+const LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong'] as const
+
+export function passwordStrength(password: string): PasswordStrength {
+  if (password.length === 0) return { level: 0, label: '', note: null }
+  const lower = password.toLowerCase()
+  if (COMMON_PARTS.some((part) => lower.includes(part))) {
+    return { level: 1, label: LABELS[1], note: 'It contains a very common word or sequence.' }
+  }
+  if (new Set(password).size < MIN_DIFFERENT_CHARACTERS) {
+    return { level: 1, label: LABELS[1], note: 'It uses too few different characters.' }
+  }
+  const met = passwordRules(password).filter((r) => r.ok).length
+  if (met <= 2) return { level: 1, label: LABELS[1], note: null }
+  if (met === 3) return { level: 2, label: LABELS[2], note: null }
+  if (password.length >= STRONG_LENGTH) return { level: 4, label: LABELS[4], note: null }
+  return { level: 3, label: LABELS[3], note: `Use ${STRONG_LENGTH} or more characters to make it strong.` }
+}
