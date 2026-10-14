@@ -762,25 +762,29 @@ No SQL file was changed, so there is nothing for the Project Manager to run live
 ### 10.2.2 Password rules when choosing a password (2026-10-14)
 
 Requested by the Project Manager: a password is at least 8 characters with at least one capital letter, one number and one special
-character (a character that is not a letter, a number or a space). Before: only "at least 10 characters". The rules live in one place,
+character (a character that is not a letter, a number or a space). **A lowercase letter was added** the same day, by the Project Manager's decision,
+so that the app matches the only option the Supabase dashboard offers that requires a symbol ("Lowercase, uppercase letters, digits and symbols").
+Before: only "at least 10 characters". The rules live in one place,
 `lib/auth/password-policy.ts`; the server action `app/set-password/actions.ts` decides, and the form `app/set-password/SetPasswordForm.tsx`
 shows a live checklist and a strength meter. Signing in does not check the rules, so a password chosen earlier keeps working. The student ID is still refused as a password.
 
 | ID | What was checked | Expected | Actual (2026-10-14) | Result |
 | --- | --- | --- | --- | --- |
-| P-01 | Unit tests UT-88 to UT-90 (`tests/unit/password-policy.test.ts`) | Accepts 8 characters with a capital, a number and a special character; names the first broken rule (length, capital, number, special); a space is not special; more than 72 characters refused | 90 of 90 unit tests pass (3 new) | Pass |
-| P-02 | The form in the browser (local production build), typing `abc`, `Portal2026`, `Portal#2026` | The checklist ticks each rule as it is met | `abc`: 0 of 4; `Portal2026`: 3 of 4 (no special character); `Portal#2026`: 4 of 4 | Pass |
-| P-03 | The server action, submitting four passwords that each break one rule (the form fields filled and submitted by script, so the browser's own checks did not decide) | A plain message for the rule broken, nothing saved | `Portal2026`: "Add at least one special character, such as ! ? # or @."; `portal#2026`: "Add at least one capital letter."; `Portal#portal`: "Add at least one number."; `Short1!` (7 characters): "Use at least 8 characters." | Pass |
-| P-05 | The strength meter: unit tests UT-91 to UT-93, and the form in the browser (local production build, dark and light, 375 px) | Four levels: Weak (1 or 2 rules, or a common word or run, or fewer than 5 different characters), Fair (3 rules), Good (all 4), Strong (all 4 and 12 or more characters); the word is written next to the bar; a hint tells a Good password how to become Strong | 93 of 93 unit tests pass. In the browser: nothing typed, no bars and "type a password to see it"; `abc` Weak (few different characters); `Tomatoes1` Fair; `Tomato#12` Good with the 12-character hint (3 of 4 bars); `Tomato#2026xy` Strong (4 of 4); `Password1!` Weak (common word) and `Aaaaaaa1!` Weak (few different characters) although both meet every rule. No sideways scroll at 375 px; the bar uses the danger, warning and success colors of the theme | Pass |
+| P-01 | Unit tests UT-88 to UT-90 (`tests/unit/password-policy.test.ts`) | Accepts 8 characters with a lowercase letter, a capital, a number and a special character; names the first broken rule (length, lowercase, capital, number, special); a space is not special; more than 72 characters refused | 93 of 93 unit tests pass (6 new, UT-88 to UT-93) | Pass |
+| P-02 | The form in the browser (local production build), typing `abc`, `Portal2026`, `Portal#2026` | The checklist ticks each rule as it is met | First version (four rules): `abc` 0 of 4; `Portal2026` 3 of 4 (no special character); `Portal#2026` 4 of 4. With the lowercase rule (five lines): `PORTAL#2026` 4 of 5 ("One lowercase letter" not ticked); `Portal#2026` 5 of 5 | Pass |
+| P-03 | The server action, submitting four passwords that each break one rule (the form fields filled and submitted by script, so the browser's own checks did not decide) | A plain message for the rule broken, nothing saved | `Portal2026`: "Add at least one special character, such as ! ? # or @."; `portal#2026`: "Add at least one capital letter."; `Portal#portal`: "Add at least one number."; `Short1!` (7 characters): "Use at least 8 characters.". After the lowercase rule: `PORTAL#2026` (no lowercase letter): "Add at least one lowercase letter." | Pass |
+| P-05 | The strength meter: unit tests UT-91 to UT-93, and the form in the browser (local production build, dark and light, 375 px) | Four levels: Weak (up to 2 of the 5 rules, or a common word or run, or fewer than 5 different characters), Fair (3 or 4 rules), Good (all 5), Strong (all 5 and 12 or more characters); the word is written next to the bar; a hint tells a Good password how to become Strong | 93 of 93 unit tests pass. In the browser: nothing typed, no bars and "type a password to see it"; `abc` Weak (few different characters); `Tomatoes1` Fair; `Tomato#12` Good with the 12-character hint (3 of 4 bars); `Tomato#2026xy` Strong (4 of 4); `PORTAL#2026` Fair (no lowercase letter); `Password1!` Weak (common word) and `Aaaaaaa1!` Weak (few different characters) although both meet every rule. No sideways scroll at 375 px; the bar uses the danger, warning and success colors of the theme | Pass |
 | P-04 | A password that meets every rule is accepted and saved | Saved, signed in | **Not Run**: it would change a real account's password. Covered only by UT-88 | Not Run |
 
-The meter is a guide only; it never blocks or allows a password (the four rules decide). Its list of common words is short (`password`, `qwerty`, `123456`, `abcdef`, `letmein`, `welcome`, `admin`, `cabuyao`, `pnc`), so it does not know every weak password, and it does not check a password against known data breaches.
+The meter is a guide only; it never blocks or allows a password (the five rules decide). Its list of common words is short (`password`, `qwerty`, `123456`, `abcdef`, `letmein`, `welcome`, `admin`, `cabuyao`, `pnc`), so it does not know every weak password, and it does not check a password against known data breaches.
 
-**SF-8 (new finding, open): the rules are enforced by the app only.** A signed-in person can call the Supabase Auth endpoint directly (the same
-path as SF-1) and set a password that breaks these rules. The matching rule also has to be set in the Supabase dashboard (Authentication, then the
-password settings: minimum length 8, and the required characters lower and upper case, digits and symbols), which is outside the repository.
-The same setting must not demand more than the app does, or a password the app accepts would be refused with `weak_password` (the action shows
-"That password is too easy to guess" for that). **Not checked yet**; the Project Manager sets and checks it, and the date goes here.
+**SF-8 (closed 2026-10-14): the rules were enforced by the app only.** A signed-in person could call the Supabase Auth endpoint directly (the same
+path as SF-1) and set a password that broke these rules. Found in the dashboard (Authentication, Sign In / Providers, Email): **minimum password length 6 and no
+required characters**. The Project Manager set **minimum length 8 and "Lowercase, uppercase letters, digits and symbols"** and saved it; Claude read the settings
+back from a fresh dashboard page the same day (minimum 8; the required-characters option holds lower case, upper case, digits and symbols). Both layers now ask for the same,
+so a password the app accepts is not refused later with the vague "too easy to guess" message. **Not tested:** that Supabase really refuses a weak password sent
+straight to the Auth endpoint (it would change a real account's password, or create an account); the setting was read, not exercised. **Still open:** "Prevent use of leaked
+passwords" needs the Pro plan and is off; and existing accounts keep the passwords they chose earlier.
 
 ## 11. Findings and deviations
 
