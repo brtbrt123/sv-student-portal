@@ -420,6 +420,28 @@ Known limits of this change (recorded, not fixed): expiry is run when the Regist
 
 Not verified in this run: B-05 on screen, the several-documents form and the queue rule on the deployed site and on a phone, a transferee end to end, and PER-01 after these changes.
 
+### 7.9 Admin users, academic setup and the two dashboards on live data (browser, 2026-10-14)
+
+Run by: Claude in the browser pane on a production build of the branch `feature/admin-live-data`, against the live database, signed in by the Project Manager as the Admin and as the Registrar. For issues #103, #104 and #105. The screens used sample data before. Not yet deployed to `cabuyaouni.vercel.app` at the time of this run. Three parts were written by three parallel agents with separate files; their own checks were `tsc`, `eslint` and unit tests (UT-94 to UT-119, 119 tests in all).
+
+| ID | Screen and steps | Expected | Actual (2026-10-14) | Result |
+| --- | --- | --- | --- | --- |
+| D-01 | Admin `/admin/users` | The real accounts, no sample note | 10 accounts (6 students, 4 staff) with role, department or program, status and created date; summary 10 total, 6 active students, 4 staff, 0 inactive; "This is you" in place of Deactivate on the Admin's own row | Pass |
+| D-02 | Deactivate, then Reactivate the test student 2026-0010 | Account changes state, list and counts follow, change is audited | "The account is deactivated." (active 6 to 5, inactive 0 to 1); "The account is active again." (back to 6 and 0). Database: `is_active` true again; two `profiles` UPDATE rows in the audit log with the Admin as actor | Pass |
+| D-03 | Admin `/admin/academic-setup` | The live catalog, no sample note | 2 terms (1st 2026-2027 current), 3 programs, 16 subjects, 16 sections in the current term; Add and Edit buttons, "Make current" on the other term | Pass |
+| D-04 | Edit subject BA104 (title plus " (test)"), then edit it back | "Subject saved.", table follows, locked fields read-only | Both saves accepted; the department shown "(cannot be changed)"; title back to "Introduction to Marketing" in the database; two `subjects` UPDATE audit rows | Pass |
+| D-05 | Edit section A of BA104 (capacity 40 to 41, then back to 40) | "Section saved.", subject and term read-only | Both saves accepted; the subject and the term shown "(cannot be changed)"; capacity 40 in the database again; two `sections` UPDATE audit rows. The table refreshed a few seconds after the second save | Pass |
+| D-06 | Admin `/admin` | Live totals, users by role, recent audit entries, no sample note | Total 10, active 10, inactive 0; Student 6, Registrar 1, Cashier 1, Department 1, Admin 1; 191 audit entries; the five newest rows were the day's actions (the Cashier's payment, the Department's holds) | Pass |
+| D-07 | Registrar `/registrar` | Live applications, enrollments, document requests, queue, no sample note | 1 application pending, 1 enrollment awaiting review (2026-0010, 4 subjects after the drop), 11 document requests to process and 2 ready, queue all 0, 0 clearances ready; every block links to its page | Pass |
+| D-08 | The four pages at 375 px | No sideways scroll, tap targets at least 44 px | `/admin`, `/admin/users`, `/admin/academic-setup`, `/registrar`: no page-level horizontal scroll and no target under 44 px | Pass |
+
+Findings from this run (fixed before the commit):
+- **Server module imported by a client component (found only in the browser).** `components/admin/UsersTable.tsx` imported a helper from `lib/data/admin-users.ts`, which imports the Supabase server client (`next/headers`). `tsc`, `eslint` and the unit tests all passed, but the page answered HTTP 500 in the browser. Fix: the types and pure helpers moved to `lib/data/admin-users-map.ts` (no server imports); the client and the tests import that file. The other client components were checked: they import only types, server actions and constants from plain modules.
+- A link on the Registrar dashboard said "Open queue" but led to the documents page. Now "Open document requests".
+- The dev server (`npm run dev`) left the buttons inactive for a long time after load; on a production build the same page is active at once. All results above are from the production build.
+
+Not tested on the live data (written down, not claimed): creating a term, program, subject or section (there is no delete, so a test row would stay in the live data); "Make current" for a term (it changes which term students enrol in); adding a staff user, changing a user's role or department, and "Resend invite" (they create accounts or send emails); the same screens on the deployed site and on a phone. Known limits: the dashboards read the whole lists and count them in memory (fine for this data size); the Student dashboard still shows sample data (no issue covers it); locally each page takes 2 to 3 seconds because one call from this PC to the database in Sydney takes 0.4 to 0.8 seconds, while the deployed site, whose server is also in Sydney, answers in about 0.7 seconds.
+
 ## 8. Negative and isolation cases (support levels 2, 3 and 6)
 
 | ID | Case | Expected | Actual | Result |
