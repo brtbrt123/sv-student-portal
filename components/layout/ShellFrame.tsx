@@ -155,7 +155,7 @@ export default function ShellFrame({
                 {item.label}
                 {item.icon === 'notifications' && unread > 0 && (
                   <span
-                    className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-xs font-bold text-ink tabular-nums"
+                    className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-xs font-bold text-[#18181b] tabular-nums"
                     aria-label={`${unread} unread`}
                   >
                     {unreadLabel(unread)}
@@ -188,7 +188,7 @@ export default function ShellFrame({
           <div className="mt-2 flex items-center gap-2.5 border-t border-rail-border px-1 pt-3">
             <span
               aria-hidden="true"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gold text-sm font-semibold text-ink"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gold text-sm font-semibold text-[#18181b]"
             >
               {userName.charAt(0)}
             </span>
@@ -219,7 +219,7 @@ export default function ShellFrame({
             >
               <Icon name="bell" className="size-5" />
               {unread > 0 && (
-                <span className="absolute top-1.5 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] leading-none font-bold text-ink tabular-nums">
+                <span className="absolute top-1.5 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] leading-none font-bold text-[#18181b] tabular-nums">
                   {unreadLabel(unread)}
                 </span>
               )}

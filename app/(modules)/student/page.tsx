@@ -175,10 +175,10 @@ export default async function StudentDashboardPage() {
         </Card>
 
         <div className="flex min-w-0 flex-col gap-4 md:col-span-2 xl:col-start-1 xl:row-start-3 xl:row-span-3">
-          <Card className="flex flex-col gap-2 px-6 py-4">
+          <Card className="flex flex-col gap-2 p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-baseline gap-x-3">
-                <h2 className="text-base font-bold leading-[22px]">Progress</h2>
+                <h2 className="text-base font-semibold leading-6">Progress</h2>
                 <p className="text-sm font-semibold text-muted">Lower is better</p>
               </div>
               <LegendItem color="var(--hue-violet-strong)">GWA</LegendItem>
@@ -208,19 +208,19 @@ export default async function StudentDashboardPage() {
               title="Current grades"
               icon="grades"
               hue="violet"
-              className="px-[18px] py-4"
+              className="px-5 py-4"
               action={
                 <Link href="/student/grades" aria-label="See all grades" className={SEE_ALL}>
                   See all
                 </Link>
               }
             />
-            {dash.gradesLabel && <p className="px-[18px] pt-3 text-sm text-muted">{dash.gradesLabel}</p>}
+            {dash.gradesLabel && <p className="px-5 pt-3 text-sm text-muted">{dash.gradesLabel}</p>}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[480px] text-left text-sm">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className={`${TH} w-[76px] px-3.5`}>Code</TableHead>
+                    <TableHead className={`${TH} w-[76px]`}>Code</TableHead>
                     <TableHead className={TH}>Course</TableHead>
                     <TableHead className={`${TH} w-14`}>Units</TableHead>
                     <TableHead className={`${TH} w-[60px]`}>Grade</TableHead>
@@ -242,7 +242,7 @@ export default async function StudentDashboardPage() {
                 </TableBody>
               </table>
               {dash.currentGrades.length === 0 && (
-                <p className="px-[18px] py-4 text-sm text-muted">
+                <p className="px-5 py-4 text-sm text-muted">
                   {dash.gradesFailed ? 'We could not load your grades. Reload the page.' : 'No grades have been posted yet.'}
                 </p>
               )}
