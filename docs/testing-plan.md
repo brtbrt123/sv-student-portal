@@ -70,7 +70,7 @@ clearance items can only be cleared by SQL as the database owner (recorded as te
 | 2. Integration | SQL suites TC-01 to TC-71 (clearance slice, hardening) and TC-72 to TC-122 (lockout, grades, documents, enrollment), all run on the live database | Pass (some rehearsal failures found real defects, section 6) | App-to-database calls are only covered through the browser checks of level 3. TC-94 has no recorded file |
 | 3. System | Browser walk E2E-01 to E2E-13 (clearance, 2026-10-11) and browser checks S-01 to S-12 (2026-10-12, grades, documents, enrollment, lockout in the app) | Pass, with the gaps on the right | Student enrollment submit/add/remove forms, Reject button, friendly error messages, audit rows of the new writes, phone width, dark mode, every role on the deployed site |
 | 4. Acceptance | None run | Not done | A script per SRS requirement with a sign-off by team members (section 9). Nobody is assigned yet |
-| 5. Performance | PER-02 (0.1 to 1.5 ms per query) and PER-01 (student pages load in 0.9 to 1.3 s) measured 2026-10-14 | Done for the student pages | Staff pages and phone not timed (issue #109) |
+| 5. Performance | PER-02 (0.1 to 1.5 ms per query) and PER-01 (all five roles load in 0.93 to 2.18 s) measured 2026-10-14 | Done | Phone, throttled network and larger data not tested (issue #109) |
 | 6. Security | Isolation, grants, audit and lockout tests (SQL and browser); vulnerabilities table in section 10 | Partly done: 3 of the candidate vulnerabilities have a fix and a recorded test (rls_auto_enable, brute force, rate limiting) | SQL injection has no direct test; rate limiting tested on the sign-in route only; lockout residual risks not tested; at least 3 vulnerabilities with solutions needed |
 
 ## 5. Level 1: Unit testing
@@ -358,8 +358,8 @@ Planned acceptance script (checks to run on the live site; each needs a name and
 
 ### 10.1 Level 5: Performance testing
 
-Status: **PER-02 measured and passed; PER-01 measured on the live site after the fixes and passed for the student pages (both
-2026-10-14).** Registrar, Cashier, Department and Admin pages were not timed. Issue #109.
+Status: **PER-02 measured and passed; PER-01 measured on the live site after the fixes and passed for all five roles (both
+2026-10-14).** Limits are listed under the tables. Issue #109.
 
 **PERF-02 (PER-02: grade and clearance queries under 500 ms): Pass.** Run by Claude with a read-only, rolled-back script in the
 Supabase SQL editor on the live project (as a student with row-level security on: role `authenticated` and the JWT claim of
@@ -375,9 +375,12 @@ student1). Each query was run 30 times; the figures are the average per call, in
 | `list_my_notifications(20, false)` | 0.09 | 500 |
 | `queue_my_status('Enrollment')` | 0.80 | 500 |
 
-These are database times on a small data set. They do not include the network between the app and the database.
+Rows used (counted the same way, 2026-10-14): as student1 the views returned 3 rows (`v_grades`), 4 rows (`v_clearance_items`) and
+1 row (`v_clearances`); the tables hold 6 grades, 12 clearance items, 3 clearances, 4 enrollments, 7 notifications and 1 queue ticket.
+These are database times on a very small data set (demo data); they say the queries are cheap here, not how they would scale. They do not
+include the network between the app and the database.
 
-**PERF-01 (PER-01: UI loads in under 2.5 s): Pass for the student pages, measured after the fixes were deployed.** Before the fixes,
+**PERF-01 (PER-01: UI loads in under 2.5 s): Pass for the main pages of all five roles, measured after the fixes were deployed.** Before the fixes,
 measured from the Project Manager's machine on the deployed site with `curl` on 2026-10-14: a static file from the edge takes 0.18 s to the first byte; `/login` (no database call) takes 0.43 to
 0.46 s warm and 1.8 s on a cold start; `/apply` 0.47 s. Signed-in pages were not timed on the live site (a login is needed). Findings:
 - The Supabase project is in Sydney (`ap-southeast-2`) but Vercel runs the app's functions in Washington DC (`iad1`, the default;
@@ -417,12 +420,51 @@ Full page load in the browser (Navigation Timing and largest contentful paint, o
 | /student/enrollment | 1016 | 1173 | 1228 |
 | /student/grades | 880 | 926 | 1192 |
 
-All measured values are under 2.5 s. Limits of this test: one student account, 3 pages for the full load and one run each, one network
-(the Project Manager's), no phone, no throttling, no Registrar / Cashier / Department / Admin pages, cold start not isolated.
+Staff roles, same method (signed in as `registrar@pnc.test`, `cashier@pnc.test`, `dept@pnc.test`, `admin@pnc.test`; whole-HTML time in
+milliseconds, 3 runs per page; the first number is the first run):
+
+| Page | Run 1 | Run 2 | Run 3 |
+| --- | --- | --- | --- |
+| /registrar | 1146 | 1073 | 884 |
+| /registrar/enrollments | 1227 | 978 | 1062 |
+| /registrar/queue | 989 | 939 | 926 |
+| /registrar/documents | 929 | 946 | 945 |
+| /registrar/grades | 1048 | 1167 | 1293 |
+| /registrar/applications | 923 | 878 | 958 |
+| /cashier | 1054 | 1030 | 992 |
+| /cashier/charges | 960 | 1677 | 949 |
+| /cashier/payments | 962 | 995 | 925 |
+| /cashier/clearance | 1135 | 973 | 1150 |
+| /department | 1003 | 1679 | 968 |
+| /department/clearance | 1136 | 1047 | 1110 |
+| /department/holds | 949 | 913 | 1672 |
+| /admin | 1860 | 874 | 1107 |
+| /admin/users | 1401 | 891 | 802 |
+| /admin/academic-setup | 1004 | 858 | 1090 |
+| /admin/audit-log | 1087 | 1231 | 903 |
+
+Full page load of each role's main page, plus the Registrar's queue page (one run each, milliseconds):
+
+| Page | DOM interactive | Load event | Largest contentful paint |
+| --- | --- | --- | --- |
+| /registrar | 1534 | 1584 | 1568 |
+| /registrar/queue | 1724 | 2184 | 1752 |
+| /cashier | 983 | 1034 | 1020 |
+| /department | 1044 | 1138 | 1068 |
+| /admin | 914 | 991 | 944 |
+
+Summary over all five roles: whole HTML typically 0.8 to 1.3 s, slowest single response 1.86 s (the first request to /admin); full load
+0.93 to 2.18 s, the slowest being the Registrar's queue page (2.18 s, a single run, which loads the QR scanner library); largest
+contentful paint 0.94 to 1.75 s. All measured values are under 2.5 s, but the queue page is the closest to the limit.
+
+Limits of this test: one account per role, one network (the Project Manager's, Philippines to Singapore to Sydney), one run per page for
+the full load, no phone, no throttling, cold start not isolated, a very small data set (see PERF-02 row counts), and no "before" figure for
+signed-in pages, so the size of the improvement is not measured. The test used the live site with the Claude browser pane
+(Project Manager signed in each role); Claude read the numbers.
 
 | ID | Requirement | What to measure | Status |
 | --- | --- | --- | --- |
-| PERF-01 | PER-01 | Page load time of the main pages on the live site (student pages measured after the fixes: load 0.9 to 1.3 s, largest contentful paint 1.2 to 1.45 s) | Pass for student pages, 2026-10-14 |
+| PERF-01 | PER-01 | Page load time of the main page of each role on the live site, after the fixes (full load 0.93 to 1.58 s, Registrar queue page 2.18 s; largest contentful paint 0.94 to 1.75 s) | Pass, 2026-10-14 |
 | PERF-02 | PER-02 | Query time for grades and clearance status (`v_grades`, `v_clearance_items`, `v_clearances` and others, as a student, 30 runs) | Pass, 2026-10-14 |
 
 ### 10.2 Level 6: Security testing
@@ -487,7 +529,7 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | --- | --- | --- | --- |
 | Unit tests | 1 | Done (78 of 78 pass) | Section 5. Not covered: React components and the Server Actions as a whole (levels 2 and 3) |
 | Acceptance script run and signed off by team members | 4 | Not done | Section 9. Before the freeze on 2026-10-15. Owner: to be named by the PM |
-| Performance: PER-01 on the staff pages and on a phone | 5 | Not done | Student pages measured 2026-10-14 (pass); Registrar, Cashier, Department and Admin pages not timed (issue #109) |
+| Performance: PER-01 on a phone and on a throttled network; PER-02 on a larger data set | 5 | Not done | All five roles were measured on the live site on 2026-10-14 (pass); demo-size data and one network only (issue #109) |
 | Rate limiting (SEC-04) | 6 | Done (sign-in route) | Vercel firewall rule "Limit POST requests per IP" (POST, 60 s fixed window, 20 requests per IP, 429) tested 2026-10-12: 429 after about 24 POSTs in a minute from one IP; see `docs/rate-limiting.md` |
 | SQL injection direct test | 6 | Not done | Issue #108. Owner and date not set |
 | Lockout residual risks (DoS lockout, direct Auth endpoint, race) | 6 | Not tested | Documented as accepted risks; test or mitigate if time allows |
@@ -538,7 +580,7 @@ Residual risks of the login lockout (V-2), written in the header of `login_locko
 | SEC-04 rate limiting | `docs/rate-limiting.md` | Pass (sign-in route; server actions not tested one by one) |
 | SEC-05 SQL injection | none direct | Not done |
 | SEC-06 secret handling | pre-commit scrub command only | Not done as a recorded test |
-| PER-01 | PERF-01 | Pass (student pages) |
+| PER-01 | PERF-01 | Pass (all five roles) |
 | PER-02 | PERF-02 | Pass |
 | PER-03 deploy on merge to main | Vercel deployment of main verified 2026-10-11 (signed in as student1; see HANDOFF.md) | Partly: not a written test case |
 | ETH-01 privacy between students | N-01, N-02, TC-12 to TC-14 | Pass |
