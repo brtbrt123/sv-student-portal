@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
 import { catalogErrorMessage, CATALOG_GENERIC } from '@/lib/data/catalog-errors'
-import { parseId, validateProgram, validateSection, validateSubject, validateTerm } from '@/lib/data/catalog-validate'
+import { parseDepartmentType, parseId, validateDepartment, validateProgram, validateSection, validateSubject, validateTerm } from '@/lib/data/catalog-validate'
 
 // Server Actions for the Admin's Academic setup screen. They run with the signed-in user's own session:
 // the database (RLS, column grants, check constraints) is the final gate; the checks here only give
@@ -138,6 +138,48 @@ export async function setCurrentTerm(_prev: CatalogActionState, formData: FormDa
     return fail(CATALOG_GENERIC)
   }
   return ok('Current term changed.')
+}
+
+export async function createDepartment(_prev: CatalogActionState, formData: FormData): Promise<CatalogActionState> {
+  void _prev
+  const type = parseDepartmentType(field(formData, 'departmentType'))
+  if (!type) return fail('Choose the type of the department: Academic or Financial.')
+  const v = validateDepartment({ code: field(formData, 'code'), name: field(formData, 'name') })
+  if (!v.ok) return fail(v.message)
+  try {
+    const supabase = await adminClient()
+    if (!supabase) return fail(SESSION_ENDED)
+    const { error } = await supabase
+      .from('departments')
+      .insert({ code: v.value.code, name: v.value.name, department_type: type })
+    if (error) return fail(catalogErrorMessage(error.code, error.message))
+  } catch {
+    return fail(CATALOG_GENERIC)
+  }
+  return ok('Department added.')
+}
+
+// The type of a department is not sent: the database does not let it change after the department is created.
+export async function updateDepartment(_prev: CatalogActionState, formData: FormData): Promise<CatalogActionState> {
+  void _prev
+  const id = parseId(field(formData, 'departmentId'))
+  if (!id) return fail(NOT_FOUND)
+  const v = validateDepartment({ code: field(formData, 'code'), name: field(formData, 'name') })
+  if (!v.ok) return fail(v.message)
+  try {
+    const supabase = await adminClient()
+    if (!supabase) return fail(SESSION_ENDED)
+    const { data, error } = await supabase
+      .from('departments')
+      .update({ code: v.value.code, name: v.value.name })
+      .eq('department_id', id)
+      .select('department_id')
+    if (error) return fail(catalogErrorMessage(error.code, error.message))
+    if (!data || data.length === 0) return fail(NOT_FOUND)
+  } catch {
+    return fail(CATALOG_GENERIC)
+  }
+  return ok('Department saved.')
 }
 
 export async function createProgram(_prev: CatalogActionState, formData: FormData): Promise<CatalogActionState> {

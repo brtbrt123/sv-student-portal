@@ -11,6 +11,7 @@ export function catalogErrorMessage(code: string | undefined, message: string | 
   if (code === '23505') {
     if (text.includes('uq_terms_one_current_term')) return 'Another term is already marked as the current term.'
     if (text.includes('terms')) return 'That school year and semester already exist.'
+    if (text.includes('_name_key')) return 'That name is already used. Use a different name.'
     return 'That code is already used. Use a different code.'
   }
   if (code === '23514') {

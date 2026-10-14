@@ -74,6 +74,25 @@ export function validateProgram(raw: { code?: unknown; name?: unknown }): Checke
   return { ok: true, value: { code: code.value, name: name.value } }
 }
 
+export const DEPARTMENT_TYPES = ['Academic', 'Financial'] as const
+export type DepartmentType = (typeof DEPARTMENT_TYPES)[number]
+export type DepartmentInput = { code: string; name: string }
+
+// The department type is chosen only when a department is created (the database does not let it change later),
+// so it is checked by its own function.
+export function validateDepartment(raw: { code?: unknown; name?: unknown }): Checked<DepartmentInput> {
+  const code = checkText(raw.code, 'department code', MAX_CODE)
+  if (!code.ok) return code
+  const name = checkText(raw.name, 'department name', MAX_NAME)
+  if (!name.ok) return name
+  return { ok: true, value: { code: code.value, name: name.value } }
+}
+
+export function parseDepartmentType(raw: unknown): DepartmentType | null {
+  const text = String(raw ?? '').trim()
+  return (DEPARTMENT_TYPES as readonly string[]).includes(text) ? (text as DepartmentType) : null
+}
+
 export type SubjectInput = { code: string; title: string; units: number }
 
 export function validateSubject(raw: { code?: unknown; title?: unknown; units?: unknown }): Checked<SubjectInput> {

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { parseDate, parseId, validateProgram, validateSection, validateSubject, validateTerm } from '@/lib/data/catalog-validate'
+import {
+  parseDate,
+  parseDepartmentType,
+  parseId,
+  validateDepartment,
+  validateProgram,
+  validateSection,
+  validateSubject,
+  validateTerm,
+} from '@/lib/data/catalog-validate'
 import { catalogErrorMessage, CATALOG_GENERIC, CATALOG_NOT_ALLOWED } from '@/lib/data/catalog-errors'
 
 const term = { schoolYear: '2026-2027', semester: '1st', startDate: '2026-08-01', endDate: '2026-12-15' }
@@ -72,5 +81,23 @@ describe('academic setup validators and error mapper (UT-100..109)', () => {
     expect(text).toBe(CATALOG_GENERIC)
     expect(catalogErrorMessage(undefined, undefined)).toBe(CATALOG_GENERIC)
     expect(catalogErrorMessage('P0001', 'secret internal text')).not.toContain('secret')
+  })
+})
+
+describe('department form (UT-120..121)', () => {
+  it('UT-120 a department needs a code and a name; text is trimmed and the lengths are limited', () => {
+    expect(validateDepartment({ code: ' CED ', name: ' College of Education ' })).toEqual({ ok: true, value: { code: 'CED', name: 'College of Education' } })
+    expect(validateDepartment({ code: '', name: 'College of Education' }).ok).toBe(false)
+    expect(validateDepartment({ code: 'CED', name: '' }).ok).toBe(false)
+    expect(validateDepartment({ code: 'x'.repeat(21), name: 'Name' }).ok).toBe(false)
+    expect(validateDepartment({ code: 'CED', name: 'n'.repeat(121) }).ok).toBe(false)
+  })
+  it('UT-121 the type is Academic or Financial only, and a duplicate name or code gets its own plain message', () => {
+    expect(parseDepartmentType('Academic')).toBe('Academic')
+    expect(parseDepartmentType(' Financial ')).toBe('Financial')
+    expect(parseDepartmentType('Other')).toBeNull()
+    expect(parseDepartmentType(undefined)).toBeNull()
+    expect(catalogErrorMessage('23505', 'duplicate key value violates unique constraint "departments_name_key"')).toContain('name is already used')
+    expect(catalogErrorMessage('23505', 'duplicate key value violates unique constraint "departments_code_key"')).toContain('code is already used')
   })
 })

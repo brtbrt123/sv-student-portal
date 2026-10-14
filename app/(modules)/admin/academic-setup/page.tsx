@@ -1,11 +1,11 @@
 import DashboardShell from '@/components/layout/DashboardShell'
-import TableCard from '@/components/admin/TableCard'
 import { CatalogTerms } from '@/components/admin/CatalogTerms'
+import { CatalogDepartments } from '@/components/admin/CatalogDepartments'
 import { CatalogPrograms } from '@/components/admin/CatalogPrograms'
 import { CatalogSubjects } from '@/components/admin/CatalogSubjects'
 import { CatalogSections } from '@/components/admin/CatalogSections'
 import { requireRole } from '@/lib/auth/session'
-import { EmptyState, SummaryStrip, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui'
+import { EmptyState, SummaryStrip } from '@/components/ui'
 import { getCatalogState } from '@/lib/data/catalog'
 
 export default async function AdminAcademicSetupPage() {
@@ -49,26 +49,7 @@ export default async function AdminAcademicSetupPage() {
         <CatalogSubjects subjects={subjects} departments={departments} />
         <CatalogSections sections={sections} subjects={subjects} terms={terms} currentTermId={currentTermId} />
 
-        <TableCard title="Departments" description="Read only. Departments are changed by the database team." minWidth="min-w-[480px]">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              {['Code', 'Name', 'Type'].map((c) => (
-                <TableHead key={c} scope="col">
-                  {c}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {departments.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>{d.code}</TableCell>
-                <TableCell className="font-normal text-muted">{d.name}</TableCell>
-                <TableCell className="font-normal text-muted">{d.type}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </TableCard>
+        <CatalogDepartments departments={departments} />
       </div>
     </DashboardShell>
   )
