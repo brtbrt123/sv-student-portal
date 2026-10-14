@@ -103,6 +103,9 @@ function ApplicationReviewPanel({ application: a }: { application: ApplicationIt
         <Detail label="Program">
           {a.programCode} · {a.programName}
         </Detail>
+        <Detail label="Applicant">
+          {a.applicantType === 'Transferee' ? 'Transferee (picks their own subjects)' : 'New student (first-year subjects set automatically)'}
+        </Detail>
         {a.status === 'Accepted' && (
           <Detail label="Student ID">
             {a.provisioned ? (a.studentNumber ?? 'Set up') : 'Not set up yet'}
@@ -278,6 +281,7 @@ export default function ApplicationsReview({ applications }: { applications: App
                   <TableCell className="text-muted">
                     <span className="block font-medium text-foreground">{a.programCode}</span>
                     <span className="block text-xs">{a.programName}</span>
+                    {a.applicantType === 'Transferee' && <span className="block text-xs">Transferee</span>}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted">{formatShortDate(a.submittedAt)}</TableCell>
                   <TableCell><ApplicationStatusBadge status={a.status} /></TableCell>

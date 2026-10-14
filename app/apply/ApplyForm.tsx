@@ -160,6 +160,26 @@ export function ApplyForm({ programs }: { programs: ProgramOption[] }) {
             ))}
           </Select>
         </Field>
+        <Field
+          id="applicantType"
+          label="I am a"
+          required
+          error={fe.applicantType}
+          hint="A new student gets the first-year subjects of the program automatically. A transferee picks their own subjects after the Registrar accepts the application."
+        >
+          <Select
+            id="applicantType"
+            name="applicantType"
+            required
+            defaultValue={v?.applicantType ?? 'New'}
+            aria-invalid={fe.applicantType ? true : undefined}
+            aria-describedby={describe('applicantType', fe.applicantType, true)}
+            className={FIELD_SIZE}
+          >
+            <option value="New">New student</option>
+            <option value="Transferee">Transferee</option>
+          </Select>
+        </Field>
       </fieldset>
 
       {/* Honeypot: hidden from people and assistive tech. Bots fill it; the server then ignores the application. */}

@@ -37,6 +37,7 @@ type AppRow = {
   program_id: number | null
   status: string
   student_id: string | null
+  applicant_type: string | null
 }
 
 type Provisioned = { ok: true; studentId: string; studentNumber: string } | { ok: false; message: string }
@@ -50,6 +51,8 @@ const SETUP_FAILED =
 const EMAIL_IN_USE =
   "The applicant's email address is already used by another portal account, so no student account was created. " +
   'The application stays Accepted. Ask the Admin to check the existing account, then use "Retry account setup".'
+const NO_ENROLLMENT =
+  ' The first-year enrollment was not created: use "Resend email" to try again, or ask the Admin if it keeps failing.'
 const MAX_REMARKS = 300
 
 // application_id may be a number or a uuid; both are passed to the database as text, never in SQL.
@@ -221,6 +224,16 @@ async function studentNumberOf(db: Db, studentId: string): Promise<string | null
   return STUDENT_NUMBER_RE.test(n) ? n : null
 }
 
+// A NEW student gets a Pending Year 1 enrollment with the first-year subjects of the program. A Transferee
+// does not (they pick their own). The database function is safe to repeat: it returns the existing
+// enrollment instead of making a second one. Returns false when it failed; the account is kept either way.
+async function ensureFirstYearEnrollment(admin: Db, app: AppRow, studentId: string): Promise<boolean> {
+  if (app.applicant_type === 'Transferee') return true
+  const { error } = await admin.rpc('create_first_year_enrollment', { p_student_id: studentId })
+  if (error) logStep('create first-year enrollment', error)
+  return !error
+}
+
 // Provisions when needed, then emails. Shared by Accept and Retry.
 async function setUpAndEmail(admin: Db, app: AppRow): Promise<ApplicationActionState> {
   let studentId = app.student_id
@@ -235,9 +248,19 @@ async function setUpAndEmail(admin: Db, app: AppRow): Promise<ApplicationActionS
     if (!studentNumber) return fail(SETUP_FAILED)
   }
 
+  const enrolled = await ensureFirstYearEnrollment(admin, app, studentId)
   const sent = await sendCredentials(admin, app, studentId, studentNumber)
   if (!sent) {
-    return { status: 'warning', message: `Account created (student ID ${formatStudentId(studentNumber)}) but the email failed: use "Resend email".` }
+    return {
+      status: 'warning',
+      message: `Account created (student ID ${formatStudentId(studentNumber)}) but the email failed: use "Resend email".${enrolled ? '' : NO_ENROLLMENT}`,
+    }
+  }
+  if (!enrolled) {
+    return {
+      status: 'warning',
+      message: `Student ID ${formatStudentId(studentNumber)} is ready and the set-password email was sent.${NO_ENROLLMENT}`,
+    }
   }
   return {
     status: 'success',
@@ -340,8 +363,10 @@ export async function resendCredentials(_prev: ApplicationActionState, formData:
     const studentNumber = await studentNumberOf(db, app.student_id)
     if (!studentNumber) return fail('We could not read the student ID for this account. Reload the page.')
 
+    const enrolled = await ensureFirstYearEnrollment(ctx.admin, app, app.student_id)
     const sent = await sendCredentials(ctx.admin, app, app.student_id, studentNumber)
     if (!sent) return fail('The email could not be sent. Please try again in a few minutes.')
+    if (!enrolled) return { status: 'warning', message: `A new set-password email was sent to ${(app.email ?? '').trim()}.${NO_ENROLLMENT}` }
     return { status: 'success', message: `A new set-password email was sent to ${(app.email ?? '').trim()}.` }
   } catch {
     return fail('The email could not be sent. Please try again in a few minutes.')

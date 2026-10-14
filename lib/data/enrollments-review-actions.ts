@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth/session'
+import { getAdminClientFor } from '@/lib/supabase/admin'
 import { enrollmentDecisionErrorMessage } from '@/lib/data/db-errors'
 
 // Server Action for the Registrar's enrollment decision. It runs with the signed-in user's own session:
@@ -15,6 +16,7 @@ export type DecideEnrollmentState = { status: 'idle' | 'success' | 'error'; mess
 const SESSION_ENDED = 'Your session has ended. Please sign in again.'
 const GENERIC = 'We could not save the decision. Please try again in a few minutes.'
 const MAX_REMARKS = 300
+const GENERIC_DROP = 'We could not drop the subject. Please try again in a few minutes.'
 
 // Approves or rejects one Pending enrollment. The update is limited to the status the Registrar saw
 // (`from`, always Pending), so an enrollment someone else decided meanwhile is reported, not overwritten.
@@ -62,4 +64,53 @@ export async function decideEnrollment(_prev: DecideEnrollmentState, formData: F
   revalidatePath('/registrar', 'layout')
   revalidatePath('/student', 'layout')
   return { status: 'success', message: `Enrollment ${target.toLowerCase()}.` }
+}
+
+// A student whose subjects are set by their program cannot drop one; the Registrar does it on request.
+// The Registrar has no DELETE right on enrollment_items of their own, so this runs with the admin client,
+// handed out only after the caller's own session proves an active Registrar. The enrollment must be
+// Pending and the item must belong to it (the database trigger refuses a change to a decided enrollment
+// for every role as well).
+export async function dropEnrollmentSection(_prev: DecideEnrollmentState, formData: FormData): Promise<DecideEnrollmentState> {
+  void _prev
+  const enrollmentRaw = String(formData.get('enrollmentId') ?? '')
+  const itemRaw = String(formData.get('enrollmentItemId') ?? '')
+  const enrollmentId = /^\d+$/.test(enrollmentRaw) ? Number(enrollmentRaw) : NaN
+  const itemId = /^\d+$/.test(itemRaw) ? Number(itemRaw) : NaN
+  if (!Number.isSafeInteger(enrollmentId) || !Number.isSafeInteger(itemId)) {
+    return { status: 'error', message: 'That subject could not be dropped. Reload the page.' }
+  }
+
+  try {
+    const ctx = await getAdminClientFor('Registrar').catch(() => undefined)
+    if (ctx === undefined) return { status: 'error', message: 'Dropping a subject is not configured on the server yet. Ask the Admin.' }
+    if (ctx === null) return { status: 'error', message: SESSION_ENDED }
+
+    const { data: enrollment, error: readError } = await ctx.admin
+      .from('enrollments')
+      .select('status')
+      .eq('enrollment_id', enrollmentId)
+      .maybeSingle()
+    if (readError || !enrollment) return { status: 'error', message: GENERIC_DROP }
+    if (enrollment.status !== 'Pending') {
+      return { status: 'error', message: 'Only a Pending enrollment can change. This one was already decided. Reload the page.' }
+    }
+
+    const { data: removed, error } = await ctx.admin
+      .from('enrollment_items')
+      .delete()
+      .eq('enrollment_item_id', itemId)
+      .eq('enrollment_id', enrollmentId)
+      .select('enrollment_item_id')
+    if (error) return { status: 'error', message: GENERIC_DROP }
+    if (!removed || removed.length === 0) {
+      return { status: 'error', message: 'That subject was not found. It may be dropped already. Reload the page.' }
+    }
+  } catch {
+    return { status: 'error', message: GENERIC_DROP }
+  }
+
+  revalidatePath('/registrar', 'layout')
+  revalidatePath('/student', 'layout')
+  return { status: 'success', message: 'Subject dropped.' }
 }

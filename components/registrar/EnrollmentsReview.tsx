@@ -6,6 +6,7 @@ import { Icon } from '@/components/layout/Icon'
 import { cn } from '@/lib/utils'
 import { formatShortDate } from '@/components/student/format'
 import { decideEnrollment, type DecideEnrollmentState } from '@/lib/data/enrollments-review-actions'
+import { DropSectionButton } from './DropSectionButton'
 import type { EnrollmentReviewItem, EnrollmentStatus } from '@/lib/data/enrollments-review'
 import RowRadio from './RowRadio'
 import { QueueSheet, QueueTable, StatusLine, StudentCell } from './QueueParts'
@@ -45,11 +46,12 @@ function SectionsList({ enrollment }: { enrollment: EnrollmentReviewItem }) {
               <TableHead>Section</TableHead>
               <TableHead>Units</TableHead>
               {showSeats && <TableHead>Seats taken</TableHead>}
+              {showSeats && <TableHead>Drop</TableHead>}
             </tr>
           </TableHeader>
           <TableBody>
             {enrollment.sections.length === 0 && (
-              <EmptyRow colSpan={showSeats ? 4 : 3}>No sections were added to this enrollment.</EmptyRow>
+              <EmptyRow colSpan={showSeats ? 5 : 3}>No sections were added to this enrollment.</EmptyRow>
             )}
             {enrollment.sections.map((s) => {
               const full = s.taken >= s.capacity
@@ -68,6 +70,11 @@ function SectionsList({ enrollment }: { enrollment: EnrollmentReviewItem }) {
                     <TableCell className={full ? 'font-medium text-danger' : 'text-muted'}>
                       {s.taken} / {s.capacity}
                       {full && ' (full)'}
+                    </TableCell>
+                  )}
+                  {showSeats && (
+                    <TableCell>
+                      <DropSectionButton enrollmentId={enrollment.id} itemId={s.itemId} label={`${s.subjectCode} for ${enrollment.studentName}`} />
                     </TableCell>
                   )}
                 </TableRow>

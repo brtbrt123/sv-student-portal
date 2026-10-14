@@ -9,13 +9,13 @@ import { applicationFormErrorMessage } from '@/lib/data/db-errors'
 // friendly messages. A duplicate application for the same email succeeds silently in the database, and
 // this action always ends in the same neutral success screen, so nobody can learn whether an email was used.
 
-export type ApplyFields = 'firstName' | 'lastName' | 'email' | 'mobile' | 'programId'
+export type ApplyFields = 'firstName' | 'lastName' | 'email' | 'mobile' | 'programId' | 'applicantType'
 
 export type ApplyState = {
   status: 'idle' | 'error'
   message: string
   fieldErrors?: Partial<Record<ApplyFields, string>>
-  values?: { firstName: string; lastName: string; email: string; mobile: string; programId: string }
+  values?: { firstName: string; lastName: string; email: string; mobile: string; programId: string; applicantType: string }
 }
 
 const GENERIC = 'We could not send your application. Please try again in a few minutes.'
@@ -41,7 +41,9 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
   const email = String(formData.get('email') ?? '').trim()
   const mobile = String(formData.get('mobile') ?? '').trim()
   const programRaw = String(formData.get('programId') ?? '').trim()
-  const values = { firstName, lastName, email, mobile, programId: programRaw }
+  // A new student gets the first-year subjects of the program automatically; a transferee picks their own later.
+  const applicantType = String(formData.get('applicantType') ?? 'New').trim() || 'New'
+  const values = { firstName, lastName, email, mobile, programId: programRaw, applicantType }
 
   const fieldErrors: NonNullable<ApplyState['fieldErrors']> = {}
   const fn = checkName(firstName, 'first name')
@@ -53,6 +55,7 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
   if (mobile && !MOBILE_RE.test(mobile)) fieldErrors.mobile = 'Use 7 to 20 digits, spaces, dashes or a leading +.'
   const programId = /^\d+$/.test(programRaw) ? Number(programRaw) : NaN
   if (!Number.isSafeInteger(programId)) fieldErrors.programId = 'Choose the program you are applying for.'
+  if (applicantType !== 'New' && applicantType !== 'Transferee') fieldErrors.applicantType = 'Choose new student or transferee.'
 
   if (Object.keys(fieldErrors).length > 0) {
     return { status: 'error', message: 'Please fix the highlighted fields.', fieldErrors, values }
@@ -70,6 +73,7 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
       p_email: email,
       p_mobile: mobile === '' ? null : mobile,
       p_program_id: programId,
+      p_applicant_type: applicantType,
     })
     if (error) return { status: 'error', message: applicationFormErrorMessage(error.code, error.message, GENERIC), values }
   } catch {
