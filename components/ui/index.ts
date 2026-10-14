@@ -11,4 +11,3 @@ export { ScheduleList, type ScheduleEntry, type ScheduleTone } from "./ScheduleL
 export { HUE_SOFT, HUE_SOLID, HUE_TEXT, hueVar, type Hue } from "./hue";
 export { PhotoBanner } from "./PhotoBanner";
 export { PHOTOS, type PhotoKey } from "./photos";
-export { SampleDataNote } from "./SampleDataNote";
