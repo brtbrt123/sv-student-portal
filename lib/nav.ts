@@ -4,7 +4,7 @@ import { ROLE_HOME, ROLES } from '@/lib/auth/roles'
 export type IconName =
   | 'dashboard' | 'enrollment' | 'grades' | 'clearance' | 'documents'
   | 'charges' | 'payments' | 'holds' | 'users' | 'setup' | 'audit'
-  | 'encode' | 'settings' | 'notifications' | 'queue'
+  | 'encode' | 'notifications' | 'queue'
 
 export type NavItem = { label: string; href: string; icon: IconName }
 
