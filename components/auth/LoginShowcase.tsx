@@ -45,7 +45,7 @@ export function LoginShowcase({
             <p className="mt-3 max-w-[38ch] text-sm leading-6 text-white/90 [text-shadow:0_1px_10px_rgb(0_0_0/0.35)]">
               {staff
                 ? 'For the Registrar, Cashier, Department and Admin offices. Every change is recorded in the audit log.'
-                : 'Sign in to see where your requests stand and what to do next.'}
+                : 'Sign in to see where your requests are and what comes next.'}
             </p>
           </div>
         </div>

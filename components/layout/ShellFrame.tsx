@@ -27,7 +27,6 @@ export default function ShellFrame({
   userName,
   userMeta,
   signOut,
-  settingsHref,
   variant = 'student',
   title,
   unreadCount = 0,
@@ -41,8 +40,6 @@ export default function ShellFrame({
   signOut: React.ReactNode
   /** Accepted for compatibility; the flat shell has no sidebar promo. */
   promo?: React.ReactNode
-  /** Where Settings goes. Without it the item is shown but disabled (there is no settings page yet). */
-  settingsHref?: string
   /** `staff` adds the role label under the logo; otherwise identical. */
   variant?: 'student' | 'staff'
   /** Page title, shown in the mobile top bar (the logo name when absent). */
@@ -167,22 +164,6 @@ export default function ShellFrame({
         </nav>
 
         <div className="mt-auto flex flex-col gap-0.5 pt-6">
-          {settingsHref ? (
-            <Link href={settingsHref} onClick={() => setOpen(false)} className={cn(NAV_ITEM, NAV_IDLE)}>
-              <span className="flex size-5 shrink-0 items-center justify-center">
-                <Icon name="settings" />
-              </span>
-              Settings
-            </Link>
-          ) : (
-            <button type="button" aria-disabled="true" className={cn(NAV_ITEM, 'cursor-not-allowed font-medium text-rail-muted opacity-70')}>
-              <span className="flex size-5 shrink-0 items-center justify-center">
-                <Icon name="settings" />
-              </span>
-              Settings
-              <span className="ml-auto text-xs font-medium">Soon</span>
-            </button>
-          )}
           {signOut}
 
           <div className="mt-2 flex items-center gap-2.5 border-t border-rail-border px-1 pt-3">

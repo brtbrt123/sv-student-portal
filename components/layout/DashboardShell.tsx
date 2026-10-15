@@ -14,7 +14,6 @@ export default async function DashboardShell({
   actions,
   userMeta,
   promo,
-  settingsHref,
   variant,
   children,
 }: {
@@ -27,7 +26,6 @@ export default async function DashboardShell({
   userMeta?: string
   /** Accepted for compatibility; the flat shell does not render a sidebar promo. */
   promo?: React.ReactNode
-  settingsHref?: string
   /** Defaults to `student` for the Student role and `staff` for every other role (staff adds the role label). */
   variant?: 'student' | 'staff'
   children: React.ReactNode
@@ -41,7 +39,6 @@ export default async function DashboardShell({
       userName={`${profile.firstName} ${profile.lastName}`}
       userMeta={userMeta}
       promo={promo}
-      settingsHref={settingsHref}
       variant={shell}
       title={title}
       unreadCount={unreadCount}
