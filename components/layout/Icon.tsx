@@ -12,7 +12,6 @@ const ASSETS = {
   clearance: 'nav-clearance',
   documents: 'nav-documents',
   notifications: 'nav-notifications',
-  settings: 'nav-settings',
   menu: 'topbar-menu',
   search: 'topbar-search',
   bell: 'topbar-bell',
