@@ -198,7 +198,7 @@ function HeldRow({ ticket }: { ticket: StaffTicket }) {
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-edge bg-card px-3 py-2.5">
-      <span className="shrink-0 rounded-full bg-gold px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide text-[#18181b] uppercase">On hold</span>
+      <span className="shrink-0 rounded-full bg-gold px-2.5 py-0.5 text-xs font-extrabold tracking-wide text-[#18181b] uppercase">On hold</span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">{ticket.studentName || 'Student'}</span>
         <span className="block truncate text-[13px] text-muted tabular-nums">

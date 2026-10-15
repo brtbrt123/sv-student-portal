@@ -54,7 +54,7 @@ function Landing() {
         <div className="flex flex-col items-center px-5 py-12 text-center sm:px-8 lg:col-span-5 lg:py-16 lg:pl-2 lg:pr-12">
           <div className="mb-6 flex flex-col items-center justify-center gap-2">
             <CuMark className="w-32" />
-            <span className="text-xl font-bold text-neutral-900 dark:text-white">Cabuyao University</span>
+            <span className="text-xl font-bold text-foreground">Cabuyao University</span>
           </div>
           <h1
             id="hero-title"

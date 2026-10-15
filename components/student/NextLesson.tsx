@@ -33,7 +33,7 @@ export function NextLesson({
   return (
     <section
       aria-label={`Next class: ${title} at ${startsAt}`}
-      className={`flex flex-col gap-2 rounded-2xl bg-ink p-4 text-ink-foreground shadow-elev-md ${className ?? ''}`}
+      className={`flex flex-col gap-2 rounded-lg bg-ink p-5 text-ink-foreground shadow-elev-md ${className ?? ''}`}
     >
       <h2 className="text-sm font-medium">
         Next class at {startsAt}
